@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Gamification — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Achievements</h1>
+  <p class="page-subtitle">{{ stats.earned_badges }} of {{ stats.total_badges }} badges earned</p>
+</div>
+
+{# ── Overall progress ── #}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-between align-center mb-2">
+      <span class="label">Badge Progress</span>
+      <span class="label-value">{{ stats.progress_pct }}%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" style="width: {{ stats.progress_pct }}%"></div>
+    </div>
+    <div class="mt-2 text-muted small">
+      {{ "{:,}".format(stats.total_metres) }}m lifetime · {{ stats.earned_badges }} badges earned
+    </div>
+  </div>
+</div>
+
+{# ── Rhine journey summary ── #}
+<section class="mb-5">
+  <div class="section-title-row">
+    <h2 class="section-title">🚣 Rhine Journey</h2>
+    <a href="{{ url_for('gamification.route') }}" class="section-link">Full map →</a>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div class="rhine-summary">
+        <div class="rhine-progress-wrap">
+          <div class="d-flex justify-between align-center mb-2">
+            <span class="label">Basel → Rotterdam</span>
+            <span class="label-value">{{ rhine.position_km }} km / 820 km</span>
+          </div>
+          <div class="progress-track progress-track--rhine">
+            <div class="progress-fill progress-fill--rhine" style="width: {{ rhine.pct }}%"></div>
+          </div>
+          <div class="d-flex justify-between mt-2">
+            <span class="text-muted small">{{ rhine.pct }}% complete</span>
+            <span class="text-muted small">{{ "{:,}".format(rhine.remaining_m) }}m remaining</span>
+          </div>
+        </div>
+
+        <div class="rhine-stats-row mt-3">
+          <div class="rhine-stat">
+            <div class="rhine-stat-value">{{ rhine.position_km }} km</div>
+            <div class="rhine-stat-label">Current position</div>
+          </div>
+          <div class="rhine-stat">
+            <div class="rhine-stat-value">{{ rhine.weekly_avg_km }} km</div>
+            <div class="rhine-stat-label">Weekly avg (28d)</div>
+          </div>
+          <div class="rhine-stat">
+            {% if rhine.eta %}
+            <div class="rhine-stat-value">{{ rhine.eta }}</div>
+            <div class="rhine-stat-label">ETA at current pace</div>
+            {% else %}
+            <div class="rhine-stat-value">—</div>
+            <div class="rhine-stat-label">ETA (no recent data)</div>
+            {% endif %}
+          </div>
+          <div class="rhine-stat">
+            {% if rhine.next_waypoint %}
+            <div class="rhine-stat-value">{{ rhine.next_waypoint.emoji }} {{ rhine.next_waypoint.name }}</div>
+            <div class="rhine-stat-label">Next waypoint ({{ rhine.next_waypoint.km }} km)</div>
+            {% else %}
+            <div class="rhine-stat-value">🚢 Rotterdam</div>
+            <div class="rhine-stat-label">Journey complete!</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ── Season challenges summary ── #}
+<section class="mb-5">
+  <div class="section-title-row">
+    <h2 class="section-title">🏆 {{ challenges.q_label }} Challenges</h2>
+    <a href="{{ url_for('gamification.challenges') }}" class="section-link">Full view →</a>
+  </div>
+  <div class="challenge-grid">
+
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <span class="challenge-icon">📏</span>
+        <span class="challenge-name">Quarterly Distance</span>
+        {% if challenges.quarter.on_pace %}<span class="pace-badge on-pace">On pace</span>{% else %}<span class="pace-badge behind">Behind</span>{% endif %}
+      </div>
+      <div class="challenge-numbers">
+        <span class="challenge-achieved">{{ "{:,}".format(challenges.quarter.achieved) }}m</span>
+        <span class="challenge-target"> / {{ "{:,}".format(challenges.quarter.target) }}m</span>
+      </div>
+      <div class="progress-track mt-2">
+        <div class="progress-fill" style="width: {{ challenges.quarter.pct }}%"></div>
+      </div>
+      <div class="challenge-footer">{{ challenges.quarter.pct }}% · {{ challenges.days_remaining }}d remaining</div>
+    </div>
+
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <span class="challenge-icon">🎯</span>
+        <span class="challenge-name">PB Season</span>
+      </div>
+      <div class="challenge-numbers">
+        <span class="challenge-achieved">{{ challenges.pb_season.attempted }}</span>
+        <span class="challenge-target"> / {{ challenges.pb_season.total }} categories</span>
+      </div>
+      <div class="progress-track mt-2">
+        <div class="progress-fill" style="width: {{ challenges.pb_season.pct }}%"></div>
+      </div>
+      <div class="challenge-footer">{{ challenges.pb_season.pct }}% attempted this quarter</div>
+    </div>
+
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <span class="challenge-icon">🔥</span>
+        <span class="challenge-name">Consistency</span>
+        {% if challenges.consistency.complete %}<span class="pace-badge on-pace">✓ Done</span>{% endif %}
+      </div>
+      <div class="challenge-numbers">
+        <span class="challenge-achieved">{{ challenges.consistency.count }}</span>
+        <span class="challenge-target"> / {{ challenges.consistency.target }} sessions</span>
+      </div>
+      <div class="progress-track mt-2">
+        <div class="progress-fill {% if challenges.consistency.complete %}progress-fill--complete{% endif %}" style="width: {{ challenges.consistency.pct }}%"></div>
+      </div>
+      <div class="challenge-footer">In last {{ challenges.consistency.window_days }} days</div>
+    </div>
+
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <span class="challenge-icon">📅</span>
+        <span class="challenge-name">{{ challenges.volume_month.month_name }} Volume</span>
+      </div>
+      <div class="challenge-numbers">
+        <span class="challenge-achieved">{{ "{:,}".format(challenges.volume_month.achieved) }}m</span>
+        <span class="challenge-target"> / {{ "{:,}".format(challenges.volume_month.target) }}m</span>
+      </div>
+      <div class="progress-track mt-2">
+        <div class="progress-fill" style="width: {{ challenges.volume_month.pct }}%"></div>
+      </div>
+      <div class="challenge-footer">{{ challenges.volume_month.pct }}% · {{ challenges.volume_month.days_remaining }}d left this month</div>
+    </div>
+
+  </div>
+</section>
+
+{# ── You vs. Past You summary ── #}
+<section class="mb-5">
+  <div class="section-title-row">
+    <h2 class="section-title">📊 You vs. Past You</h2>
+    <a href="{{ url_for('gamification.versus') }}" class="section-link">Full table →</a>
+  </div>
+  <div class="card">
+    <div class="card-body versus-table-wrap">
+      <table class="versus-table versus-table--compact">
+        <thead>
+          <tr>
+            <th class="vt-metric-col">Metric</th>
+            {% for col in versus.col_order %}
+            <th class="{% if col == 'this_month' %}vt-current{% endif %}">
+              {{ versus.labels[col] }}
+              {% if col == 'this_month' %}<span class="vt-current-badge">Now</span>{% endif %}
+            </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in versus.rows %}
+          <tr>
+            <td class="vt-metric-label">{{ row.label }}</td>
+            {% for col in versus.col_order %}
+            {% set cell = row.cells[col] %}
+            <td class="vt-cell
+              {% if col == 'this_month' %}vt-current{% endif %}
+              {% if cell.delta == 'better' %}vt-better{% elif cell.delta == 'worse' %}vt-worse{% endif %}">
+              {% if cell.display is none or cell.display == None %}
+                <span class="vt-nodata">—</span>
+              {% else %}
+                {{ cell.display }}
+                {% if cell.delta == 'better' %}<span class="vt-delta vt-delta--better">▲</span>
+                {% elif cell.delta == 'worse' %}<span class="vt-delta vt-delta--worse">▼</span>{% endif %}
+              {% endif %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+{# ── Recently earned ── #}
+{% if recently_earned %}
+<section class="mb-5">
+  <h2 class="section-title">🎉 Recently Earned</h2>
+  <div class="badge-grid">
+    {% for badge in recently_earned %}
+    <div class="badge-card earned new">
+      <div class="badge-icon">🏅</div>
+      <div class="badge-name">{{ badge.badge_name }}</div>
+      <div class="badge-desc">{{ badge.badge_desc }}</div>
+      <div class="badge-date">{{ badge.earned_date.strftime('%b %d, %Y') }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ── Stale PB nudges ── #}
+{% if stale_pbs %}
+<section class="mb-5">
+  <h2 class="section-title">⏰ PB Nudges</h2>
+  <div class="nudge-list">
+    {% for pb in stale_pbs %}
+    <div class="nudge-card">
+      <span class="nudge-icon">🎯</span>
+      <span class="nudge-text">
+        Your <strong>{{ pb.category }}</strong> PB is
+        {{ (today - pb.achieved_date).days }} days old — time to test it.
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ── Badge categories ── #}
+{% for category, badge_list in by_category.items() %}
+<section class="mb-5">
+  <h2 class="section-title">{{ category }}</h2>
+  <div class="badge-grid">
+    {% for badge in badge_list %}
+    <div class="badge-card {% if badge.earned_date %}earned{% else %}locked{% endif %}">
+      <div class="badge-icon">
+        {% if badge.earned_date %}🏅{% else %}🔒{% endif %}
+      </div>
+      <div class="badge-name">{{ badge.badge_name }}</div>
+      <div class="badge-desc">{{ badge.badge_desc }}</div>
+      {% if badge.earned_date %}
+      <div class="badge-date">{{ badge.earned_date.strftime('%b %d, %Y') }}</div>
+      {% else %}
+      <div class="badge-locked-label">Not yet earned</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function triggerBadgeCheck() {
+  fetch('/gamification/api/badges/check', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.newly_awarded && data.newly_awarded.length > 0) {
+        alert('New badges earned: ' + data.newly_awarded.join(', '));
+        location.reload();
+      }
+    });
+}
+</script>
+{% endblock %}

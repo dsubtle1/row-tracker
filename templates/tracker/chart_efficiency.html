@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Stroke Rate vs Pace — Row Tracker{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Stroke Rate vs Pace</h1>
+</div>
+
+{% include "tracker/_chart_subnav.html" %}
+
+<div class="chart-controls">
+  <div class="range-tabs" id="rangeTabs">
+    <button class="range-tab {% if days == 90 %}active{% endif %}"  data-days="90">90 days</button>
+    <button class="range-tab {% if days == 365 %}active{% endif %}" data-days="365">1 year</button>
+    <button class="range-tab {% if days == 730 %}active{% endif %}" data-days="730">2 years</button>
+    <button class="range-tab {% if days == 0 %}active{% endif %}"   data-days="0">All time</button>
+  </div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-wrap">
+    <canvas id="efficiencyChart"></canvas>
+  </div>
+  <p class="chart-note">
+    Each point is one workout. X-axis: stroke rate (spm). Y-axis: avg pace — lower is faster.
+    Ideal direction: same pace at fewer strokes (left and down). Hover for details.
+  </p>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function () {
+  const currentDays = {{ days }};
+  let chart = null;
+
+  document.querySelectorAll(".range-tab").forEach(btn => {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".range-tab").forEach(b => b.classList.remove("active"));
+      this.classList.add("active");
+      loadChart(parseInt(this.dataset.days));
+    });
+  });
+
+  function fmtPace(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.round(sec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
+  function loadChart(days) {
+    fetch(`/api/data/efficiency?days=${days}`)
+      .then(r => r.json())
+      .then(data => {
+        if (chart) chart.destroy();
+
+        const isDark     = document.documentElement.getAttribute("data-theme") !== "light";
+        const gridColor  = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
+        const textColor  = isDark ? "#7a8399" : "#64748b";
+
+        // Colour points by recency — older = more muted
+        const n = data.length;
+        const pointColors = data.map((_, i) => {
+          const t = i / Math.max(n - 1, 1);
+          // Fade from muted teal to bright blue
+          const r = Math.round(30  + t * (59  - 30));
+          const g = Math.round(100 + t * (130 - 100));
+          const b = Math.round(180 + t * (246 - 180));
+          return `rgba(${r},${g},${b},0.65)`;
+        });
+
+        const ctx = document.getElementById("efficiencyChart").getContext("2d");
+        chart = new Chart(ctx, {
+          type: "scatter",
+          data: {
+            datasets: [{
+              label: "Workouts",
+              data: data.map(d => ({ x: d.stroke_rate, y: d.pace_seconds, _d: d })),
+              backgroundColor: pointColors,
+              pointRadius: 5,
+              pointHoverRadius: 7,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: item => {
+                    const d = item.raw._d;
+                    const dateStr = new Date(d.date + "T00:00:00")
+                      .toLocaleDateString("default", { month: "short", day: "numeric", year: "numeric" });
+                    return [
+                      `  ${dateStr}`,
+                      `  Pace: ${d.pace_str}/500m`,
+                      `  Stroke rate: ${d.stroke_rate} spm`,
+                      `  Distance: ${d.distance_km}km`,
+                    ];
+                  },
+                  title: () => "",
+                },
+              },
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Stroke rate (spm)",
+                  color: textColor,
+                  font: { size: 11 },
+                },
+                ticks: { color: textColor },
+                grid:  { color: gridColor },
+              },
+              y: {
+                reverse: true,
+                title: {
+                  display: true,
+                  text: "Avg pace / 500m",
+                  color: textColor,
+                  font: { size: 11 },
+                },
+                ticks: {
+                  color: textColor,
+                  callback: val => fmtPace(val),
+                },
+                grid: { color: gridColor },
+              },
+            },
+          },
+        });
+      });
+  }
+
+  loadChart(currentDays);
+
+  const observer = new MutationObserver(() => loadChart(
+    parseInt(document.querySelector(".range-tab.active")?.dataset.days ?? currentDays)
+  ));
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
+{% endblock %}

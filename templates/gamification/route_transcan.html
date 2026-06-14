@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block title %}Trans-Canada Highway — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>🍁 Trans-Canada Highway</h1>
+  <p class="page-subtitle">Victoria, BC → St. John's, NL · 7,821 km · World's longest national highway</p>
+</div>
+
+{% if not transcan.active and not transcan.complete %}
+<div class="journey-start-card card">
+  <div class="card-body text-center">
+    <div class="journey-start-icon">🍁</div>
+    <h2 class="journey-start-title">Ready to cross Canada?</h2>
+    <p class="journey-start-desc">
+      7,821 km from Mile Zero in Victoria, BC to St. John's, Newfoundland — through all 10 provinces,
+      the Rockies, the Prairies, the Canadian Shield, and the Maritimes. The world's longest national highway.<br><br>
+      23 waypoints including Banff, Winnipeg, Ottawa, Montreal, Quebec City and more.
+      Metres counted from the day you start.
+    </p>
+    <form method="POST" action="{{ url_for('gamification.journey_transcan_start') }}">
+      <button type="submit" class="btn btn-primary btn-lg mt-3">🚗 Start Trans-Canada</button>
+    </form>
+  </div>
+</div>
+
+{% elif transcan.complete %}
+<div class="journey-complete-card card mb-4">
+  <div class="card-body text-center">
+    <div class="journey-complete-icon">🏆</div>
+    <h2 class="journey-complete-title">Coast to Coast!</h2>
+    <p class="journey-complete-desc">
+      You rowed the Trans-Canada — Victoria to St. John's, 7,821 km.<br>
+      Started {{ transcan.start_date }} · Completed {{ transcan.completed_date }}
+    </p>
+    <form method="POST" action="{{ url_for('gamification.journey_transcan_start') }}">
+      <button type="submit" class="btn btn-primary mt-3">🚗 Drive It Again</button>
+    </form>
+  </div>
+</div>
+
+{% else %}
+
+{# Stats bar #}
+<div class="rhine-stats-bar mb-4">
+  <div class="rhine-stat-box">
+    <div class="rsb-value">{{ transcan.position_km }} km</div>
+    <div class="rsb-label">Journey distance</div>
+  </div>
+  <div class="rhine-stat-box">
+    <div class="rsb-value">{{ transcan.pct }}%</div>
+    <div class="rsb-label">Complete</div>
+  </div>
+  <div class="rhine-stat-box">
+    <div class="rsb-value">{{ "{:,}".format(transcan.remaining_km | int) }} km</div>
+    <div class="rsb-label">Remaining</div>
+  </div>
+  <div class="rhine-stat-box">
+    <div class="rsb-value">{{ transcan.weekly_avg_km }} km</div>
+    <div class="rsb-label">Weekly avg (28d)</div>
+  </div>
+  <div class="rhine-stat-box">
+    {% if transcan.eta %}<div class="rsb-value">{{ transcan.eta }}</div>
+    <div class="rsb-label">ETA at current pace</div>
+    {% else %}<div class="rsb-value">—</div><div class="rsb-label">ETA</div>{% endif %}
+  </div>
+  <div class="rhine-stat-box">
+    <div class="rsb-value">{{ transcan.start_date }}</div>
+    <div class="rsb-label">Journey started</div>
+  </div>
+</div>
+
+{# Province progress - group waypoints by province #}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-between align-center mb-2">
+      <span class="label">Victoria, BC → St. John's, NL</span>
+      <span class="label-value">{{ transcan.position_km }} / 7,821 km</span>
+    </div>
+    <div class="progress-track progress-track--rhine">
+      <div class="progress-fill progress-fill--rhine" style="width: {{ transcan.pct }}%"></div>
+    </div>
+    <div class="mt-2 text-muted small">
+      {% if transcan.last_passed %}Last reached: {{ transcan.last_passed.emoji }} {{ transcan.last_passed.name }}{% endif %}
+      {% if transcan.next_waypoint %} · Next: {{ transcan.next_waypoint.emoji }} {{ transcan.next_waypoint.name }} ({{ transcan.next_waypoint.km }} km){% endif %}
+    </div>
+  </div>
+</div>
+
+{# SVG map — Trans-Canada Highway #}
+<div class="card mb-4">
+  <div class="card-body">
+    {#
+      Trans-Canada SVG map — 700×260 viewBox, left=Victoria, right=St. John's
+      Route traces geographic terrain: Rocky Mountain peaks, flat prairies,
+      Canadian Shield dip, Great Lakes curve, St. Lawrence valley, Maritime coast,
+      ferry gap to Newfoundland.
+      24 waypoints mapped to x positions proportional to km (0–7821).
+    #}
+    {% set pts = [
+      (18,  165),
+      (27,  155),
+      (38,  148),
+      (62,  130),
+      (98,  108),
+      (116, 118),
+      (162, 128),
+      (198, 130),
+      (244, 130),
+      (270, 128),
+      (348, 125),
+      (413, 120),
+      (457, 118),
+      (508, 115),
+      (533, 112),
+      (573, 108),
+      (638, 112),
+      (662, 115),
+      (693, 118),
+      (720, 116),
+      (755, 122),
+      (790, 128),
+      (818, 132),
+      (876, 148)
+    ] %}
+    <svg class="rhine-map" viewBox="0 -20 900 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="transcanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="var(--color-teal,#00829b)" stop-opacity="0.5"/>
+          <stop offset="40%"  stop-color="var(--color-teal,#00829b)" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="var(--color-teal,#00829b)" stop-opacity="1.0"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <rect width="900" height="220" y="-20" fill="transparent"/>
+
+      {# Terrain silhouette — Rocky Mountains, prairies, shield, Appalachians #}
+      <path d="
+        M 0,185
+        L 18,185 C 25,185 30,175 35,160 C 40,145 45,125 55,110
+        C 60,100 65,92 72,88 C 78,84 82,86 88,95
+        C 94,104 98,112 105,118 C 112,124 118,126 125,126
+        C 135,126 145,128 155,130 C 165,132 185,133 210,133
+        C 235,133 260,132 285,131 C 310,130 330,128 360,126
+        C 390,124 415,122 440,120 C 465,118 490,117 515,116
+        C 540,115 560,113 580,110 C 600,107 618,110 635,114
+        C 652,118 665,117 678,116 C 691,115 705,116 718,117
+        C 730,118 742,119 756,120 C 770,121 784,124 800,128
+        C 816,132 835,138 856,142 C 876,146 890,150 900,155
+        L 900,185 Z"
+        fill="var(--color-teal,#00829b)" fill-opacity="0.055" stroke="none"/>
+
+      {# Mountain peaks hint — BC/AB #}
+      <polyline points="55,110 65,88 75,105 85,82 97,106 108,92 120,115"
+        fill="none" stroke="var(--color-teal,#00829b)" stroke-width="0.8" stroke-opacity="0.18"/>
+
+      {# Province divider lines (subtle) #}
+      {% set dividers = [
+        (130, "BC/AB"), (198, "AB/SK"), (312, "SK/MB"),
+        (390, "MB/ON"), (590, "ON/QC"), (700, "QC/NB")
+      ] %}
+      {% for dv in dividers %}
+      <line x1="{{ dv[0] }}" y1="88" x2="{{ dv[0] }}" y2="185"
+        stroke="var(--color-teal,#00829b)" stroke-width="0.5" stroke-opacity="0.15" stroke-dasharray="3,4"/>
+      <text x="{{ dv[0] + 2 }}" y="86" font-size="6" fill="var(--color-teal,#00829b)" fill-opacity="0.3" font-family="inherit">{{ dv[1] }}</text>
+      {% endfor %}
+
+      {# Background shadow #}
+      <path
+        d="M 18,165
+           C 28,157 33,152 38,148
+           C 48,140 70,120 98,108
+           C 108,112 112,116 116,118
+           C 130,122 146,127 162,128
+           C 178,129 190,130 198,130
+           C 216,130 230,130 244,130
+           C 252,129 261,128 270,128
+           C 295,127 320,126 348,125
+           C 375,124 394,121 413,120
+           C 432,119 444,119 457,118
+           C 476,117 492,116 508,115
+           C 520,115 530,114 533,112
+           C 545,110 558,109 573,108
+           C 586,107 600,110 614,111
+           C 626,112 634,113 638,112
+           C 648,111 656,113 662,115
+           C 671,116 683,116 693,118
+           C 700,119 710,118 720,116
+           C 728,115 738,116 745,118
+           C 752,120 753,121 755,122
+           C 764,124 776,126 790,128
+           C 802,130 812,131 818,132
+           C 835,136 855,142 876,148"
+        fill="none" stroke="var(--color-border,#2e3350)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+      {# Main route line with progress dash #}
+      <path class="rhine-river"
+        d="M 18,165
+           C 28,157 33,152 38,148
+           C 48,140 70,120 98,108
+           C 108,112 112,116 116,118
+           C 130,122 146,127 162,128
+           C 178,129 190,130 198,130
+           C 216,130 230,130 244,130
+           C 252,129 261,128 270,128
+           C 295,127 320,126 348,125
+           C 375,124 394,121 413,120
+           C 432,119 444,119 457,118
+           C 476,117 492,116 508,115
+           C 520,115 530,114 533,112
+           C 545,110 558,109 573,108
+           C 586,107 600,110 614,111
+           C 626,112 634,113 638,112
+           C 648,111 656,113 662,115
+           C 671,116 683,116 693,118
+           C 700,119 710,118 720,116
+           C 728,115 738,116 745,118
+           C 752,120 753,121 755,122
+           C 764,124 776,126 790,128
+           C 802,130 812,131 818,132
+           C 835,136 855,142 876,148"
+        fill="none" stroke="url(#transcanGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="{{ transcan.pct * 9 }}, 900"/>
+
+      {# Ferry gap indicators (NS → NL) #}
+      <line x1="720" y1="116" x2="755" y2="122"
+        stroke="var(--color-teal,#00829b)" stroke-width="2" stroke-opacity="0.35"
+        stroke-dasharray="4,4"/>
+      <text x="737" y="108" text-anchor="middle" font-size="7" fill="var(--color-teal,#00829b)" fill-opacity="0.5" font-family="inherit">⛴ ferry</text>
+
+      {# Waypoint dots and labels — alternate above/below to avoid overlap #}
+      {% set above = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22] %}
+      {% for wp in transcan.waypoints %}
+        {% set pt = pts[loop.index0] %}
+        {% set passed = wp.passed %}
+        {% set is_above = loop.index0 in above %}
+        <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="{% if loop.index0 == 0 or loop.index0 == 23 %}7{% else %}5{% endif %}"
+          fill="{% if passed %}var(--color-teal,#00829b){% else %}var(--color-border,#2e3350){% endif %}"
+          stroke="var(--color-surface,#1e2130)" stroke-width="2"
+          {% if passed %}filter="url(#glow)"{% endif %}/>
+        {# Tick line #}
+        <line x1="{{ pt[0] }}" y1="{{ pt[1] }}"
+              x2="{{ pt[0] }}" y2="{% if is_above %}{{ pt[1] - 8 }}{% else %}{{ pt[1] + 8 }}{% endif %}"
+          stroke="var(--color-teal,#00829b)" stroke-width="0.8"
+          stroke-opacity="{% if passed %}0.6{% else %}0.25{% endif %}"/>
+        <text x="{{ pt[0] }}"
+              y="{% if is_above %}{{ pt[1] - 12 }}{% else %}{{ pt[1] + 18 }}{% endif %}"
+              text-anchor="middle"
+              class="wp-label {% if passed %}wp-passed{% endif %}"
+              font-size="7.5">{{ wp.emoji }}</text>
+        <text x="{{ pt[0] }}"
+              y="{% if is_above %}{{ pt[1] - 22 }}{% else %}{{ pt[1] + 27 }}{% endif %}"
+              text-anchor="middle"
+              class="wp-label {% if passed %}wp-passed{% endif %}"
+              font-size="7">{{ wp.name | replace(' (ferry to mainland)', '') | replace(' — Mile Zero', '') | replace(' — Journey\'s End', '') | replace(' (ferry to NL)', '') | truncate(18, True, '') }}</text>
+      {% endfor %}
+
+      {# Current position marker #}
+      {% if transcan.active %}
+        {% set pos_pct = transcan.pct / 100 %}
+        {% set n = pts | length %}
+        {% set idx_f = pos_pct * (n - 1) %}
+        {% set idx_i = idx_f | int %}
+        {% set idx_j = [idx_i + 1, n - 1] | min %}
+        {% set frac = idx_f - idx_i %}
+        {% set px = pts[idx_i][0] + frac * (pts[idx_j][0] - pts[idx_i][0]) %}
+        {% set py = pts[idx_i][1] + frac * (pts[idx_j][1] - pts[idx_i][1]) %}
+        <circle cx="{{ px | round }}" cy="{{ py | round }}" r="9"
+          fill="var(--color-accent,#f4c542)" stroke="var(--color-surface,#1e2130)" stroke-width="3"
+          filter="url(#glow)">
+          <animate attributeName="r" values="9;12;9" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <text x="{{ (px) | round }}" y="{{ (py - 16) | round }}" class="position-label" text-anchor="middle" font-size="9">You are here</text>
+      {% endif %}
+
+      {# Scale bar #}
+      <g transform="translate(20, 195)">
+        <line x1="0" y1="0" x2="56" y2="0" stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
+        <line x1="0" y1="-3" x2="0" y2="3" stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
+        <line x1="56" y1="-3" x2="56" y2="3" stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
+        <text x="28" y="12" text-anchor="middle" font-size="7.5" fill="var(--color-teal,#00829b)" fill-opacity="0.5" font-family="inherit">~500 km</text>
+      </g>
+
+      {# Pacific / Atlantic labels #}
+      <text x="10" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4" font-style="italic" font-family="inherit">🌊 Pacific</text>
+      <text x="862" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4" font-style="italic" font-family="inherit" text-anchor="end">Atlantic 🌊</text>
+    </svg>
+  </div>
+</div>
+
+{# Waypoint timeline #}
+<div class="card mb-4">
+  <div class="card-body">
+    <h3 class="card-title mb-3">Waypoints</h3>
+    <div class="waypoint-timeline">
+      {% for wp in transcan.waypoints %}
+      <div class="wpt-row {% if wp.passed %}wpt-passed{% else %}wpt-locked{% endif %}">
+        <div class="wpt-marker">{% if wp.passed %}✓{% else %}○{% endif %}</div>
+        <div class="wpt-km">{{ "{:,}".format(wp.km) }} km</div>
+        <div class="wpt-name">{{ wp.emoji }} {{ wp.name }}</div>
+        {% if not wp.passed and transcan.weekly_avg_km > 0 %}
+          {% set km_to_go = wp.km - transcan.position_km %}
+          {% if km_to_go > 0 %}
+          <div class="wpt-eta text-muted small">~{{ (km_to_go / transcan.weekly_avg_km * 7) | round | int }}d away</div>
+          {% endif %}
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="text-center mb-4">
+  <form method="POST" action="{{ url_for('gamification.journey_transcan_start') }}"
+        onsubmit="return confirm('This will abandon your current journey and start fresh from today. Are you sure?')">
+    <button type="submit" class="btn btn-ghost btn-sm">↺ Restart from Today</button>
+  </form>
+</div>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Workout {{ workout.id }} — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>{{ workout.workout_date }} &mdash; {{ "{:,}".format(workout.distance_meters) if workout.distance_meters else "—" }}m</h1>
+</div>
+<dl class="detail-grid">
+  <dt>Time</dt>       <dd>{{ workout.time_formatted }}</dd>
+  <dt>Avg Pace</dt>   <dd>{{ workout.avg_pace_formatted }}/500m</dd>
+  <dt>Stroke Rate</dt><dd>{{ workout.avg_stroke_rate or "—" }} SPM</dd>
+  <dt>Calories</dt>   <dd>{{ workout.total_calories or "—" }}</dd>
+  <dt>C2 Log ID</dt>  <dd>{{ workout.id }}</dd>
+</dl>
+<a href="{{ url_for('tracker.workout_list') }}" class="back-link">← Back to workouts</a>
+{% endblock %}

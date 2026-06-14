@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Training Load — Row Tracker{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Training Load</h1>
+</div>
+
+{% include "tracker/_chart_subnav.html" %}
+
+<div class="cawr-zones">
+  <span class="cawr-zone cawr-zone--low">Under-training &lt;0.8</span>
+  <span class="cawr-zone cawr-zone--optimal">Optimal 0.8–1.3</span>
+  <span class="cawr-zone cawr-zone--high">Strain 1.3–1.5</span>
+  <span class="cawr-zone cawr-zone--danger">Risk &gt;1.5</span>
+</div>
+
+<div class="chart-card">
+  <div class="chart-wrap chart-wrap--tall">
+    <canvas id="loadChart"></canvas>
+  </div>
+  <p class="chart-note">
+    Chronic:Acute Workload Ratio — 42-day chronic vs 7-day acute daily metre averages.
+    Shaded band marks the optimal 0.8–1.3 training zone. Last 2 years shown.
+  </p>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function () {
+  let chart = null;
+
+  function loadChart() {
+    fetch("/api/data/load")
+      .then(r => r.json())
+      .then(data => {
+        if (chart) chart.destroy();
+
+        const isDark    = document.documentElement.getAttribute("data-theme") !== "light";
+        const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
+        const textColor = isDark ? "#7a8399" : "#64748b";
+
+        // Colour each CAWR point by zone
+        const pointColors = data.map(d => {
+          if (d.cawr === null)  return "transparent";
+          if (d.cawr < 0.8)    return "#f59e0b";   // amber — under-training
+          if (d.cawr <= 1.3)   return "#22c55e";   // green  — optimal
+          if (d.cawr <= 1.5)   return "#f97316";   // orange — strain
+          return "#ef4444";                         // red    — risk
+        });
+
+        const labels = data.map(d => d.date);
+        const cawrValues = data.map(d => d.cawr);
+
+        const ctx = document.getElementById("loadChart").getContext("2d");
+        chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              // Optimal zone band — upper edge
+              {
+                label: "_zone_top",
+                data: data.map(() => 1.3),
+                borderColor: "transparent",
+                backgroundColor: isDark
+                  ? "rgba(34,197,94,0.08)"
+                  : "rgba(34,197,94,0.10)",
+                fill: "-1",   // fill down to next dataset
+                pointRadius: 0,
+                order: 3,
+              },
+              // Optimal zone band — lower edge
+              {
+                label: "_zone_bottom",
+                data: data.map(() => 0.8),
+                borderColor: "transparent",
+                backgroundColor: "transparent",
+                fill: false,
+                pointRadius: 0,
+                order: 4,
+              },
+              // CAWR line
+              {
+                label: "CAWR",
+                data: cawrValues,
+                borderColor: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.15)",
+                borderWidth: 1.5,
+                backgroundColor: pointColors,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                pointBackgroundColor: pointColors,
+                tension: 0.2,
+                order: 1,
+                fill: false,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                filter: item => item.dataset.label === "CAWR",
+                callbacks: {
+                  title: items => {
+                    const d = data[items[0].dataIndex];
+                    return new Date(d.date + "T00:00:00")
+                      .toLocaleDateString("default", { month: "short", day: "numeric", year: "numeric" });
+                  },
+                  label: item => {
+                    const d = data[item.dataIndex];
+                    const cawr = d.cawr !== null ? d.cawr.toFixed(2) : "—";
+                    let zone = "";
+                    if (d.cawr !== null) {
+                      if (d.cawr < 0.8)       zone = " · Under-training";
+                      else if (d.cawr <= 1.3)  zone = " · Optimal";
+                      else if (d.cawr <= 1.5)  zone = " · Strain";
+                      else                     zone = " · High risk";
+                    }
+                    return [
+                      `  CAWR: ${cawr}${zone}`,
+                      `  7-day avg:  ${d.acute_avg.toLocaleString()}m/day`,
+                      `  42-day avg: ${d.chronic_avg.toLocaleString()}m/day`,
+                    ];
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: textColor,
+                  maxTicksLimit: 12,
+                  maxRotation: 0,
+                  callback: function (val, idx) {
+                    const d = new Date(labels[idx] + "T00:00:00");
+                    return d.toLocaleDateString("default", { month: "short", year: "2-digit" });
+                  },
+                },
+                grid: { color: gridColor },
+              },
+              y: {
+                min: 0,
+                max: 2.2,
+                ticks: {
+                  color: textColor,
+                  stepSize: 0.2,
+                  callback: val => val.toFixed(1),
+                },
+                grid: { color: gridColor },
+                title: {
+                  display: true,
+                  text: "Chronic : Acute ratio",
+                  color: textColor,
+                  font: { size: 11 },
+                },
+              },
+            },
+          },
+        });
+      });
+  }
+
+  loadChart();
+
+  const observer = new MutationObserver(loadChart);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
+{% endblock %}

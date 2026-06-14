@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Row Tracker{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <nav class="site-nav">
+    <div class="nav-brand">
+      <span class="nav-logo">🚣</span>
+      <span class="nav-title">Row Tracker</span>
+    </div>
+    <div class="nav-links">
+      <a href="{{ url_for('tracker.dashboard') }}"
+         class="nav-link {% if request.endpoint == 'tracker.dashboard' %}active{% endif %}">
+        Dashboard
+      </a>
+      <a href="{{ url_for('tracker.chart_pace') }}"
+         class="nav-link {% if request.endpoint and 'chart' in request.endpoint %}active{% endif %}">
+        Charts
+      </a>
+      <a href="{{ url_for('tracker.personal_bests') }}"
+         class="nav-link {% if request.endpoint == 'tracker.personal_bests' %}active{% endif %}">
+        PBs
+      </a>
+      <a href="{{ url_for('wod.wod') }}"
+         class="nav-link {% if request.endpoint and request.endpoint.startswith('wod') %}active{% endif %}">
+        WOD
+      </a>
+      <a href="{{ url_for('gamification.journeys') }}"
+         class="nav-link {% if request.endpoint in ['gamification.journeys', 'gamification.route', 'gamification.route_holland', 'gamification.route_transcan'] %}active{% endif %}">
+        Journeys
+      </a>
+      <a href="{{ url_for('gamification.hub') }}"
+         class="nav-link {% if request.endpoint and request.endpoint.startswith('gamification') and request.endpoint not in ['gamification.journeys', 'gamification.route', 'gamification.route_holland', 'gamification.route_transcan'] %}active{% endif %}">
+        Achievements
+      </a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+        <span class="theme-icon">☀️</span>
+      </button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+
+</body>
+</html>

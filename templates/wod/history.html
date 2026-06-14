@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}WOD History — Row Tracker{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>WOD History</h1>
+</div>
+
+{% if history %}
+<div class="wod-history-table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Workout</th>
+        <th>Type</th>
+        <th>Target Pace</th>
+        <th>Zone</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for w in history %}
+      <tr class="{% if w.completed %}wod-row--completed{% endif %}">
+        <td class="wod-history-date">{{ w.date.strftime("%b %-d, %Y") }}</td>
+        <td>{{ w.title }}</td>
+        <td>
+          <span class="wod-type-badge wod-type-{{ w.wod_type }} wod-type-badge--sm">
+            {{ w.wod_type | replace("_", " ") | title }}
+          </span>
+        </td>
+        <td class="mono">{{ w.target_pace_str }}/500m</td>
+        <td class="mono">{{ w.pace_zone }}</td>
+        <td>
+          {% if w.completed %}
+            <span class="status-done">✓ Done</span>
+          {% else %}
+            <span class="status-pending">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# Pagination #}
+{% if pagination.pages > 1 %}
+<div class="pagination">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for('wod.wod_history', page=pagination.prev_num) }}" class="page-link">← Newer</a>
+  {% endif %}
+  <span class="page-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for('wod.wod_history', page=pagination.next_num) }}" class="page-link">Older →</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<p class="muted">No WODs generated yet. <a href="{{ url_for('wod.wod') }}">Generate today's workout →</a></p>
+{% endif %}
+
+{% endblock %}

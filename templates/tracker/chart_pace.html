@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Pace Trend — Row Tracker{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Pace Trend</h1>
+</div>
+
+{% include "tracker/_chart_subnav.html" %}
+
+<div class="chart-controls">
+  <div class="range-tabs" id="rangeTabs">
+    <button class="range-tab {% if days == 90 %}active{% endif %}"  data-days="90">90 days</button>
+    <button class="range-tab {% if days == 365 %}active{% endif %}" data-days="365">1 year</button>
+    <button class="range-tab {% if days == 730 %}active{% endif %}" data-days="730">2 years</button>
+    <button class="range-tab {% if days == 0 %}active{% endif %}"   data-days="0">All time</button>
+  </div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-wrap">
+    <canvas id="paceChart"></canvas>
+  </div>
+  <p class="chart-note">
+    Each point is one workout. The blue line is a 10-session rolling average.
+    Y-axis: lower = faster. Hover for date, pace, and distance.
+  </p>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function () {
+  const currentDays = {{ days }};
+  let chart = null;
+
+  // ── Range tab switching ──────────────────────────────────────────────
+  document.querySelectorAll(".range-tab").forEach(btn => {
+    btn.addEventListener("click", function () {
+      document.querySelectorAll(".range-tab").forEach(b => b.classList.remove("active"));
+      this.classList.add("active");
+      const days = parseInt(this.dataset.days);
+      loadChart(days);
+    });
+  });
+
+  // ── Pace formatter (seconds → m:ss) ─────────────────────────────────
+  function fmtPace(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.round(sec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
+  // ── Build chart ──────────────────────────────────────────────────────
+  function loadChart(days) {
+    const url = `/api/data/pace?days=${days}`;
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        if (chart) chart.destroy();
+
+        const isDark = document.documentElement.getAttribute("data-theme") !== "light";
+        const gridColor  = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
+        const textColor  = isDark ? "#7a8399" : "#64748b";
+        const dotColor   = isDark ? "rgba(96,165,250,0.45)" : "rgba(59,130,246,0.45)";
+        const lineColor  = "#3b82f6";
+
+        const labels = data.map(d => d.date);
+
+        const ctx = document.getElementById("paceChart").getContext("2d");
+        chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Workout pace",
+                data: data.map(d => d.pace_seconds),
+                borderColor: "transparent",
+                backgroundColor: dotColor,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                showLine: false,
+                order: 2,
+              },
+              {
+                label: "10-session avg",
+                data: data.map(d => d.rolling_avg_seconds),
+                borderColor: lineColor,
+                backgroundColor: "transparent",
+                borderWidth: 2,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                tension: 0.3,
+                order: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+              legend: {
+                labels: { color: textColor, boxWidth: 12, padding: 16 },
+              },
+              tooltip: {
+                callbacks: {
+                  title: items => {
+                    const d = data[items[0].dataIndex];
+                    return new Date(d.date + "T00:00:00")
+                      .toLocaleDateString("default", { month: "short", day: "numeric", year: "numeric" });
+                  },
+                  label: item => {
+                    const d = data[item.dataIndex];
+                    if (item.datasetIndex === 0) {
+                      return `  Pace: ${d.pace_str}/500m  ·  ${d.distance_km}km`;
+                    }
+                    return `  10-session avg: ${fmtPace(d.rolling_avg_seconds)}/500m`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: textColor,
+                  maxTicksLimit: 10,
+                  maxRotation: 0,
+                  callback: function (val, idx) {
+                    const d = new Date(labels[idx] + "T00:00:00");
+                    return d.toLocaleDateString("default", { month: "short", year: "2-digit" });
+                  },
+                },
+                grid: { color: gridColor },
+              },
+              y: {
+                reverse: true,   // lower pace (faster) at top
+                ticks: {
+                  color: textColor,
+                  callback: val => fmtPace(val),
+                },
+                grid: { color: gridColor },
+                title: {
+                  display: true,
+                  text: "Avg pace / 500m",
+                  color: textColor,
+                  font: { size: 11 },
+                },
+              },
+            },
+          },
+        });
+      });
+  }
+
+  loadChart(currentDays);
+
+  // Re-render on theme toggle to pick up new colors
+  const observer = new MutationObserver(() => loadChart(
+    parseInt(document.querySelector(".range-tab.active")?.dataset.days ?? currentDays)
+  ));
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
+{% endblock %}

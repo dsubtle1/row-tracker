@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}WOD — Row Tracker{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Workout of the Day</h1>
+</div>
+
+{# ── Tabs ── #}
+<div class="wod-tabs">
+  <a href="{{ url_for('wod.wod') }}?tab=today"
+     class="wod-tab {% if active_tab != 'random' %}wod-tab--active{% endif %}">
+    Today's WOD
+  </a>
+  <a href="{{ url_for('wod.wod') }}?tab=random"
+     class="wod-tab {% if active_tab == 'random' %}wod-tab--active{% endif %}">
+    ⚡ Random Generator
+  </a>
+</div>
+
+{# ══════════════════════════════════════════════════════════════════════════
+   TAB: TODAY'S WOD
+   ══════════════════════════════════════════════════════════════════════════ #}
+{% if active_tab != 'random' %}
+
+<div class="wod-date-label">{{ wod.date.strftime("%A, %B %-d") }}</div>
+
+<div class="wod-card">
+
+  <div class="wod-header">
+    <div class="wod-header-left">
+      <span class="wod-type-badge wod-type-{{ wod.wod_type }}">{{ wod.wod_type | replace("_", " ") | title }}</span>
+      <h2 class="wod-title">{{ wod.title }}</h2>
+    </div>
+    <div class="wod-header-right">
+      <div class="wod-pace-target">
+        <span class="wod-pace-value">{{ wod.target_pace_str }}</span>
+        <span class="wod-pace-label">/500m · {{ wod.pace_zone }}</span>
+      </div>
+    </div>
+  </div>
+
+  {% if wod.intervals %}
+  <div class="interval-diagram">
+    {% for seg in wod.intervals %}
+      {% if seg.type == "work" %}
+        <div class="interval-block interval-block--work">
+          <span class="interval-label">{{ seg.label }}</span>
+        </div>
+      {% else %}
+        <div class="interval-block interval-block--rest">
+          <span class="interval-label interval-label--rest">{{ seg.label }}</span>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="wod-sections">
+    <div class="wod-section">
+      <div class="wod-section-label">Warm-up</div>
+      <p class="wod-section-text">{{ wod.warm_up }}</p>
+    </div>
+    <div class="wod-section">
+      <div class="wod-section-label">Main Set</div>
+      <p class="wod-section-text">{{ wod.coaching_notes }}</p>
+    </div>
+    <div class="wod-section">
+      <div class="wod-section-label">Cool-down</div>
+      <p class="wod-section-text">{{ wod.cool_down }}</p>
+    </div>
+  </div>
+
+  <div class="wod-actions">
+    {% if not wod.completed %}
+    <form method="POST" action="{{ url_for('wod.wod_complete') }}" class="wod-complete-form">
+      <input type="hidden" name="wod_id" value="{{ wod_id }}" />
+      <button type="submit" class="btn btn-primary">✓ Mark Complete</button>
+    </form>
+    {% else %}
+    <div class="wod-completed-badge">✓ Completed</div>
+    {% endif %}
+    <form method="POST" action="{{ url_for('wod.wod_generate') }}">
+      <button type="submit" class="btn btn-ghost">↺ Regenerate</button>
+    </form>
+    <a href="{{ url_for('wod.wod_library') }}" class="btn btn-ghost">Browse Library</a>
+  </div>
+
+</div>
+
+<section class="section mt-4">
+  <div class="section-header">
+    <h2 class="section-title">History</h2>
+    <a href="{{ url_for('wod.wod_history') }}" class="section-link">View all →</a>
+  </div>
+  <a href="{{ url_for('wod.wod_history') }}" class="wod-history-link">
+    View past workouts and completion log →
+  </a>
+</section>
+
+{# ══════════════════════════════════════════════════════════════════════════
+   TAB: RANDOM GENERATOR
+   ══════════════════════════════════════════════════════════════════════════ #}
+{% else %}
+
+<div class="random-generator">
+  <p class="random-intro">
+    Choose your parameters and generate a workout. Each generation picks randomly
+    from a curated pool that matches your selections.
+  </p>
+
+  <form method="POST" action="{{ url_for('wod.wod_random') }}" class="random-form">
+
+    {# ── Intensity ── #}
+    <div class="rf-group">
+      <div class="rf-label">Intensity</div>
+      <div class="rf-hint">Total session duration including warm-up and cool-down</div>
+      <div class="rf-options">
+        <label class="rf-option">
+          <input type="radio" name="intensity" value="light" checked />
+          <span class="rf-option-card">
+            <span class="rf-option-title">Light</span>
+            <span class="rf-option-desc">1–15 min work</span>
+          </span>
+        </label>
+        <label class="rf-option">
+          <input type="radio" name="intensity" value="medium" />
+          <span class="rf-option-card">
+            <span class="rf-option-title">Medium</span>
+            <span class="rf-option-desc">15–30 min work</span>
+          </span>
+        </label>
+        <label class="rf-option">
+          <input type="radio" name="intensity" value="heavy" />
+          <span class="rf-option-card">
+            <span class="rf-option-title">Heavy</span>
+            <span class="rf-option-desc">30+ min work</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    {# ── Effort ── #}
+    <div class="rf-group">
+      <div class="rf-label">Effort Level</div>
+      <div class="rf-hint">How hard you want to push — you judge this yourself on the erg</div>
+      <div class="rf-options">
+        <label class="rf-option">
+          <input type="radio" name="effort" value="low" checked />
+          <span class="rf-option-card">
+            <span class="rf-option-title">Low</span>
+            <span class="rf-option-desc">Easy / recovery · UT2 zone</span>
+          </span>
+        </label>
+        <label class="rf-option">
+          <input type="radio" name="effort" value="medium" />
+          <span class="rf-option-card">
+            <span class="rf-option-title">Medium</span>
+            <span class="rf-option-desc">Sustainably hard · AT zone</span>
+          </span>
+        </label>
+        <label class="rf-option">
+          <input type="radio" name="effort" value="high" />
+          <span class="rf-option-card">
+            <span class="rf-option-title">High</span>
+            <span class="rf-option-desc">Hard push · TR zone</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    {# ── Workout Type ── #}
+    <div class="rf-group">
+      <div class="rf-label">Workout Type</div>
+      <div class="rf-options">
+        <label class="rf-option">
+          <input type="radio" name="wod_type" value="surprise" checked />
+          <span class="rf-option-card">
+            <span class="rf-option-title">🎲 Surprise Me</span>
+            <span class="rf-option-desc">Random type chosen for you</span>
+          </span>
+        </label>
+        <label class="rf-option">
+          <input type="radio" name="wod_type" value="steady_state" />
+          <span class="rf-option-card">
+            <span class="rf-option-title">Steady State</span>
+            <span class="rf-option-desc">Continuous aerobic work</span>
+          </span>
+        </label>
+        <label class="rf-option">
+          <input type="radio" name="wod_type" value="intervals" />
+          <span class="rf-option-card">
+            <span class="rf-option-title">Intervals</span>
+            <span class="rf-option-desc">Work / rest structure</span>
+          </span>
+        </label>
+        <label class="rf-option">
+          <input type="radio" name="wod_type" value="threshold" />
+          <span class="rf-option-card">
+            <span class="rf-option-title">Threshold</span>
+            <span class="rf-option-desc">Sustained hard effort</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    {# ── Notes ── #}
+    <div class="rf-group">
+      <div class="rf-label">Notes <span class="rf-optional">(optional)</span></div>
+      <div class="rf-hint">e.g. "focusing on technique", "tired legs today"</div>
+      <textarea name="notes" class="rf-notes" rows="2" maxlength="200"
+                placeholder="Any context for today's session..."></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary rf-submit">⚡ Generate Workout</button>
+
+  </form>
+</div>
+
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Highlight selected radio option cards
+document.querySelectorAll('.rf-option input[type="radio"]').forEach(function(radio) {
+  // Set initial state
+  if (radio.checked) {
+    radio.closest('.rf-option').querySelector('.rf-option-card').classList.add('rf-option-card--selected');
+  }
+  radio.addEventListener('change', function() {
+    // Clear all in same group
+    document.querySelectorAll('input[name="' + this.name + '"]').forEach(function(r) {
+      r.closest('.rf-option').querySelector('.rf-option-card').classList.remove('rf-option-card--selected');
+    });
+    // Highlight selected
+    this.closest('.rf-option').querySelector('.rf-option-card').classList.add('rf-option-card--selected');
+  });
+});
+</script>
+{% endblock %}

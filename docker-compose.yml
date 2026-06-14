@@ -1,0 +1,12 @@
+services:
+  row-tracker:
+    build: .
+    container_name: row-tracker
+    ports:
+      - "7376:7376"
+    volumes:
+      - ./data:/app/data
+      - ./csv-data:/app/csv-data:ro
+    env_file:
+      - .env
+    restart: unless-stopped

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Badges — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Badge Collection</h1>
+  <p class="page-subtitle">{{ stats.earned_badges }} earned · {{ stats.total_badges - stats.earned_badges }} remaining</p>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="progress-track">
+      <div class="progress-fill" style="width: {{ stats.progress_pct }}%"></div>
+    </div>
+    <div class="mt-2 text-muted small text-center">{{ stats.progress_pct }}% complete</div>
+  </div>
+</div>
+
+{% for category, badge_list in by_category.items() %}
+<section class="mb-5">
+  <h2 class="section-title">
+    {{ category }}
+    <span class="category-count">
+      {{ badge_list | selectattr('earned_date') | list | length }} / {{ badge_list | length }}
+    </span>
+  </h2>
+
+  <div class="badge-grid badge-grid--full">
+    {% for badge in badge_list %}
+    <div class="badge-card {% if badge.earned_date %}earned{% else %}locked{% endif %}">
+      <div class="badge-icon-large">
+        {% if badge.earned_date %}🏅{% else %}🔒{% endif %}
+      </div>
+      <div class="badge-name">{{ badge.badge_name }}</div>
+      <div class="badge-desc">{{ badge.badge_desc }}</div>
+      {% if badge.earned_date %}
+        <div class="badge-date earned-date">
+          ✓ {{ badge.earned_date.strftime('%b %d, %Y') }}
+        </div>
+      {% else %}
+        <div class="badge-locked-label">Locked</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+
+{% endblock %}

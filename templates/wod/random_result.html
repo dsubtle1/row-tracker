@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Random WOD — Row Tracker{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Your Workout</h1>
+  <span class="wod-date">Generated {{ wod.date.strftime("%A, %B %-d") }}</span>
+</div>
+
+<div class="wod-card">
+
+  <div class="wod-header">
+    <div class="wod-header-left">
+      <span class="wod-type-badge wod-type-{{ wod.wod_type }}">{{ wod.wod_type | replace("_", " ") | title }}</span>
+      <h2 class="wod-title">{{ wod.title }}</h2>
+    </div>
+    <div class="wod-header-right">
+      <div class="wod-pace-target">
+        <span class="wod-pace-value">{{ wod.target_pace_str }}</span>
+        <span class="wod-pace-label">/500m · {{ wod.pace_zone }}</span>
+      </div>
+    </div>
+  </div>
+
+  {% if wod.intervals %}
+  <div class="interval-diagram">
+    {% for seg in wod.intervals %}
+      {% if seg.type == "work" %}
+        <div class="interval-block interval-block--work">
+          <span class="interval-label">{{ seg.label }}</span>
+        </div>
+      {% else %}
+        <div class="interval-block interval-block--rest">
+          <span class="interval-label interval-label--rest">{{ seg.label }}</span>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="wod-sections">
+    <div class="wod-section">
+      <div class="wod-section-label">Warm-up</div>
+      <p class="wod-section-text">{{ wod.warm_up }}</p>
+    </div>
+    <div class="wod-section">
+      <div class="wod-section-label">Main Set</div>
+      <p class="wod-section-text">{{ wod.coaching_notes }}</p>
+    </div>
+    <div class="wod-section">
+      <div class="wod-section-label">Cool-down</div>
+      <p class="wod-section-text">{{ wod.cool_down }}</p>
+    </div>
+  </div>
+
+  <div class="wod-actions">
+    {% if not wod.completed %}
+    <form method="POST" action="{{ url_for('wod.wod_complete') }}">
+      <input type="hidden" name="wod_id" value="{{ wod_id }}" />
+      <button type="submit" class="btn btn-primary">✓ Mark Complete</button>
+    </form>
+    {% else %}
+    <div class="wod-completed-badge">✓ Completed</div>
+    {% endif %}
+    <a href="{{ url_for('wod.wod') }}?tab=random" class="btn btn-ghost">⚡ Generate Another</a>
+    <a href="{{ url_for('wod.wod') }}" class="btn btn-ghost">Today's WOD</a>
+  </div>
+
+</div>
+
+{% endblock %}

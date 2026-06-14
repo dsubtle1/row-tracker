@@ -1,0 +1,27 @@
+# Database — contains all synced workout data
+data/
+
+# Environment file — contains API credentials and secret key
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Flask session files
+flask_session/
+
+# macOS system files
+.DS_Store
+
+# Windows system files
+Thumbs.db
+desktop.ini
+
+# CSV data if you don't want it in the repo
+csv-data/
+
+# Project spec file
+row-tracker-spec.md

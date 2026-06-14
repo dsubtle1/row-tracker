@@ -1,0 +1,14 @@
+<nav class="chart-subnav">
+  <a href="{{ url_for('tracker.chart_pace') }}"
+     class="chart-subnav-link {% if request.endpoint == 'tracker.chart_pace' %}active{% endif %}">
+    Pace Trend
+  </a>
+  <a href="{{ url_for('tracker.chart_efficiency') }}"
+     class="chart-subnav-link {% if request.endpoint == 'tracker.chart_efficiency' %}active{% endif %}">
+    Stroke Rate vs Pace
+  </a>
+  <a href="{{ url_for('tracker.chart_load') }}"
+     class="chart-subnav-link {% if request.endpoint == 'tracker.chart_load' %}active{% endif %}">
+    Training Load
+  </a>
+</nav>

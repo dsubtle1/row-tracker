@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}{{ challenges.q_label }} Challenges — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>🏆 Season Challenges</h1>
+  <p class="page-subtitle">{{ challenges.q_label }} · {{ challenges.q_start }} – {{ challenges.q_end }} · {{ challenges.days_remaining }} days remaining</p>
+</div>
+
+{# ── 1. Quarterly distance ── #}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="challenge-card-header">
+      <div class="challenge-title-row">
+        <span class="challenge-icon-lg">📏</span>
+        <div>
+          <h3 class="challenge-title">Quarterly Distance Target</h3>
+          <p class="challenge-subtitle">{{ "{:,}".format(challenges.quarter.target) }}m goal · resets {{ challenges.q_end }}</p>
+        </div>
+      </div>
+      {% if challenges.quarter.on_pace %}
+      <span class="pace-badge on-pace">On pace ✓</span>
+      {% else %}
+      <span class="pace-badge behind">Behind pace</span>
+      {% endif %}
+    </div>
+    <div class="challenge-big-number">
+      {{ "{:,}".format(challenges.quarter.achieved) }}<span class="challenge-unit">m</span>
+    </div>
+    <div class="progress-track progress-track--lg mt-3">
+      <div class="progress-fill" style="width: {{ challenges.quarter.pct }}%"></div>
+    </div>
+    <div class="d-flex justify-between mt-2">
+      <span class="text-muted small">{{ challenges.quarter.pct }}% complete</span>
+      <span class="text-muted small">{{ "{:,}".format(challenges.quarter.target - challenges.quarter.achieved) }}m to go</span>
+    </div>
+    <div class="challenge-detail-row mt-3">
+      <div class="challenge-detail">
+        <span class="cd-label">Daily needed</span>
+        <span class="cd-value">{{ "{:,}".format(challenges.quarter.daily_needed) }}m</span>
+      </div>
+      <div class="challenge-detail">
+        <span class="cd-label">On-pace daily</span>
+        <span class="cd-value">{{ "{:,}".format(challenges.quarter.on_pace_daily) }}m</span>
+      </div>
+      <div class="challenge-detail">
+        <span class="cd-label">Days remaining</span>
+        <span class="cd-value">{{ challenges.days_remaining }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── 2. PB Season ── #}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="challenge-card-header mb-3">
+      <div class="challenge-title-row">
+        <span class="challenge-icon-lg">🎯</span>
+        <div>
+          <h3 class="challenge-title">PB Season</h3>
+          <p class="challenge-subtitle">Attempt all 8 standard categories this quarter</p>
+        </div>
+      </div>
+      <span class="pace-badge {% if challenges.pb_season.attempted == challenges.pb_season.total %}on-pace{% else %}neutral{% endif %}">
+        {{ challenges.pb_season.attempted }} / {{ challenges.pb_season.total }}
+      </span>
+    </div>
+    <div class="pb-checklist">
+      {% for item in challenges.pb_season.categories %}
+      <div class="pb-check-item {% if item.attempted %}pb-done{% endif %}">
+        <span class="pb-check-icon">{% if item.attempted %}✅{% else %}⬜{% endif %}</span>
+        <span class="pb-check-label">{{ item.category }}</span>
+        {% if item.attempted %}<span class="pb-check-status text-muted small">Attempted this quarter</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="progress-track mt-3">
+      <div class="progress-fill" style="width: {{ challenges.pb_season.pct }}%"></div>
+    </div>
+  </div>
+</div>
+
+{# ── 3. Consistency ── #}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="challenge-card-header">
+      <div class="challenge-title-row">
+        <span class="challenge-icon-lg">🔥</span>
+        <div>
+          <h3 class="challenge-title">Consistency Challenge</h3>
+          <p class="challenge-subtitle">{{ challenges.consistency.target }} sessions in any {{ challenges.consistency.window_days }}-day window</p>
+        </div>
+      </div>
+      {% if challenges.consistency.complete %}
+      <span class="pace-badge on-pace">Complete ✓</span>
+      {% endif %}
+    </div>
+    <div class="challenge-big-number">
+      {{ challenges.consistency.count }}<span class="challenge-unit"> / {{ challenges.consistency.target }}</span>
+    </div>
+    <div class="progress-track progress-track--lg mt-3">
+      <div class="progress-fill {% if challenges.consistency.complete %}progress-fill--complete{% endif %}"
+           style="width: {{ challenges.consistency.pct }}%"></div>
+    </div>
+    <div class="mt-2 text-muted small">Last {{ challenges.consistency.window_days }} days</div>
+  </div>
+</div>
+
+{# ── 4. Volume Month ── #}
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="challenge-card-header">
+      <div class="challenge-title-row">
+        <span class="challenge-icon-lg">📅</span>
+        <div>
+          <h3 class="challenge-title">{{ challenges.volume_month.month_name }} Volume</h3>
+          <p class="challenge-subtitle">{{ "{:,}".format(challenges.volume_month.target) }}m stretch goal · {{ challenges.volume_month.days_remaining }} days left</p>
+        </div>
+      </div>
+    </div>
+    <div class="challenge-big-number">
+      {{ "{:,}".format(challenges.volume_month.achieved) }}<span class="challenge-unit">m</span>
+    </div>
+    <div class="progress-track progress-track--lg mt-3">
+      <div class="progress-fill" style="width: {{ challenges.volume_month.pct }}%"></div>
+    </div>
+    <div class="d-flex justify-between mt-2">
+      <span class="text-muted small">{{ challenges.volume_month.pct }}%</span>
+      <span class="text-muted small">{{ "{:,}".format(challenges.volume_month.target - challenges.volume_month.achieved) }}m to go</span>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

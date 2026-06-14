@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}You vs. Past You — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>📊 You vs. Past You</h1>
+  <p class="page-subtitle">How does this month stack up against your history?</p>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body versus-table-wrap">
+    <table class="versus-table">
+      <thead>
+        <tr>
+          <th class="vt-metric-col">Metric</th>
+          {% for col in versus.col_order %}
+          <th class="{% if col == 'this_month' %}vt-current{% endif %}">
+            {{ versus.labels[col] }}
+            {% if col == 'this_month' %}<span class="vt-current-badge">Now</span>{% endif %}
+          </th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in versus.rows %}
+        <tr>
+          <td class="vt-metric-label">{{ row.label }}</td>
+          {% for col in versus.col_order %}
+          {% set cell = row.cells[col] %}
+          <td class="vt-cell
+            {% if col == 'this_month' %}vt-current{% endif %}
+            {% if cell.delta == 'better' %}vt-better{% elif cell.delta == 'worse' %}vt-worse{% endif %}">
+            {% if cell.display is none or cell.display == None %}
+              <span class="vt-nodata">—</span>
+            {% else %}
+              {{ cell.display }}
+              {% if cell.delta == 'better' %}
+                <span class="vt-delta vt-delta--better">▲</span>
+              {% elif cell.delta == 'worse' %}
+                <span class="vt-delta vt-delta--worse">▼</span>
+              {% endif %}
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="versus-legend">
+      <span class="vt-legend-item"><span class="vt-dot vt-dot--better"></span> Better than this month</span>
+      <span class="vt-legend-item"><span class="vt-dot vt-dot--worse"></span> Worse than this month</span>
+      <span class="vt-legend-item"><span class="vt-dot vt-dot--none"></span> No data</span>
+    </div>
+    <p class="text-muted small mt-2">
+      Pace and 2k time: lower is better. All other metrics: higher is better.
+      Arrows indicate how past periods compare to the current month.
+    </p>
+  </div>
+</div>
+
+{% endblock %}

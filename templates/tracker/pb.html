@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Personal Bests — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Personal Bests</h1>
+</div>
+
+{% if pbs %}
+<div class="pb-grid">
+  {% for pb in pbs %}
+  <div class="pb-card {% if pb.is_stale %}pb-stale{% endif %}">
+    <div class="pb-category">{{ pb.category }}</div>
+    <div class="pb-value">{{ pb.value_formatted }}</div>
+    <div class="pb-date">{{ pb.achieved_date }}</div>
+    {% if pb.delta_seconds %}
+      <div class="pb-delta positive">▲ {{ pb.delta_seconds }}s improvement</div>
+    {% endif %}
+    {% if pb.is_stale %}
+      <div class="pb-stale-badge">{{ pb.days_since_achieved }}d old — time to test</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="muted">No personal bests recorded yet.</p>
+{% endif %}
+{% endblock %}

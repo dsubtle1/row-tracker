@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Row Tracker{% endblock %}
+
+{% block content %}
+
+{# ── Summary Bar ──────────────────────────────────────────────────────── #}
+<div class="summary-bar">
+
+  <div class="stat-block stat-block--primary">
+    <span class="stat-value">{{ "{:,}".format(summary.lifetime_meters) }}</span>
+    <span class="stat-label">metres lifetime</span>
+    {% if summary.next_milestone %}
+    <div class="milestone-track">
+      <div class="milestone-bar" style="width: {{ summary.milestone_pct }}%"></div>
+    </div>
+    <span class="milestone-label">
+      {{ "{:,}".format(summary.meters_to_milestone) }}m to {{ summary.next_label }}
+    </span>
+    {% endif %}
+  </div>
+
+  <div class="stat-block">
+    <span class="stat-value">{{ summary.streak }}</span>
+    <span class="stat-label">day streak</span>
+  </div>
+
+  <div class="stat-block">
+    <span class="stat-value">{{ summary.workouts_week }}</span>
+    <span class="stat-label">workouts this week</span>
+  </div>
+
+  <div class="stat-block">
+    <span class="stat-value">{{ summary.workouts_month }}</span>
+    <span class="stat-label">this month</span>
+  </div>
+
+  {% if summary.last_workout %}
+  <div class="stat-block stat-block--last">
+    <span class="stat-label stat-label--eyebrow">last session</span>
+    <span class="stat-value stat-value--md">
+      {{ "{:,}".format(summary.last_workout.distance_meters) }}m
+    </span>
+    <span class="stat-sub">
+      {{ summary.last_workout.avg_pace_formatted }}/500m
+      &nbsp;·&nbsp;
+      {{ summary.last_workout.workout_date.strftime("%b %-d") }}
+    </span>
+  </div>
+  {% endif %}
+
+</div>
+
+{# ── Sync bar ─────────────────────────────────────────────────────────── #}
+<div class="sync-bar">
+  <button class="sync-btn" id="syncBtn" onclick="triggerSync()">
+    <span class="sync-icon">⟳</span> Sync Workouts
+  </button>
+  <span class="sync-status" id="syncStatus"></span>
+</div>
+
+{# ── Volume Heatmap ───────────────────────────────────────────────────── #}
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title">Volume — past 52 weeks</h2>
+  </div>
+
+  <div class="heatmap-scroll">
+    <div class="heatmap-grid" id="heatmap"></div>
+  </div>
+
+  <div class="heatmap-legend">
+    <span class="legend-label">Less</span>
+    <span class="heatmap-cell legend-cell" data-level="0"></span>
+    <span class="heatmap-cell legend-cell" data-level="1"></span>
+    <span class="heatmap-cell legend-cell" data-level="2"></span>
+    <span class="heatmap-cell legend-cell" data-level="3"></span>
+    <span class="heatmap-cell legend-cell" data-level="4"></span>
+    <span class="legend-label">More</span>
+  </div>
+</section>
+
+{# ── Day detail modal ─────────────────────────────────────────────────── #}
+<div class="day-modal-backdrop" id="dayModalBackdrop" onclick="closeDayModal()"></div>
+<div class="day-modal" id="dayModal">
+  <div class="day-modal-header">
+    <span class="day-modal-date" id="dayModalDate"></span>
+    <button class="day-modal-close" onclick="closeDayModal()">✕</button>
+  </div>
+  <div class="day-modal-body" id="dayModalBody">
+    <div class="day-modal-loading">Loading…</div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  // Heatmap data injected from Flask
+  const days = {{ heatmap | tojson }};
+
+  const grid = document.getElementById("heatmap");
+  if (!grid) return;
+
+  // Build column-per-week structure (Mon–Sun rows)
+  // Group days into ISO weeks
+  const weeks = [];
+  let week = [];
+  days.forEach((d, i) => {
+    week.push(d);
+    if (d.dow === 6 || i === days.length - 1) {
+      weeks.push(week);
+      week = [];
+    }
+  });
+
+  // DOW labels column
+  const labels = ["M", "", "W", "", "F", "", "S"];
+  const labelCol = document.createElement("div");
+  labelCol.className = "heatmap-col heatmap-col--labels";
+  labels.forEach(l => {
+    const el = document.createElement("span");
+    el.className = "heatmap-dow";
+    el.textContent = l;
+    labelCol.appendChild(el);
+  });
+  grid.appendChild(labelCol);
+
+  // Month label tracking
+  let lastMonth = -1;
+
+  weeks.forEach(wk => {
+    const col = document.createElement("div");
+    col.className = "heatmap-col";
+
+    // Determine if we should show a month label (first week a month appears)
+    const firstDay = wk.find(d => d.dow === 0) || wk[0];
+    const dt = new Date(firstDay.date + "T00:00:00");
+    const mo = dt.getMonth();
+    if (mo !== lastMonth) {
+      col.dataset.month = dt.toLocaleString("default", { month: "short" });
+      lastMonth = mo;
+    }
+
+    // Fill Mon–Sun; pad if week starts mid-week
+    for (let dow = 0; dow < 7; dow++) {
+      const d = wk.find(x => x.dow === dow);
+      const cell = document.createElement("span");
+      cell.className = "heatmap-cell";
+      if (d) {
+        cell.dataset.level = d.level;
+        if (d.meters) {
+          const km = (d.meters / 1000).toFixed(1);
+          const dateStr = new Date(d.date + "T00:00:00")
+            .toLocaleDateString("default", { month: "short", day: "numeric" });
+          cell.title = `${dateStr}: ${km}km`;
+        } else {
+          const dateStr = new Date(d.date + "T00:00:00")
+            .toLocaleDateString("default", { month: "short", day: "numeric" });
+          cell.title = dateStr;
+        }
+      } else {
+        cell.dataset.level = "empty";
+      }
+      // Click handler — open day modal for any cell with a date
+      if (d && d.date) {
+        cell.style.cursor = "pointer";
+        cell.dataset.date = d.date;
+        cell.addEventListener("click", function() {
+          openDayModal(this.dataset.date);
+        });
+      }
+      col.appendChild(cell);
+    }
+    grid.appendChild(col);
+  });
+})();
+
+// ── Day modal ────────────────────────────────────────────────────────────
+
+function openDayModal(dateStr) {
+  const backdrop = document.getElementById("dayModalBackdrop");
+  const modal    = document.getElementById("dayModal");
+  const dateEl   = document.getElementById("dayModalDate");
+  const body     = document.getElementById("dayModalBody");
+
+  const dt = new Date(dateStr + "T00:00:00");
+  dateEl.textContent = dt.toLocaleDateString("default", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric"
+  });
+
+  body.innerHTML = '<div class="day-modal-loading">Loading…</div>';
+  backdrop.classList.add("day-modal-backdrop--open");
+  modal.classList.add("day-modal--open");
+
+  fetch("/api/data/workouts_by_date?date=" + dateStr)
+    .then(r => r.json())
+    .then(workouts => {
+      if (!workouts.length) {
+        body.innerHTML = '<p class="day-modal-empty">No workouts recorded on this day.</p>';
+        return;
+      }
+      let html = '';
+      workouts.forEach(function(w, i) {
+        html += '<div class="day-modal-workout">';
+        if (workouts.length > 1) {
+          html += '<div class="day-modal-workout-num">Session ' + (i + 1) + '</div>';
+        }
+        html += '<div class="day-modal-stats">';
+        html += '<div class="dms-block"><span class="dms-value">' + Number(w.distance_m).toLocaleString() + 'm</span><span class="dms-label">distance</span></div>';
+        html += '<div class="dms-block"><span class="dms-value">' + w.time_str + '</span><span class="dms-label">time</span></div>';
+        html += '<div class="dms-block"><span class="dms-value">' + w.pace_str + '</span><span class="dms-label">/500m pace</span></div>';
+        if (w.stroke_rate) html += '<div class="dms-block"><span class="dms-value">' + w.stroke_rate + '</span><span class="dms-label">s/m</span></div>';
+        if (w.calories)    html += '<div class="dms-block"><span class="dms-value">' + w.calories + '</span><span class="dms-label">cal</span></div>';
+        html += '</div>';
+        html += '<a href="/workouts/' + w.id + '" class="day-modal-detail-link">View full detail →</a>';
+        html += '</div>';
+      });
+      body.innerHTML = html;
+    })
+    .catch(function() {
+      body.innerHTML = '<p class="day-modal-empty">Failed to load workout data.</p>';
+    });
+}
+
+function closeDayModal() {
+  document.getElementById("dayModalBackdrop").classList.remove("day-modal-backdrop--open");
+  document.getElementById("dayModal").classList.remove("day-modal--open");
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") closeDayModal();
+});
+
+// ── Sync button ──────────────────────────────────────────────────────────
+function triggerSync() {
+  const btn    = document.getElementById("syncBtn");
+  const status = document.getElementById("syncStatus");
+
+  btn.disabled    = true;
+  btn.textContent = "⟳ Syncing…";
+  status.textContent = "";
+  status.className   = "sync-status";
+
+  fetch("/sync", { method: "POST" })
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled    = false;
+      btn.innerHTML   = "<span class='sync-icon'>⟳</span> Sync Workouts";
+
+      if (data.status === "error") {
+        status.textContent = "✗ " + data.message;
+        status.className   = "sync-status sync-status--error";
+        return;
+      }
+
+      const parts = [];
+      if (data.inserted > 0) parts.push(data.inserted + " new workouts");
+      if (data.badges_awarded && data.badges_awarded.length > 0)
+        parts.push(data.badges_awarded.length + " badge" + (data.badges_awarded.length > 1 ? "s" : "") + " earned");
+      if (parts.length === 0) parts.push("Already up to date");
+
+      status.textContent = "✓ " + parts.join(" · ");
+      status.className   = "sync-status sync-status--ok";
+
+      // Reload after a beat if new data arrived
+      if (data.inserted > 0) {
+        setTimeout(() => location.reload(), 2000);
+      }
+    })
+    .catch(err => {
+      btn.disabled    = false;
+      btn.innerHTML   = "<span class='sync-icon'>⟳</span> Sync Workouts";
+      status.textContent = "✗ Request failed — check logs.";
+      status.className   = "sync-status sync-status--error";
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Rhine Journey — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>🚣 Rhine Journey</h1>
+  <p class="page-subtitle">Basel, Switzerland → Rotterdam, Netherlands · 820 km</p>
+</div>
+
+{# ══════════════════════════════════════
+   STATE: NOT STARTED
+   ══════════════════════════════════════ #}
+{% if not rhine.active and not rhine.complete %}
+
+<div class="journey-start-card card">
+  <div class="card-body text-center">
+    <div class="journey-start-icon">🗺️</div>
+    <h2 class="journey-start-title">Ready to row the Rhine?</h2>
+    <p class="journey-start-desc">
+      820 km from Basel, Switzerland to Rotterdam, Netherlands.<br>
+      Your journey counts metres rowed from the day you start — no historical data.<br>
+      14 waypoints along the way, from Strasbourg to Cologne to the North Sea.
+    </p>
+    <form method="POST" action="{{ url_for('gamification.journey_start') }}">
+      <button type="submit" class="btn btn-primary btn-lg mt-3">🚣 Start Journey</button>
+    </form>
+  </div>
+</div>
+
+{# ══════════════════════════════════════
+   STATE: COMPLETE
+   ══════════════════════════════════════ #}
+{% elif rhine.complete %}
+
+<div class="journey-complete-card card mb-4">
+  <div class="card-body text-center">
+    <div class="journey-complete-icon">🏆</div>
+    <h2 class="journey-complete-title">Journey Complete!</h2>
+    <p class="journey-complete-desc">
+      You rowed the Rhine — Basel to Rotterdam, 820 km.<br>
+      Started {{ rhine.start_date }} · Completed {{ rhine.completed_date }}
+    </p>
+    <form method="POST" action="{{ url_for('gamification.journey_start') }}">
+      <button type="submit" class="btn btn-primary mt-3">🚣 Row It Again</button>
+    </form>
+  </div>
+</div>
+
+{# Show completed map below #}
+<div class="card mb-4">
+  <div class="card-body">
+    <svg class="rhine-map" viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="riverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="var(--color-teal,#00829b)" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="var(--color-teal,#00829b)" stop-opacity="0.4"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <rect width="700" height="520" fill="transparent"/>
+      <path class="rhine-river-bg"
+        d="M 350,470 C 320,420 380,380 340,330 C 300,280 370,240 330,190 C 290,140 360,100 340,50"
+        fill="none" stroke="var(--color-border,#2e3350)" stroke-width="12" stroke-linecap="round"/>
+      <path class="rhine-river"
+        d="M 350,470 C 320,420 380,380 340,330 C 300,280 370,240 330,190 C 290,140 360,100 340,50"
+        fill="none" stroke="url(#riverGrad)" stroke-width="6" stroke-linecap="round"
+        stroke-dasharray="800, 800"/>
+      {% set path_points = [(350,470),(338,432),(325,395),(345,358),(335,322),(320,286),(342,250),(330,214),(325,195),(318,170),(328,148),(335,112),(338,82),(340,50)] %}
+      {% for wp in rhine.waypoints %}
+        {% set pt = path_points[loop.index0] %}
+        <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="7"
+          fill="var(--color-teal,#00829b)" stroke="var(--color-surface,#1e2130)" stroke-width="2" filter="url(#glow)"/>
+        {% if loop.index0 % 2 == 0 %}
+          <text x="{{ pt[0] + 14 }}" y="{{ pt[1] + 4 }}" class="wp-label wp-passed">{{ wp.emoji }} {{ wp.name }}</text>
+        {% else %}
+          <text x="{{ pt[0] - 14 }}" y="{{ pt[1] + 4 }}" class="wp-label wp-passed" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
+        {% endif %}
+      {% endfor %}
+      <text x="340" y="28" class="position-label" text-anchor="middle">🏆 Rotterdam reached!</text>
+    </svg>
+  </div>
+</div>
+
+{# ══════════════════════════════════════
+   STATE: ACTIVE
+   ══════════════════════════════════════ #}
+{% else %}
+
+{# Stats bar #}
+<div class="rhine-stats-bar mb-4">
+  <div class="rhine-stat-box">
+    <div class="rsb-value">{{ rhine.position_km }} km</div>
+    <div class="rsb-label">Journey distance</div>
+  </div>
+  <div class="rhine-stat-box">
+    <div class="rsb-value">{{ rhine.pct }}%</div>
+    <div class="rsb-label">Complete</div>
+  </div>
+  <div class="rhine-stat-box">
+    <div class="rsb-value">{{ rhine.remaining_km }} km</div>
+    <div class="rsb-label">Remaining</div>
+  </div>
+  <div class="rhine-stat-box">
+    <div class="rsb-value">{{ rhine.weekly_avg_km }} km</div>
+    <div class="rsb-label">Weekly avg (28d)</div>
+  </div>
+  <div class="rhine-stat-box">
+    {% if rhine.eta %}
+    <div class="rsb-value">{{ rhine.eta }}</div>
+    <div class="rsb-label">ETA at current pace</div>
+    {% else %}
+    <div class="rsb-value">—</div>
+    <div class="rsb-label">ETA (no recent data)</div>
+    {% endif %}
+  </div>
+  <div class="rhine-stat-box">
+    <div class="rsb-value">{{ rhine.start_date }}</div>
+    <div class="rsb-label">Journey started</div>
+  </div>
+</div>
+
+{# SVG map #}
+<div class="card mb-4">
+  <div class="card-body">
+    <svg class="rhine-map" viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="riverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%"   stop-color="var(--color-teal,#00829b)" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="var(--color-teal,#00829b)" stop-opacity="0.4"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <rect width="700" height="520" fill="transparent"/>
+      <path class="rhine-river-bg"
+        d="M 350,470 C 320,420 380,380 340,330 C 300,280 370,240 330,190 C 290,140 360,100 340,50"
+        fill="none" stroke="var(--color-border,#2e3350)" stroke-width="12" stroke-linecap="round"/>
+      <path class="rhine-river"
+        d="M 350,470 C 320,420 380,380 340,330 C 300,280 370,240 330,190 C 290,140 360,100 340,50"
+        fill="none" stroke="url(#riverGrad)" stroke-width="6" stroke-linecap="round"
+        stroke-dasharray="{{ rhine.pct * 8 }}, 800"/>
+
+      {% set path_points = [(350,470),(338,432),(325,395),(345,358),(335,322),(320,286),(342,250),(330,214),(325,195),(318,170),(328,148),(335,112),(338,82),(340,50)] %}
+      {% for wp in rhine.waypoints %}
+        {% set pt = path_points[loop.index0] %}
+        {% set passed = wp.passed %}
+        <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="7"
+          fill="{% if passed %}var(--color-teal,#00829b){% else %}var(--color-border,#2e3350){% endif %}"
+          stroke="var(--color-surface,#1e2130)" stroke-width="2"
+          {% if passed %}filter="url(#glow)"{% endif %}/>
+        {% if loop.index0 % 2 == 0 %}
+          <text x="{{ pt[0] + 14 }}" y="{{ pt[1] + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}">{{ wp.emoji }} {{ wp.name }}</text>
+        {% else %}
+          <text x="{{ pt[0] - 14 }}" y="{{ pt[1] + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
+        {% endif %}
+      {% endfor %}
+
+      {# Current position marker #}
+      {% set pos_pct = rhine.pct / 100 %}
+      {% set n = path_points | length %}
+      {% set idx_f = pos_pct * (n - 1) %}
+      {% set idx_i = idx_f | int %}
+      {% set idx_j = [idx_i + 1, n - 1] | min %}
+      {% set frac = idx_f - idx_i %}
+      {% set px = path_points[idx_i][0] + frac * (path_points[idx_j][0] - path_points[idx_i][0]) %}
+      {% set py = path_points[idx_i][1] + frac * (path_points[idx_j][1] - path_points[idx_i][1]) %}
+      <circle cx="{{ px | round }}" cy="{{ py | round }}" r="10"
+        fill="var(--color-accent,#f4c542)" stroke="var(--color-surface,#1e2130)" stroke-width="3"
+        filter="url(#glow)">
+        <animate attributeName="r" values="10;13;10" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <text x="{{ (px + 14) | round }}" y="{{ (py - 10) | round }}" class="position-label">You are here</text>
+    </svg>
+  </div>
+</div>
+
+{# Waypoint timeline #}
+<div class="card mb-4">
+  <div class="card-body">
+    <h3 class="card-title mb-3">Waypoints</h3>
+    <div class="waypoint-timeline">
+      {% for wp in rhine.waypoints %}
+      <div class="wpt-row {% if wp.passed %}wpt-passed{% else %}wpt-locked{% endif %}">
+        <div class="wpt-marker">{% if wp.passed %}✓{% else %}○{% endif %}</div>
+        <div class="wpt-km">{{ wp.km }} km</div>
+        <div class="wpt-name">{{ wp.emoji }} {{ wp.name }}</div>
+        {% if not wp.passed and rhine.weekly_avg_km > 0 %}
+          {% set km_to_go = wp.km - rhine.position_km %}
+          {% if km_to_go > 0 %}
+          <div class="wpt-eta text-muted small">~{{ (km_to_go / rhine.weekly_avg_km * 7) | round | int }}d away</div>
+          {% endif %}
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{# Restart option at bottom #}
+<div class="text-center mb-4">
+  <form method="POST" action="{{ url_for('gamification.journey_start') }}"
+        onsubmit="return confirm('This will abandon your current journey and start fresh from today. Are you sure?')">
+    <button type="submit" class="btn btn-ghost btn-sm">↺ Restart Journey from Today</button>
+  </form>
+</div>
+
+{% endif %}
+
+{% endblock %}

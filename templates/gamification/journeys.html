@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Journeys — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>🗺️ Virtual Journeys</h1>
+  <p class="page-subtitle">Row the world's great routes — one metre at a time</p>
+</div>
+
+<div class="journey-cards">
+
+  {# Rhine #}
+  <div class="journey-card">
+    <div class="journey-card-map">🇨🇭→🇳🇱</div>
+    <div class="journey-card-info">
+      <h2 class="journey-card-title">Rhine River</h2>
+      <p class="journey-card-desc">Basel, Switzerland to Rotterdam, Netherlands · 820 km</p>
+      {% if rhine.active %}
+        <div class="journey-card-progress">
+          <div class="progress-track"><div class="progress-fill" style="width:{{ rhine.pct }}%"></div></div>
+          <span class="journey-card-stat">{{ rhine.position_km }} km · {{ rhine.pct }}%</span>
+        </div>
+        <a href="{{ url_for('gamification.route') }}" class="btn btn-primary btn-sm mt-2">View Progress →</a>
+      {% elif rhine.complete %}
+        <span class="journey-complete-badge">✓ Complete!</span>
+        <a href="{{ url_for('gamification.route') }}" class="btn btn-ghost btn-sm mt-2">Row Again →</a>
+      {% else %}
+        <a href="{{ url_for('gamification.route') }}" class="btn btn-primary btn-sm mt-2">Start Journey →</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Holland #}
+  <div class="journey-card">
+    <div class="journey-card-map">🌷🧀🌬️</div>
+    <div class="journey-card-info">
+      <h2 class="journey-card-title">Holland Tour</h2>
+      <p class="journey-card-desc">Amsterdam scenic loop — cities, windmills & tulip fields · 550 km</p>
+      {% if holland.active %}
+        <div class="journey-card-progress">
+          <div class="progress-track"><div class="progress-fill" style="width:{{ holland.pct }}%"></div></div>
+          <span class="journey-card-stat">{{ holland.position_km }} km · {{ holland.pct }}%</span>
+        </div>
+        <a href="{{ url_for('gamification.route_holland') }}" class="btn btn-primary btn-sm mt-2">View Progress →</a>
+      {% elif holland.complete %}
+        <span class="journey-complete-badge">✓ Complete!</span>
+        <a href="{{ url_for('gamification.route_holland') }}" class="btn btn-ghost btn-sm mt-2">Row Again →</a>
+      {% else %}
+        <a href="{{ url_for('gamification.route_holland') }}" class="btn btn-primary btn-sm mt-2">Start Journey →</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Trans-Canada #}
+  <div class="journey-card">
+    <div class="journey-card-map">🏔️🌾🍁</div>
+    <div class="journey-card-info">
+      <h2 class="journey-card-title">Trans-Canada Highway</h2>
+      <p class="journey-card-desc">Victoria, BC to St. John's, NL — coast to coast · 7,821 km</p>
+      {% if transcan.active %}
+        <div class="journey-card-progress">
+          <div class="progress-track"><div class="progress-fill" style="width:{{ transcan.pct }}%"></div></div>
+          <span class="journey-card-stat">{{ transcan.position_km }} km · {{ transcan.pct }}%</span>
+        </div>
+        <a href="{{ url_for('gamification.route_transcan') }}" class="btn btn-primary btn-sm mt-2">View Progress →</a>
+      {% elif transcan.complete %}
+        <span class="journey-complete-badge">✓ Complete!</span>
+        <a href="{{ url_for('gamification.route_transcan') }}" class="btn btn-ghost btn-sm mt-2">Row Again →</a>
+      {% else %}
+        <a href="{{ url_for('gamification.route_transcan') }}" class="btn btn-primary btn-sm mt-2">Start Journey →</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Route 66 #}
+  <div class="journey-card">
+    <div class="journey-card-map">🌆→🏖️</div>
+    <div class="journey-card-info">
+      <h2 class="journey-card-title">Route 66</h2>
+      <p class="journey-card-desc">Chicago, IL to Santa Monica, CA — The Mother Road · 3,940 km</p>
+      {% if route66.active %}
+        <div class="journey-card-progress">
+          <div class="progress-track"><div class="progress-fill" style="width:{{ route66.pct }}%"></div></div>
+          <span class="journey-card-stat">{{ route66.position_km }} km · {{ route66.pct }}%</span>
+        </div>
+        <a href="{{ url_for('gamification.route_route66') }}" class="btn btn-primary btn-sm mt-2">View Progress →</a>
+      {% elif route66.complete %}
+        <span class="journey-complete-badge">✓ Complete!</span>
+        <a href="{{ url_for('gamification.route_route66') }}" class="btn btn-ghost btn-sm mt-2">Drive Again →</a>
+      {% else %}
+        <a href="{{ url_for('gamification.route_route66') }}" class="btn btn-primary btn-sm mt-2">Start Journey →</a>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
