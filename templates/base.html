@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Row Tracker{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/feedback.css') }}" />
   {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -41,6 +42,9 @@
       </a>
     </div>
     <div class="nav-actions">
+      <button class="feedback-btn" onclick="openFeedback()" title="Send feedback">
+        💬 Feedback
+      </button>
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
         <span class="theme-icon">☀️</span>
       </button>
@@ -51,7 +55,10 @@
     {% block content %}{% endblock %}
   </main>
 
+  {% include 'feedback/modal.html' %}
+
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/feedback.js') }}"></script>
   {% block extra_js %}{% endblock %}
 
 </body>

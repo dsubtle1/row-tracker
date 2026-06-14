@@ -1,0 +1,46 @@
+<!-- Feedback Modal — included in base.html -->
+<div id="feedback-modal" class="feedback-overlay" role="dialog" aria-modal="true" aria-label="Send Feedback" hidden>
+  <div class="feedback-modal">
+    <div class="feedback-header">
+      <h2 class="feedback-title">Send Feedback</h2>
+      <button class="feedback-close" onclick="closeFeedback()" aria-label="Close">&times;</button>
+    </div>
+
+    <form id="feedback-form" onsubmit="submitFeedback(event)">
+      <input type="hidden" name="page" id="feedback-page" />
+
+      <div class="feedback-field">
+        <label for="feedback-category">Category</label>
+        <select id="feedback-category" name="category" required>
+          <option value="Bug">🐛 Bug</option>
+          <option value="Suggestion">💡 Suggestion</option>
+          <option value="Question">❓ Question</option>
+          <option value="Other">💬 Other</option>
+        </select>
+      </div>
+
+      <div class="feedback-field">
+        <label for="feedback-name">Name / handle <span class="feedback-optional">(optional)</span></label>
+        <input type="text" id="feedback-name" name="name" placeholder="Anonymous" maxlength="80" />
+      </div>
+
+      <div class="feedback-field">
+        <label for="feedback-message">Message <span class="feedback-required">*</span></label>
+        <textarea id="feedback-message" name="message" rows="5" placeholder="What's on your mind?" required maxlength="2000"></textarea>
+      </div>
+
+      <div id="feedback-error" class="feedback-error" hidden></div>
+
+      <div class="feedback-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeFeedback()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="feedback-submit">Send Feedback</button>
+      </div>
+    </form>
+
+    <div id="feedback-success" class="feedback-success" hidden>
+      <span class="feedback-success-icon">✅</span>
+      <p>Thanks — feedback received!</p>
+      <button class="btn btn-secondary" onclick="closeFeedback()">Close</button>
+    </div>
+  </div>
+</div>

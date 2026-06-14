@@ -5,7 +5,10 @@ Single container, single port (7376), three Blueprint modules.
 
 import os
 from flask import Flask
+from flask_mail import Mail
 from models import db
+
+mail = Mail()
 
 
 def create_app():
@@ -18,6 +21,14 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 
+    # -------------------------------------------------------------------- mail
+    app.config["MAIL_SERVER"]         = "smtp.gmail.com"
+    app.config["MAIL_PORT"]           = 587
+    app.config["MAIL_USE_TLS"]        = True
+    app.config["MAIL_USERNAME"]       = os.environ.get("MAIL_USERNAME", "")
+    app.config["MAIL_PASSWORD"]       = os.environ.get("MAIL_PASSWORD", "")
+    app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME", "")
+
     # Feature flags (read from .env via Docker)
     app.config["USE_AI_WOD"] = os.environ.get("USE_AI_WOD", "false").lower() == "true"
 
@@ -28,6 +39,7 @@ def create_app():
 
     # ---------------------------------------------------------- init extensions
     db.init_app(app)
+    mail.init_app(app)
 
     with app.app_context():
         db.create_all()
@@ -36,10 +48,12 @@ def create_app():
     from blueprints.tracker import tracker_bp
     from blueprints.wod import wod_bp
     from blueprints.gamification import gamification_bp
+    from blueprints.feedback import feedback_bp
 
     app.register_blueprint(tracker_bp)
     app.register_blueprint(wod_bp)
     app.register_blueprint(gamification_bp)
+    app.register_blueprint(feedback_bp)
 
     return app
 
