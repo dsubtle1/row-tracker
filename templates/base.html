@@ -40,6 +40,14 @@
          class="nav-link {% if request.endpoint and request.endpoint.startswith('gamification') and request.endpoint not in ['gamification.journeys', 'gamification.route', 'gamification.route_holland', 'gamification.route_transcan'] %}active{% endif %}">
         Achievements
       </a>
+      <a href="{{ url_for('tracker.faq') }}"
+         class="nav-link {% if request.endpoint == 'tracker.faq' %}active{% endif %}">
+        FAQ
+      </a>
+      <a href="{{ url_for('tracker.quickstart') }}"
+         class="nav-link {% if request.endpoint == 'tracker.quickstart' %}active{% endif %}">
+        Quick Start
+      </a>
     </div>
     <div class="nav-actions">
       <button class="feedback-btn" onclick="openFeedback()" title="Send feedback">

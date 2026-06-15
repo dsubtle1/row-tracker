@@ -356,6 +356,16 @@ def sync():
     })
 
 
+@tracker_bp.route("/faq")
+def faq():
+    return render_template("tracker/faq.html")
+
+
+@tracker_bp.route("/quickstart")
+def quickstart():
+    return render_template("tracker/quickstart.html")
+
+
 @tracker_bp.route("/auth/callback")
 def auth_callback():
     """OAuth callback — not needed when using a pre-issued refresh token."""

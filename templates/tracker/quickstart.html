@@ -1,0 +1,438 @@
+{% extends 'base.html' %}
+
+{% block title %}Quick Start Guide — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Quick Start Guide</h1>
+  <p class="page-subtitle">You're installed and running — here's what to do next.</p>
+</div>
+
+<div class="qs-layout">
+
+  <!-- ── Step nav sidebar ───────────────────────────────────────────── -->
+  <aside class="qs-nav">
+    <p class="qs-nav-label">Steps</p>
+    <a href="#step-1" class="qs-nav-link">1 — Sync Your Workouts</a>
+    <a href="#step-2" class="qs-nav-link">2 — Explore the Dashboard</a>
+    <a href="#step-3" class="qs-nav-link">3 — Personal Bests</a>
+    <a href="#step-4" class="qs-nav-link">4 — Charts</a>
+    <a href="#step-5" class="qs-nav-link">5 — Workout of the Day</a>
+    <a href="#step-6" class="qs-nav-link">6 — Virtual Journeys</a>
+    <a href="#step-7" class="qs-nav-link">7 — Achievements</a>
+    <div class="qs-nav-divider"></div>
+    <a href="#tips" class="qs-nav-link">Tips</a>
+    <a href="#feedback" class="qs-nav-link">Feedback</a>
+  </aside>
+
+  <!-- ── Main content ───────────────────────────────────────────────── -->
+  <div class="qs-content">
+
+    <div class="qs-step" id="step-1">
+      <div class="qs-step-header">
+        <span class="qs-step-number">1</span>
+        <h2 class="qs-step-title">Sync Your Workouts</h2>
+      </div>
+      <div class="qs-step-body">
+        <p>On the Dashboard, click the <strong>Sync Workouts</strong> button.</p>
+        <p>Row Tracker will connect to your Concept2 Logbook and pull in your full workout history. Depending on how many workouts you have, this may take up to a minute. You'll see a confirmation message when it's done showing how many workouts were imported.</p>
+        <div class="qs-tip-box">
+          💡 After the first sync, Row Tracker syncs automatically every night at 3:00 AM. You can always click Sync manually to pull in your latest session straight away.
+        </div>
+        <a href="{{ url_for('tracker.dashboard') }}" class="qs-action-link">Go to Dashboard →</a>
+      </div>
+    </div>
+
+    <div class="qs-step" id="step-2">
+      <div class="qs-step-header">
+        <span class="qs-step-number">2</span>
+        <h2 class="qs-step-title">Explore the Dashboard</h2>
+      </div>
+      <div class="qs-step-body">
+        <p>Once synced, your Dashboard shows everything at a glance:</p>
+        <ul class="qs-list">
+          <li><strong>Lifetime metres</strong> — your total rowing distance with a progress bar toward the next milestone</li>
+          <li><strong>Current streak</strong> — consecutive days with at least one workout</li>
+          <li><strong>This week / this month</strong> — workout counts for the current periods</li>
+          <li><strong>Last session</strong> — distance, pace, and date of your most recent row</li>
+          <li><strong>52-week heatmap</strong> — a full year of training volume at a glance; click any square to see that day's individual workouts</li>
+        </ul>
+        <a href="{{ url_for('tracker.dashboard') }}" class="qs-action-link">Go to Dashboard →</a>
+      </div>
+    </div>
+
+    <div class="qs-step" id="step-3">
+      <div class="qs-step-header">
+        <span class="qs-step-number">3</span>
+        <h2 class="qs-step-title">Check Your Personal Bests</h2>
+      </div>
+      <div class="qs-step-body">
+        <p>Click <strong>PBs</strong> in the navigation bar. Row Tracker automatically calculates your best times and distances across 8 standard categories:</p>
+        <ul class="qs-list">
+          <li>Distance pieces: 100m, 500m, 1,000m, 2,000m, 5,000m, 10,000m</li>
+          <li>Time pieces: 30 minutes, 60 minutes</li>
+        </ul>
+        <p>PBs are recalculated after every sync. If a PB is more than 90 days old, you'll see a nudge to go test it again.</p>
+        <a href="{{ url_for('tracker.personal_bests') }}" class="qs-action-link">Go to Personal Bests →</a>
+      </div>
+    </div>
+
+    <div class="qs-step" id="step-4">
+      <div class="qs-step-header">
+        <span class="qs-step-number">4</span>
+        <h2 class="qs-step-title">Look at Your Charts</h2>
+      </div>
+      <div class="qs-step-body">
+        <p>Click <strong>Charts</strong> in the navigation bar to explore three views:</p>
+        <ul class="qs-list">
+          <li><strong>Pace Trend</strong> — your 500m pace over time with a 10-session rolling average</li>
+          <li><strong>Efficiency</strong> — pace vs. stroke rate to see how your technique is evolving</li>
+          <li><strong>Training Load</strong> — your acute vs. chronic workload ratio (CAWR) to track training stress over time</li>
+        </ul>
+        <a href="{{ url_for('tracker.chart_pace') }}" class="qs-action-link">Go to Charts →</a>
+      </div>
+    </div>
+
+    <div class="qs-step" id="step-5">
+      <div class="qs-step-header">
+        <span class="qs-step-number">5</span>
+        <h2 class="qs-step-title">Get Today's Workout</h2>
+      </div>
+      <div class="qs-step-body">
+        <p>Click <strong>WOD</strong> in the navigation bar. Row Tracker generates a daily Workout of the Day based on your recent training. Pace targets are set automatically from your 2k personal best.</p>
+        <p>If today's WOD doesn't suit you, you can:</p>
+        <ul class="qs-list">
+          <li>Click <strong>Force Regenerate</strong> for a new one</li>
+          <li>Browse the <strong>WOD Library</strong> and assign any workout manually</li>
+          <li>Use the <strong>Random WOD Generator</strong> to build your own by choosing intensity, effort level, and type</li>
+        </ul>
+        <a href="{{ url_for('wod.wod') }}" class="qs-action-link">Go to WOD →</a>
+      </div>
+    </div>
+
+    <div class="qs-step" id="step-6">
+      <div class="qs-step-header">
+        <span class="qs-step-number">6</span>
+        <h2 class="qs-step-title">Start a Virtual Journey</h2>
+      </div>
+      <div class="qs-step-body">
+        <p>Click <strong>Journeys</strong> in the navigation bar. Pick a route and click <strong>Start</strong> — every metre you row from that point counts toward your progress.</p>
+        <ul class="qs-list">
+          <li>🇨🇭 <strong>Rhine River</strong> — Basel to Rotterdam, 820 km, 14 waypoints</li>
+          <li>🇳🇱 <strong>Holland Tour</strong> — Amsterdam scenic loop, 550 km, 17 waypoints</li>
+          <li>🇨🇦 <strong>Trans-Canada Highway</strong> — Victoria BC to St. John's NL, 7,821 km, 23 waypoints</li>
+        </ul>
+        <p>You can run all three simultaneously. Each shows your current position, upcoming waypoints, and an estimated arrival date based on your recent training pace.</p>
+        <a href="{{ url_for('gamification.journeys') }}" class="qs-action-link">Go to Journeys →</a>
+      </div>
+    </div>
+
+    <div class="qs-step" id="step-7">
+      <div class="qs-step-header">
+        <span class="qs-step-number">7</span>
+        <h2 class="qs-step-title">Check Your Achievements</h2>
+      </div>
+      <div class="qs-step-body">
+        <p>Click <strong>Achievements</strong> in the navigation bar to see:</p>
+        <ul class="qs-list">
+          <li><strong>Badges</strong> — 16 badges across Performance, Volume, Consistency, and Efficiency, awarded automatically as you hit milestones</li>
+          <li><strong>Season Challenges</strong> — quarterly targets including distance goals, PB attempts, and consistency streaks</li>
+          <li><strong>You vs. Past You</strong> — a side-by-side comparison of your training across this month, last month, 3 months ago, and 12 months ago</li>
+        </ul>
+        <a href="{{ url_for('gamification.hub') }}" class="qs-action-link">Go to Achievements →</a>
+      </div>
+    </div>
+
+    <!-- ── Tips ── -->
+    <div class="qs-tips" id="tips">
+      <h2 class="qs-tips-title">A Few Tips</h2>
+      <div class="qs-tips-grid">
+        <div class="qs-tip-card">
+          <span class="qs-tip-icon">☀️</span>
+          <div>
+            <strong>Dark / light mode</strong>
+            <p>Use the ☀️ toggle in the top-right corner to switch themes. Your preference is saved.</p>
+          </div>
+        </div>
+        <div class="qs-tip-card">
+          <span class="qs-tip-icon">🗓️</span>
+          <div>
+            <strong>Heatmap drill-down</strong>
+            <p>Click any square in the 52-week heatmap to see that day's individual workouts in detail.</p>
+          </div>
+        </div>
+        <div class="qs-tip-card">
+          <span class="qs-tip-icon">🗺️</span>
+          <div>
+            <strong>Journey ETAs</strong>
+            <p>Arrival estimates are based on your average pace over the last 28 days — row more to move them closer.</p>
+          </div>
+        </div>
+        <div class="qs-tip-card">
+          <span class="qs-tip-icon">💾</span>
+          <div>
+            <strong>Your data</strong>
+            <p>All workout data is stored in <code>row-tracker/data/row_tracker.db</code>. Back this file up occasionally to keep it safe.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Feedback ── -->
+    <div class="qs-feedback-box" id="feedback">
+      <div class="qs-feedback-text">
+        <h2 class="qs-feedback-title">Send Feedback</h2>
+        <p>This is an alpha release and your input matters. Use the Feedback button to report bugs, suggest features, or ask questions — it goes directly to the Row Tracker team.</p>
+        <p>For a list of known issues and common questions, visit the FAQ page.</p>
+      </div>
+      <div class="qs-feedback-actions">
+        <button class="btn btn-primary" onclick="openFeedback()">💬 Send Feedback</button>
+        <a href="{{ url_for('tracker.faq') }}" class="btn btn-secondary">FAQ & Known Issues</a>
+      </div>
+    </div>
+
+  </div><!-- /.qs-content -->
+</div><!-- /.qs-layout -->
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-subtitle {
+    color: var(--color-text-muted, #888);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+  }
+
+  .qs-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  /* ── Sidebar nav ── */
+  .qs-nav {
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .qs-nav-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted, #888);
+    margin: 0 0 0.4rem 0.5rem;
+  }
+
+  .qs-nav-link {
+    font-size: 0.82rem;
+    color: var(--color-text-muted, #aaa);
+    text-decoration: none;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .qs-nav-link:hover {
+    background: var(--color-surface-hover, rgba(255,255,255,0.06));
+    color: var(--color-text, #e0e0e0);
+  }
+
+  .qs-nav-divider {
+    border-top: 1px solid var(--color-border, #333);
+    margin: 0.4rem 0;
+  }
+
+  /* ── Steps ── */
+  .qs-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .qs-step {
+    background: var(--color-surface, #1e1e2e);
+    border: 1px solid var(--color-border, #333);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .qs-step-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border, #333);
+    background: var(--color-surface-alt, #16162a);
+  }
+
+  .qs-step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--color-accent, #4fc3f7);
+    color: #000;
+    font-size: 0.9rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .qs-step-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text, #e0e0e0);
+  }
+
+  .qs-step-body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .qs-step-body p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--color-text-muted, #bbb);
+  }
+
+  .qs-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .qs-list li {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--color-text-muted, #bbb);
+  }
+
+  .qs-tip-box {
+    background: rgba(79, 195, 247, 0.08);
+    border: 1px solid rgba(79, 195, 247, 0.25);
+    border-radius: 6px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.845rem;
+    line-height: 1.5;
+    color: var(--color-text-muted, #bbb);
+  }
+
+  .qs-action-link {
+    font-size: 0.845rem;
+    font-weight: 600;
+    color: var(--color-accent, #4fc3f7);
+    text-decoration: none;
+    align-self: flex-start;
+  }
+
+  .qs-action-link:hover {
+    text-decoration: underline;
+  }
+
+  /* ── Tips grid ── */
+  .qs-tips {
+    background: var(--color-surface, #1e1e2e);
+    border: 1px solid var(--color-border, #333);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+
+  .qs-tips-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 1rem;
+    color: var(--color-text, #e0e0e0);
+  }
+
+  .qs-tips-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .qs-tip-card {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    background: var(--color-surface-alt, #16162a);
+    border: 1px solid var(--color-border, #333);
+    border-radius: 8px;
+    padding: 0.75rem;
+  }
+
+  .qs-tip-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .qs-tip-card strong {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--color-text, #e0e0e0);
+    margin-bottom: 0.2rem;
+  }
+
+  .qs-tip-card p {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--color-text-muted, #999);
+  }
+
+  .qs-tip-card code {
+    font-size: 0.75rem;
+    background: rgba(255,255,255,0.07);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+  }
+
+  /* ── Feedback box ── */
+  .qs-feedback-box {
+    background: var(--color-surface, #1e1e2e);
+    border: 1px solid var(--color-border, #333);
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  .qs-feedback-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.4rem;
+    color: var(--color-text, #e0e0e0);
+  }
+
+  .qs-feedback-text p {
+    margin: 0 0 0.3rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--color-text-muted, #aaa);
+  }
+
+  .qs-feedback-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,443 @@
+{% extends 'base.html' %}
+
+{% block title %}FAQ & Known Issues — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">FAQ &amp; Known Issues</h1>
+  <p class="page-subtitle">Alpha release · June 2026</p>
+</div>
+
+<div class="faq-layout">
+
+  <!-- ── Left column: FAQ ───────────────────────────────────────────── -->
+  <section class="faq-section">
+    <h2 class="faq-section-title">Frequently Asked Questions</h2>
+
+    <div class="faq-group">
+      <h3 class="faq-group-title">Getting Started</h3>
+
+      <details class="faq-item">
+        <summary class="faq-question">What is Row Tracker?</summary>
+        <div class="faq-answer">
+          Row Tracker is a personal analytics app for Concept2 rowing machine workouts. It connects to your Concept2 Online Logbook and pulls your workout data automatically, giving you pace trends, personal bests, badges, virtual journeys, and daily workout recommendations — all in one place.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Do I need a Concept2 account?</summary>
+        <div class="faq-answer">
+          Yes. Row Tracker pulls your data from the Concept2 Online Logbook. If you row with a Concept2 machine and use the ErgData app, your workouts are already being synced to your logbook automatically after each session.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">How does Row Tracker get my workout data?</summary>
+        <div class="faq-answer">
+          It connects to the Concept2 Logbook API using your account credentials. Once connected, it syncs your workouts automatically every night at 3:00 AM (Toronto time). You can also trigger a manual sync at any time from the Dashboard.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Does it work on my phone or tablet?</summary>
+        <div class="faq-answer">
+          Row Tracker is browser-based and works best on a desktop or laptop. Mobile and iPad layouts are not yet optimised — this is a known issue being worked on.
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-group">
+      <h3 class="faq-group-title">Data &amp; Sync</h3>
+
+      <details class="faq-item">
+        <summary class="faq-question">How often does my data sync?</summary>
+        <div class="faq-answer">
+          Automatically every night at 3:00 AM Toronto time. You can also click the Sync button on the Dashboard at any time to pull in your latest workouts immediately.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">My latest workout isn't showing — what should I do?</summary>
+        <div class="faq-answer">
+          First, make sure your workout has synced to the Concept2 Online Logbook via ErgData. Then click the Sync button on the Dashboard. If it still doesn't appear, wait a few minutes and try again — occasionally the Concept2 API has a short delay.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Can I import workouts from a CSV or other file?</summary>
+        <div class="faq-answer">
+          Not currently. Row Tracker only pulls data via the Concept2 Logbook API.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Will my historical workouts appear?</summary>
+        <div class="faq-answer">
+          Yes. The first time Row Tracker syncs, it backfills your full workout history from the Concept2 Logbook.
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-group">
+      <h3 class="faq-group-title">Personal Bests</h3>
+
+      <details class="faq-item">
+        <summary class="faq-question">How are personal bests calculated?</summary>
+        <div class="faq-answer">
+          PBs are recalculated automatically after every sync across 8 categories: 100m, 500m, 1000m, 2000m, 5000m, 10000m, 30 minutes, and 60 minutes. The app scans your full workout history each time.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">What does the "stale PB" warning mean?</summary>
+        <div class="faq-answer">
+          If a personal best hasn't been improved in 90 or more days, Row Tracker flags it as stale and shows a nudge on the Achievements hub. It's a reminder to test that category again.
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-group">
+      <h3 class="faq-group-title">Workout of the Day</h3>
+
+      <details class="faq-item">
+        <summary class="faq-question">How is the daily WOD generated?</summary>
+        <div class="faq-answer">
+          The WOD engine looks at your last 28 days of training to determine your current phase (base, build, peak, or recovery) and generates a workout appropriate for that phase. Pace targets are based on your 2k personal best.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Can I get a different WOD if I don't like today's?</summary>
+        <div class="faq-answer">
+          Yes — click Force Regenerate on the WOD page to get a new one. You can also browse the full WOD library and assign any workout manually.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">What is the Random WOD Generator?</summary>
+        <div class="faq-answer">
+          It lets you generate a one-off workout by specifying intensity (light / medium / heavy), effort level (low / medium / high), and type (steady state / intervals / threshold / surprise me). You can also add optional notes like "tired legs today."
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-group">
+      <h3 class="faq-group-title">Achievements &amp; Badges</h3>
+
+      <details class="faq-item">
+        <summary class="faq-question">How do I earn badges?</summary>
+        <div class="faq-answer">
+          Badges are awarded automatically after each sync when the conditions are met. There are 16 badges across four categories: Performance, Volume, Consistency, and Efficiency. Once earned, a badge is yours permanently.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Why hasn't my badge been awarded yet?</summary>
+        <div class="faq-answer">
+          Badge evaluation runs after each sync. Try triggering a manual sync from the Dashboard. If the conditions have been met and the badge still hasn't appeared, use the Feedback button to let us know.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">What are Season Challenges?</summary>
+        <div class="faq-answer">
+          Quarterly targets that reset on January 1, April 1, July 1, and October 1. They include a distance target, a PB season checklist, a consistency challenge, and a monthly volume goal.
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-group">
+      <h3 class="faq-group-title">Virtual Journeys</h3>
+
+      <details class="faq-item">
+        <summary class="faq-question">What are the virtual journeys?</summary>
+        <div class="faq-answer">
+          Three independent routes you can row your way along using real workout metres:
+          <ul class="faq-list">
+            <li><strong>Rhine River</strong> — Basel to Rotterdam, 820 km, 14 waypoints</li>
+            <li><strong>Holland Tour</strong> — Amsterdam scenic loop, 550 km, 17 waypoints</li>
+            <li><strong>Trans-Canada Highway</strong> — Victoria BC to St. John's NL, 7,821 km, 23 waypoints</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">How do I start a journey?</summary>
+        <div class="faq-answer">
+          Go to Journeys in the navigation and click Start on any route. Metres from workouts completed after that date count toward your progress. Multiple journeys can run at the same time.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Do journey metres count from my full history?</summary>
+        <div class="faq-answer">
+          No — only workouts completed after you clicked Start count. This is intentional so the journey feels like a real ongoing trip.
+        </div>
+      </details>
+    </div>
+
+    <div class="faq-group">
+      <h3 class="faq-group-title">Feedback</h3>
+
+      <details class="faq-item">
+        <summary class="faq-question">How do I report a bug or suggest a feature?</summary>
+        <div class="faq-answer">
+          Click the 💬 <strong>Feedback</strong> button in the navigation bar on any page. Fill in the category, an optional name, and your message. It goes directly to the Row Tracker team.
+        </div>
+      </details>
+    </div>
+
+  </section>
+
+  <!-- ── Right column: Known Issues ────────────────────────────────── -->
+  <section class="issues-section">
+    <h2 class="faq-section-title">Known Issues</h2>
+
+    <div class="issues-list">
+
+      <div class="issue-card issue-inprogress">
+        <div class="issue-header">
+          <span class="issue-badge inprogress">In Progress</span>
+          <span class="issue-area">Charts</span>
+        </div>
+        <p class="issue-desc">All three charts are functional but visual quality needs improvement — axis labels, tooltips, and colour consistency are being worked on.</p>
+      </div>
+
+      <div class="issue-card issue-planned">
+        <div class="issue-header">
+          <span class="issue-badge planned">Planned</span>
+          <span class="issue-area">Mobile / iPad</span>
+        </div>
+        <p class="issue-desc">No responsive CSS — the app is not optimised for small screens or touch interfaces.</p>
+      </div>
+
+      <div class="issue-card issue-planned">
+        <div class="issue-header">
+          <span class="issue-badge planned">Planned</span>
+          <span class="issue-area">Heart Rate</span>
+        </div>
+        <p class="issue-desc">Heart rate data is captured from your Concept2 workouts and stored, but is not yet displayed anywhere in the app.</p>
+      </div>
+
+      <div class="issue-card issue-planned">
+        <div class="issue-header">
+          <span class="issue-badge planned">Planned</span>
+          <span class="issue-area">Stroke Data</span>
+        </div>
+        <p class="issue-desc">Per-stroke data is stored per workout but no visualisation has been built yet.</p>
+      </div>
+
+      <div class="issue-card issue-planned">
+        <div class="issue-header">
+          <span class="issue-badge planned">Planned</span>
+          <span class="issue-area">Notifications</span>
+        </div>
+        <p class="issue-desc">There are no push or email notifications for badges, milestones, or journey completions.</p>
+      </div>
+
+      <div class="issue-card issue-limitation">
+        <div class="issue-header">
+          <span class="issue-badge limitation">Known Limitation</span>
+          <span class="issue-area">Iron Month Badge</span>
+        </div>
+        <p class="issue-desc">The Iron Month badge (20+ workouts in a calendar month) uses a session count as a proxy. Planned session tracking has not been built yet.</p>
+      </div>
+
+      <div class="issue-card issue-deferred">
+        <div class="issue-header">
+          <span class="issue-badge deferred">Deferred</span>
+          <span class="issue-area">AI-Assisted WOD</span>
+        </div>
+        <p class="issue-desc">The AI coaching mode for the WOD generator has been deferred and is not available in this alpha.</p>
+      </div>
+
+      <div class="issue-card issue-deferred">
+        <div class="issue-header">
+          <span class="issue-badge deferred">Out of Scope</span>
+          <span class="issue-area">Multi-User / Sharing</span>
+        </div>
+        <p class="issue-desc">Row Tracker is single-user only. There are no sharing or social features in this release.</p>
+      </div>
+
+    </div>
+
+    <div class="issues-footer">
+      <p>Don't see your issue here? Use the <strong>💬 Feedback</strong> button to let us know.</p>
+    </div>
+
+  </section>
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-subtitle {
+    color: var(--color-text-muted, #888);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+  }
+
+  .faq-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  /* ── FAQ ── */
+  .faq-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 1.25rem;
+    color: var(--color-text, #e0e0e0);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border, #333);
+  }
+
+  .faq-group {
+    margin-bottom: 1.75rem;
+  }
+
+  .faq-group-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-accent, #4fc3f7);
+    margin: 0 0 0.75rem;
+  }
+
+  .faq-item {
+    border: 1px solid var(--color-border, #333);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+  }
+
+  .faq-question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    list-style: none;
+    color: var(--color-text, #e0e0e0);
+    background: var(--color-surface, #1e1e2e);
+    user-select: none;
+  }
+
+  .faq-question::-webkit-details-marker { display: none; }
+
+  .faq-question::after {
+    content: '+';
+    font-size: 1.1rem;
+    color: var(--color-text-muted, #888);
+    flex-shrink: 0;
+    margin-left: 0.75rem;
+  }
+
+  details[open] .faq-question::after {
+    content: '−';
+  }
+
+  .faq-question:hover {
+    background: var(--color-surface-hover, rgba(255,255,255,0.04));
+  }
+
+  .faq-answer {
+    padding: 0.75rem 1rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--color-text-muted, #aaa);
+    background: var(--color-surface-alt, #16162a);
+    border-top: 1px solid var(--color-border, #333);
+  }
+
+  .faq-list {
+    margin: 0.5rem 0 0 1.25rem;
+    padding: 0;
+  }
+
+  .faq-list li {
+    margin-bottom: 0.25rem;
+  }
+
+  /* ── Known Issues ── */
+  .issues-section {
+    position: sticky;
+    top: 1rem;
+  }
+
+  .issues-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .issue-card {
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid transparent;
+    background: var(--color-surface, #1e1e2e);
+    border: 1px solid var(--color-border, #333);
+  }
+
+  .issue-inprogress  { border-left-color: #4fc3f7; }
+  .issue-planned     { border-left-color: #81c995; }
+  .issue-limitation  { border-left-color: #f9a825; }
+  .issue-deferred    { border-left-color: #888; }
+
+  .issue-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .issue-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+  }
+
+  .issue-badge.inprogress  { background: rgba(79,195,247,0.15); color: #4fc3f7; }
+  .issue-badge.planned     { background: rgba(129,201,149,0.15); color: #81c995; }
+  .issue-badge.limitation  { background: rgba(249,168,37,0.15);  color: #f9a825; }
+  .issue-badge.deferred    { background: rgba(136,136,136,0.15); color: #aaa; }
+
+  .issue-area {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text, #e0e0e0);
+  }
+
+  .issue-desc {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--color-text-muted, #999);
+    margin: 0;
+  }
+
+  .issues-footer {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--color-surface-alt, #16162a);
+    border-radius: 6px;
+    border: 1px solid var(--color-border, #333);
+    font-size: 0.825rem;
+    color: var(--color-text-muted, #aaa);
+  }
+
+  .issues-footer p { margin: 0; }
+</style>
+{% endblock %}
