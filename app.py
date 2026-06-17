@@ -45,12 +45,16 @@ def create_app():
         db.create_all()
 
     # --------------------------------------------------------------- blueprints
-    from blueprints.tracker import tracker_bp
+    from blueprints.tracker import tracker_bp, hr_zone_class, hr_zone_name
     from blueprints.wod import wod_bp
     from blueprints.gamification import gamification_bp
     from blueprints.feedback import feedback_bp
 
     app.register_blueprint(tracker_bp)
+
+    # Jinja2 filters for heart rate zone display in workout_detail.html
+    app.jinja_env.filters['hr_zone_class'] = hr_zone_class
+    app.jinja_env.filters['hr_zone_name']  = hr_zone_name
     app.register_blueprint(wod_bp)
     app.register_blueprint(gamification_bp)
     app.register_blueprint(feedback_bp)

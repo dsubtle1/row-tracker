@@ -1,6 +1,11 @@
 """
 Build 1B + 1C — Row Tracker Blueprint
 Dashboard, PB board, pace trend, efficiency scatter, CAWR load chart.
+
+HR zone filters: register in app.py after blueprint import:
+    from blueprints.tracker import hr_zone_class, hr_zone_name
+    app.jinja_env.filters['hr_zone_class'] = hr_zone_class
+    app.jinja_env.filters['hr_zone_name']  = hr_zone_name
 """
 
 from datetime import date, timedelta
@@ -12,6 +17,38 @@ from sqlalchemy import func
 from models import db, Workout, PersonalBest
 
 tracker_bp = Blueprint("tracker", __name__)
+
+
+# ── HR zone helpers (registered as Jinja2 filters in app.py) ──────────────
+
+def hr_zone_class(bpm):
+    """Return a CSS class string for a heart rate value."""
+    if bpm is None:
+        return ""
+    if bpm < 109:
+        return "hr-zone-1"
+    if bpm < 124:
+        return "hr-zone-2"
+    if bpm < 140:
+        return "hr-zone-3"
+    if bpm < 157:
+        return "hr-zone-4"
+    return "hr-zone-5"
+
+
+def hr_zone_name(bpm):
+    """Return a human-readable zone label for a heart rate value."""
+    if bpm is None:
+        return ""
+    if bpm < 109:
+        return "Zone 1 · Recovery"
+    if bpm < 124:
+        return "Zone 2 · Aerobic"
+    if bpm < 140:
+        return "Zone 3 · Tempo"
+    if bpm < 157:
+        return "Zone 4 · Threshold"
+    return "Zone 5 · Max"
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────
@@ -234,7 +271,79 @@ def workout_list():
 @tracker_bp.route("/workouts/<int:workout_id>")
 def workout_detail(workout_id):
     workout = db.get_or_404(Workout, workout_id)
-    return render_template("tracker/workout_detail.html", workout=workout)
+
+    # ── Extract enriched fields from raw_json ─────────────────────────────
+    raw = workout.raw_json or {}
+
+    # Heart rate (workout-level)
+    hr = raw.get("heart_rate") or {}
+    heart_rate = {
+        "min":     hr.get("min"),
+        "average": hr.get("average"),
+        "max":     hr.get("max"),
+        "ending":  hr.get("ending"),
+    } if hr else None
+
+    # Extra performance fields
+    extras = {
+        "drag_factor":       raw.get("drag_factor"),
+        "stroke_count":      raw.get("stroke_count"),
+        "wattminutes_total": raw.get("wattminutes_total"),
+        "workout_type_name": raw.get("workout_type"),   # e.g. "FixedDistanceSplits"
+        "source":            raw.get("source"),         # e.g. "ErgData iOS"
+        "weight_class":      raw.get("weight_class"),
+        "has_stroke_data":   raw.get("stroke_data") is True,
+    }
+
+    # Watts estimate: wattminutes / elapsed minutes
+    if extras["wattminutes_total"] and workout.time_seconds:
+        elapsed_min = workout.time_seconds / 60
+        extras["avg_watts"] = round(extras["wattminutes_total"] / elapsed_min, 1)
+    else:
+        extras["avg_watts"] = None
+
+    # ── Splits ────────────────────────────────────────────────────────────
+    raw_splits = (raw.get("workout") or {}).get("splits") or []
+    splits = []
+    for i, s in enumerate(raw_splits, 1):
+        t   = s.get("time")          # tenths of a second (same as top-level)
+        dist = s.get("distance")
+        # pace: (time_seconds / distance) * 500
+        pace_str = "—"
+        if t and dist:
+            t_sec = t / 10
+            pace_sec = (t_sec / dist) * 500
+            pm, ps = divmod(int(pace_sec), 60)
+            pace_str = f"{pm}:{ps:02d}"
+        # time formatted
+        time_str = "—"
+        if t:
+            t_sec = int(t / 10)
+            tm, ts = divmod(t_sec, 60)
+            time_str = f"{tm}:{ts:02d}.{(t % 10)}"
+
+        shr = s.get("heart_rate") or {}
+        splits.append({
+            "num":             i,
+            "distance":        dist,
+            "time_str":        time_str,
+            "pace_str":        pace_str,
+            "stroke_rate":     s.get("stroke_rate"),
+            "calories":        s.get("calories_total"),
+            "wattminutes":     s.get("wattminutes_total"),
+            "hr_min":          shr.get("min"),
+            "hr_avg":          shr.get("average"),
+            "hr_max":          shr.get("max"),
+            "hr_ending":       shr.get("ending"),
+        })
+
+    return render_template(
+        "tracker/workout_detail.html",
+        workout=workout,
+        heart_rate=heart_rate,
+        extras=extras,
+        splits=splits,
+    )
 
 
 @tracker_bp.route("/pb")

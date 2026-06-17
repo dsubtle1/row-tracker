@@ -2,15 +2,198 @@
 {% block title %}Workout {{ workout.id }} — Row Tracker{% endblock %}
 
 {% block content %}
+
 <div class="page-header">
-  <h1>{{ workout.workout_date }} &mdash; {{ "{:,}".format(workout.distance_meters) if workout.distance_meters else "—" }}m</h1>
+  <h1>
+    {{ workout.workout_date.strftime("%B %-d, %Y") }}
+    &mdash;
+    {{ "{:,}".format(workout.distance_meters) if workout.distance_meters else "—" }}m
+  </h1>
+  {% if extras.workout_type_name %}
+  <p class="page-subtitle">
+    {{ extras.workout_type_name | replace("Fixed", "Fixed ") | replace("Distance", "Distance ") | replace("Splits", "· Splits") }}
+    {% if extras.source %}<span class="wd-source">· {{ extras.source }}</span>{% endif %}
+  </p>
+  {% endif %}
 </div>
-<dl class="detail-grid">
-  <dt>Time</dt>       <dd>{{ workout.time_formatted }}</dd>
-  <dt>Avg Pace</dt>   <dd>{{ workout.avg_pace_formatted }}/500m</dd>
-  <dt>Stroke Rate</dt><dd>{{ workout.avg_stroke_rate or "—" }} SPM</dd>
-  <dt>Calories</dt>   <dd>{{ workout.total_calories or "—" }}</dd>
-  <dt>C2 Log ID</dt>  <dd>{{ workout.id }}</dd>
-</dl>
+
+{# ── Core stats ──────────────────────────────────────────────────────────── #}
+<div class="wd-stats-grid">
+
+  <div class="wd-stat-card wd-stat-card--primary">
+    <span class="wd-stat-value">{{ "{:,}".format(workout.distance_meters) if workout.distance_meters else "—" }}m</span>
+    <span class="wd-stat-label">Distance</span>
+  </div>
+
+  <div class="wd-stat-card">
+    <span class="wd-stat-value">{{ workout.time_formatted }}</span>
+    <span class="wd-stat-label">Time</span>
+  </div>
+
+  <div class="wd-stat-card">
+    <span class="wd-stat-value">{{ workout.avg_pace_formatted }}</span>
+    <span class="wd-stat-label">/500m pace</span>
+  </div>
+
+  <div class="wd-stat-card">
+    <span class="wd-stat-value">{{ workout.avg_stroke_rate or "—" }}</span>
+    <span class="wd-stat-label">SPM</span>
+  </div>
+
+  <div class="wd-stat-card">
+    <span class="wd-stat-value">{{ workout.total_calories or "—" }}</span>
+    <span class="wd-stat-label">Calories</span>
+  </div>
+
+  {% if extras.avg_watts %}
+  <div class="wd-stat-card">
+    <span class="wd-stat-value">{{ extras.avg_watts }}</span>
+    <span class="wd-stat-label">Avg watts</span>
+  </div>
+  {% endif %}
+
+  {% if extras.drag_factor %}
+  <div class="wd-stat-card">
+    <span class="wd-stat-value">{{ extras.drag_factor }}</span>
+    <span class="wd-stat-label">Drag factor</span>
+  </div>
+  {% endif %}
+
+  {% if extras.stroke_count %}
+  <div class="wd-stat-card">
+    <span class="wd-stat-value">{{ extras.stroke_count }}</span>
+    <span class="wd-stat-label">Total strokes</span>
+  </div>
+  {% endif %}
+
+</div>
+
+{# ── Heart rate ──────────────────────────────────────────────────────────── #}
+{% if heart_rate and heart_rate.average %}
+<section class="wd-section">
+  <h2 class="wd-section-title">❤️ Heart Rate</h2>
+  <div class="wd-hr-grid">
+
+    <div class="wd-hr-card wd-hr-card--avg">
+      <span class="wd-hr-value">{{ heart_rate.average }}</span>
+      <span class="wd-hr-label">Avg BPM</span>
+      <span class="wd-hr-zone {{ heart_rate.average | hr_zone_class }}">
+        {{ heart_rate.average | hr_zone_name }}
+      </span>
+    </div>
+
+    <div class="wd-hr-card">
+      <span class="wd-hr-value wd-hr-value--max">{{ heart_rate.max or "—" }}</span>
+      <span class="wd-hr-label">Max BPM</span>
+    </div>
+
+    <div class="wd-hr-card">
+      <span class="wd-hr-value wd-hr-value--min">{{ heart_rate.min or "—" }}</span>
+      <span class="wd-hr-label">Min BPM</span>
+    </div>
+
+    <div class="wd-hr-card">
+      <span class="wd-hr-value">{{ heart_rate.ending or "—" }}</span>
+      <span class="wd-hr-label">Ending BPM</span>
+    </div>
+
+  </div>
+
+  {# HR range bar #}
+  {% if heart_rate.min and heart_rate.max %}
+  <div class="wd-hr-bar-wrap">
+    <div class="wd-hr-bar-track">
+      <div class="wd-hr-bar-range"
+           style="left: {{ ((heart_rate.min - 60) / 140 * 100) | int }}%;
+                  width: {{ (((heart_rate.max - heart_rate.min) / 140) * 100) | int }}%;">
+      </div>
+      <div class="wd-hr-bar-avg"
+           style="left: {{ ((heart_rate.average - 60) / 140 * 100) | int }}%;">
+      </div>
+    </div>
+    <div class="wd-hr-bar-labels">
+      <span>60</span><span>100</span><span>140</span><span>180+</span>
+    </div>
+  </div>
+  {% endif %}
+
+</section>
+{% endif %}
+
+{# ── Splits ──────────────────────────────────────────────────────────────── #}
+{% if splits %}
+<section class="wd-section">
+  <h2 class="wd-section-title">📊 Splits</h2>
+  {% set has_hr = splits | selectattr('hr_avg') | list | length > 0 %}
+  <div class="wd-splits-wrap">
+    <table class="wd-splits-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Dist</th>
+          <th>Time</th>
+          <th>Pace</th>
+          <th>SPM</th>
+          <th>Cal</th>
+          {% if has_hr %}
+          <th>HR avg</th>
+          <th>HR max</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in splits %}
+        <tr>
+          <td class="wd-split-num">{{ s.num }}</td>
+          <td>{{ "{:,}".format(s.distance) if s.distance else "—" }}m</td>
+          <td class="mono">{{ s.time_str }}</td>
+          <td class="mono wd-split-pace">{{ s.pace_str }}/500m</td>
+          <td>{{ s.stroke_rate or "—" }}</td>
+          <td>{{ s.calories or "—" }}</td>
+          {% if has_hr %}
+          <td>
+            {% if s.hr_avg %}
+            <span class="wd-split-hr {{ s.hr_avg | hr_zone_class }}">{{ s.hr_avg }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ s.hr_max or "—" }}</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{# ── Stroke data note ────────────────────────────────────────────────────── #}
+{% if extras.has_stroke_data %}
+<section class="wd-section">
+  <h2 class="wd-section-title">🚣 Stroke Data</h2>
+  <div class="wd-stroke-note">
+    <span class="wd-stroke-note-icon">ℹ️</span>
+    <p>Per-stroke data was recorded for this workout by ErgData and is stored in the Concept2 Logbook.
+    Fetching and visualising it requires an additional API call per workout and is planned for a future build.</p>
+  </div>
+</section>
+{% endif %}
+
+{# ── Meta ────────────────────────────────────────────────────────────────── #}
+<section class="wd-section wd-section--meta">
+  <h2 class="wd-section-title">Details</h2>
+  <dl class="wd-meta-grid">
+    <dt>C2 Log ID</dt>    <dd>{{ workout.id }}</dd>
+    <dt>Date</dt>         <dd>{{ workout.workout_date }}</dd>
+    {% if extras.weight_class %}
+    <dt>Weight class</dt> <dd>{{ "Heavyweight" if extras.weight_class == "H" else "Lightweight" }}</dd>
+    {% endif %}
+    {% if extras.wattminutes_total %}
+    <dt>Watt·minutes</dt> <dd>{{ extras.wattminutes_total }}</dd>
+    {% endif %}
+    <dt>Synced</dt>       <dd>{{ workout.synced_at.strftime("%Y-%m-%d %H:%M") if workout.synced_at else "—" }}</dd>
+  </dl>
+</section>
+
 <a href="{{ url_for('tracker.workout_list') }}" class="back-link">← Back to workouts</a>
+
 {% endblock %}

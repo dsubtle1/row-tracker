@@ -2531,3 +2531,322 @@ body.mobile-nav-open { overflow: hidden; }
   .milestone-bar,
   .progress-fill { transition: none; }
 }
+
+/* ============================================================
+   Workout Detail Page
+   ============================================================ */
+
+/* ── Core stats grid ── */
+.wd-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1px;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.wd-stat-card {
+  background: var(--color-surface);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.wd-stat-card--primary {
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
+}
+
+.wd-stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.wd-stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+/* ── Section ── */
+.wd-section {
+  margin-bottom: 2rem;
+}
+
+.wd-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wd-section--meta { margin-top: 1rem; }
+
+/* ── Heart rate cards ── */
+.wd-hr-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--color-border);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.wd-hr-card {
+  background: var(--color-surface);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.wd-hr-card--avg {
+  background: color-mix(in srgb, #ef4444 6%, var(--color-surface));
+}
+
+.wd-hr-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.wd-hr-value--max { color: #ef4444; }
+.wd-hr-value--min { color: #60a5fa; }
+
+.wd-hr-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.wd-hr-zone {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 99px;
+  display: inline-block;
+  margin-top: 0.1rem;
+  width: fit-content;
+}
+
+/* ── HR zone colours ── */
+.hr-zone-1 { background: rgba(96,165,250,0.15);  color: #60a5fa; }
+.hr-zone-2 { background: rgba(34,197,94,0.15);   color: #4ade80; }
+.hr-zone-3 { background: rgba(245,158,11,0.15);  color: #fbbf24; }
+.hr-zone-4 { background: rgba(249,115,22,0.15);  color: #fb923c; }
+.hr-zone-5 { background: rgba(239,68,68,0.15);   color: #ef4444; }
+
+/* Split table inline HR zone pill */
+.wd-split-hr {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.1rem 0.45rem;
+  border-radius: 99px;
+}
+
+/* ── HR range bar ── */
+.wd-hr-bar-wrap {
+  margin-top: 0.5rem;
+}
+
+.wd-hr-bar-track {
+  position: relative;
+  height: 8px;
+  background: var(--color-surface-2);
+  border-radius: 99px;
+  overflow: visible;
+  margin-bottom: 0.35rem;
+}
+
+.wd-hr-bar-range {
+  position: absolute;
+  height: 100%;
+  background: color-mix(in srgb, #ef4444 40%, var(--color-surface-2));
+  border-radius: 99px;
+}
+
+.wd-hr-bar-avg {
+  position: absolute;
+  top: -3px;
+  width: 14px;
+  height: 14px;
+  background: #ef4444;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+.wd-hr-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Splits table ── */
+.wd-splits-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.wd-splits-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.wd-splits-table thead th {
+  text-align: left;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  white-space: nowrap;
+}
+
+.wd-splits-table tbody td {
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.wd-splits-table tbody tr:last-child td { border-bottom: none; }
+.wd-splits-table tbody tr:hover { background: var(--color-surface-2); }
+
+.wd-split-num {
+  font-weight: 700;
+  color: var(--color-text-muted);
+  width: 28px;
+}
+
+.wd-split-pace {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* ── Stroke data note ── */
+.wd-stroke-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.wd-stroke-note-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.05rem; }
+
+/* ── Meta grid ── */
+.wd-meta-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+}
+
+.wd-meta-grid dt {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  padding-top: 0.1rem;
+}
+
+.wd-meta-grid dd {
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.wd-source {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .wd-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .wd-stat-card--primary {
+    grid-column: 1 / -1;
+  }
+
+  .wd-stat-value { font-size: 1.3rem; }
+
+  .wd-hr-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .wd-hr-card--avg {
+    grid-column: 1 / -1;
+  }
+
+  .wd-hr-value { font-size: 1.5rem; }
+
+  .wd-splits-table {
+    font-size: 0.8rem;
+  }
+
+  .wd-splits-table thead th,
+  .wd-splits-table tbody td {
+    padding: 0.5rem 0.6rem;
+  }
+}
+
+/* ── Light mode overrides ── */
+[data-theme="light"] .wd-stat-card,
+[data-theme="light"] .wd-hr-card,
+[data-theme="light"] .wd-stroke-note,
+[data-theme="light"] .wd-meta-grid {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme="light"] .wd-stat-value,
+[data-theme="light"] .wd-hr-value,
+[data-theme="light"] .wd-meta-grid dd {
+  color: var(--color-text);
+}
+
+[data-theme="light"] .wd-splits-table thead th {
+  background: var(--color-surface-2);
+}
