@@ -15,7 +15,7 @@
       <span class="nav-logo">🚣</span>
       <span class="nav-title">Row Tracker</span>
     </div>
-    <div class="nav-links">
+    <div class="nav-links" id="navLinks">
       <a href="{{ url_for('tracker.dashboard') }}"
          class="nav-link {% if request.endpoint == 'tracker.dashboard' %}active{% endif %}">
         Dashboard
@@ -50,14 +50,65 @@
       </a>
     </div>
     <div class="nav-actions">
-      <button class="feedback-btn" onclick="openFeedback()" title="Send feedback">
+      <button class="feedback-btn nav-feedback-btn" onclick="openFeedback()" title="Send feedback">
         💬 Feedback
       </button>
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
         <span class="theme-icon">☀️</span>
       </button>
+      <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileNav()" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
+
+  <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileNav()"></div>
+  <div class="mobile-nav-drawer" id="mobileNavDrawer">
+    <div class="mobile-nav-header">
+      <span class="nav-logo">🚣</span>
+      <span class="nav-title">Row Tracker</span>
+      <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Close navigation">✕</button>
+    </div>
+    <div class="mobile-nav-links">
+      <a href="{{ url_for('tracker.dashboard') }}"
+         class="mobile-nav-link {% if request.endpoint == 'tracker.dashboard' %}active{% endif %}">
+        📊 Dashboard
+      </a>
+      <a href="{{ url_for('tracker.chart_pace') }}"
+         class="mobile-nav-link {% if request.endpoint and 'chart' in request.endpoint %}active{% endif %}">
+        📈 Charts
+      </a>
+      <a href="{{ url_for('tracker.personal_bests') }}"
+         class="mobile-nav-link {% if request.endpoint == 'tracker.personal_bests' %}active{% endif %}">
+        🏆 Personal Bests
+      </a>
+      <a href="{{ url_for('wod.wod') }}"
+         class="mobile-nav-link {% if request.endpoint and request.endpoint.startswith('wod') %}active{% endif %}">
+        💪 Workout of the Day
+      </a>
+      <a href="{{ url_for('gamification.journeys') }}"
+         class="mobile-nav-link {% if request.endpoint in ['gamification.journeys', 'gamification.route', 'gamification.route_holland', 'gamification.route_transcan'] %}active{% endif %}">
+        🗺️ Journeys
+      </a>
+      <a href="{{ url_for('gamification.hub') }}"
+         class="mobile-nav-link {% if request.endpoint and request.endpoint.startswith('gamification') and request.endpoint not in ['gamification.journeys', 'gamification.route', 'gamification.route_holland', 'gamification.route_transcan'] %}active{% endif %}">
+        🎖️ Achievements
+      </a>
+      <a href="{{ url_for('tracker.faq') }}"
+         class="mobile-nav-link {% if request.endpoint == 'tracker.faq' %}active{% endif %}">
+        ❓ FAQ
+      </a>
+      <a href="{{ url_for('tracker.quickstart') }}"
+         class="mobile-nav-link {% if request.endpoint == 'tracker.quickstart' %}active{% endif %}">
+        🚀 Quick Start
+      </a>
+    </div>
+    <div class="mobile-nav-footer">
+      <button class="feedback-btn" onclick="closeMobileNav(); openFeedback();" style="width:100%; justify-content:center;">
+        💬 Send Feedback
+      </button>
+    </div>
+  </div>
 
   <main class="main-content">
     {% block content %}{% endblock %}
@@ -68,6 +119,29 @@
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   <script src="{{ url_for('static', filename='js/feedback.js') }}"></script>
   {% block extra_js %}{% endblock %}
+
+  <script>
+  function toggleMobileNav() {
+    const drawer  = document.getElementById('mobileNavDrawer');
+    const overlay = document.getElementById('mobileNavOverlay');
+    const burger  = document.getElementById('navHamburger');
+    const open    = drawer.classList.toggle('mobile-nav-drawer--open');
+    overlay.classList.toggle('mobile-nav-overlay--open', open);
+    burger.classList.toggle('nav-hamburger--open', open);
+    burger.setAttribute('aria-expanded', open);
+    document.body.classList.toggle('mobile-nav-open', open);
+  }
+  function closeMobileNav() {
+    document.getElementById('mobileNavDrawer').classList.remove('mobile-nav-drawer--open');
+    document.getElementById('mobileNavOverlay').classList.remove('mobile-nav-overlay--open');
+    document.getElementById('navHamburger').classList.remove('nav-hamburger--open');
+    document.getElementById('navHamburger').setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('mobile-nav-open');
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeMobileNav();
+  });
+  </script>
 
 </body>
 </html>

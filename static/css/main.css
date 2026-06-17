@@ -2034,3 +2034,500 @@ code {
 [data-theme="light"] .pb-done {
   background: color-mix(in srgb, var(--color-teal, #006d82) 12%, var(--color-surface));
 }
+
+/* ============================================================
+   Mobile & Responsive — iPhone / iPad
+   Breakpoints:
+     ≤ 768px  — phone (portrait + landscape)
+     769–1024px — iPad portrait
+   ============================================================ */
+
+/* ---- Hamburger button (hidden on desktop) ---- */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.35rem 0.5rem;
+  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+}
+
+.nav-hamburger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--color-text);
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  transform-origin: center;
+}
+
+/* Animate to X when open */
+.nav-hamburger--open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger--open span:nth-child(2) { opacity: 0; }
+.nav-hamburger--open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ---- Mobile drawer overlay ---- */
+.mobile-nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+}
+.mobile-nav-overlay--open { display: block; }
+
+/* ---- Mobile drawer ---- */
+.mobile-nav-drawer {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 280px;
+  height: 100dvh;
+  background: var(--color-nav-bg);
+  border-left: 1px solid var(--color-border);
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  transition: right 0.25s ease;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-nav-drawer--open { right: 0; }
+
+/* Prevent body scroll when drawer is open */
+body.mobile-nav-open { overflow: hidden; }
+
+.mobile-nav-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mobile-nav-header .nav-title {
+  flex: 1;
+}
+
+.mobile-nav-close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  border-radius: 4px;
+}
+.mobile-nav-close:hover { color: var(--color-text); }
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 0;
+  flex: 1;
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.95rem;
+  color: #94a3b8;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.mobile-nav-link:hover {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  text-decoration: none;
+}
+
+.mobile-nav-link.active {
+  color: #fff;
+  background: rgba(255,255,255,0.09);
+  border-left-color: var(--color-accent);
+}
+
+.mobile-nav-footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ---- Feedback button: hide text on small nav, keep on desktop ---- */
+.nav-feedback-btn { white-space: nowrap; }
+
+/* ================================================================
+   768px and below — phones
+   ================================================================ */
+@media (max-width: 768px) {
+
+  /* Nav: hide desktop links, show hamburger */
+  .nav-links { display: none; }
+  .nav-feedback-btn { display: none; }
+  .nav-hamburger { display: flex; }
+
+  /* Tighten nav padding */
+  .site-nav {
+    padding: 0 1rem;
+    gap: 0.75rem;
+  }
+
+  /* Main content padding */
+  .main-content {
+    padding: 1.25rem 1rem;
+  }
+
+  /* Page header */
+  .page-header h1 { font-size: 1.25rem; }
+  .page-subtitle   { font-size: 0.85rem; }
+
+  /* ── Summary bar: 2-column grid on mobile ── */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .stat-block {
+    flex: unset;
+    padding: 1rem 1rem;
+  }
+
+  /* Primary (lifetime metres) spans full width */
+  .stat-block--primary {
+    grid-column: 1 / -1;
+  }
+
+  /* Last session spans full width */
+  .stat-block--last {
+    grid-column: 1 / -1;
+  }
+
+  .stat-value {
+    font-size: 1.35rem;
+  }
+
+  .stat-value--md {
+    font-size: 1.15rem;
+  }
+
+  /* ── Sync bar ── */
+  .sync-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* ── Heatmap: slightly larger cells, still scrollable ── */
+  .heatmap-cell,
+  .heatmap-dow {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ── PB grid: 2 columns ── */
+  .pb-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pb-value {
+    font-size: 1.25rem;
+  }
+
+  /* ── Workout table: card layout ── */
+  .data-table,
+  .data-table thead,
+  .data-table tbody,
+  .data-table th,
+  .data-table td,
+  .data-table tr {
+    display: block;
+  }
+
+  .data-table thead { display: none; }
+
+  .data-table tbody tr {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem 1rem;
+  }
+
+  .data-table tbody tr:hover { background: var(--color-surface-2); }
+
+  /* First cell (date / link) spans full width and is larger */
+  .data-table tbody tr td:first-child {
+    grid-column: 1 / -1;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 0.2rem;
+    border: none;
+    padding: 0 0 0.4rem;
+  }
+
+  .data-table tbody td {
+    padding: 0;
+    border: none;
+    font-size: 0.85rem;
+  }
+
+  /* Add label before each cell using data-label */
+  .data-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    margin-bottom: 0.1rem;
+  }
+
+  /* ── Badge grid: 2 columns ── */
+  .badge-grid,
+  .badge-grid--full {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* ── Challenge grid: 1 column ── */
+  .challenge-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* ── Versus table: scrollable, slightly smaller font ── */
+  .versus-table {
+    font-size: 0.75rem;
+  }
+
+  .versus-table thead th,
+  .versus-table tbody td {
+    padding: 0.45rem 0.6rem;
+  }
+
+  .vt-metric-col,
+  .vt-metric-label {
+    min-width: 110px;
+    font-size: 0.72rem;
+  }
+
+  /* ── Journey cards: stack vertically, condense ── */
+  .journey-cards {
+    max-width: 100%;
+  }
+
+  .journey-card {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .journey-card-map {
+    font-size: 1.5rem;
+    width: auto;
+    text-align: left;
+  }
+
+  /* ── Rhine stats row: 2 columns ── */
+  .rhine-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .rhine-stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* ── Waypoint timeline: tighten columns ── */
+  .wpt-row {
+    grid-template-columns: 24px 50px 1fr auto;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  /* ── WOD card ── */
+  .wod-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .wod-pace-value {
+    font-size: 1.6rem;
+  }
+
+  .wod-section {
+    grid-template-columns: 80px 1fr;
+  }
+
+  /* ── Random WOD options: 2 columns ── */
+  .rf-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .rf-option-card {
+    min-width: 0;
+  }
+
+  /* ── Chart controls: wrap ── */
+  .chart-controls {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* ── Card padding ── */
+  .card .card-body {
+    padding: 1rem;
+  }
+
+  /* ── Section title row: tighten ── */
+  .section-title-row {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  /* ── Day modal ── */
+  .day-modal {
+    width: 94vw;
+  }
+
+  .day-modal-stats {
+    gap: 0.75rem;
+  }
+
+  /* ── PB checklist: 2 col ── */
+  .pb-checklist {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* ── Pagination ── */
+  .pagination {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+/* ================================================================
+   iPad portrait (769–1024px)
+   ================================================================ */
+@media (min-width: 769px) and (max-width: 1024px) {
+
+  /* Nav may be tight — shrink link padding */
+  .nav-link {
+    font-size: 0.82rem;
+    padding: 0.3rem 0.55rem;
+  }
+
+  .nav-title {
+    font-size: 0.9rem;
+  }
+
+  .main-content {
+    padding: 1.75rem 1.25rem;
+  }
+
+  /* Summary bar: keep horizontal but tighten */
+  .stat-block {
+    padding: 1rem 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  /* PB grid: 3 or 4 columns via auto-fill — already responsive */
+
+  /* Badge grid: already auto-fill, fine */
+
+  /* Challenge grid */
+  .challenge-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Rhine stats */
+  .rhine-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ================================================================
+   Safe area insets — iPhone notch / Dynamic Island / home bar
+   ================================================================ */
+.site-nav {
+  padding-left: max(1.5rem, env(safe-area-inset-left));
+  padding-right: max(1.5rem, env(safe-area-inset-right));
+}
+
+@media (max-width: 768px) {
+  .site-nav {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .main-content {
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  }
+
+  .mobile-nav-drawer {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ================================================================
+   Touch tap targets — minimum 44px for all interactive elements
+   ================================================================ */
+@media (max-width: 768px) {
+  .btn,
+  .sync-btn,
+  .feedback-btn,
+  .theme-toggle,
+  .nav-hamburger,
+  .wod-tab,
+  .range-tab {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-nav-link {
+    min-height: 48px;
+  }
+
+  .day-modal-close,
+  .mobile-nav-close {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ================================================================
+   Reduced motion
+   ================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-drawer { transition: none; }
+  .nav-hamburger span { transition: none; }
+  .milestone-bar,
+  .progress-fill { transition: none; }
+}

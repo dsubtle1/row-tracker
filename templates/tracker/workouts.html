@@ -22,11 +22,11 @@
     {% for w in workouts %}
     <tr>
       <td><a href="{{ url_for('tracker.workout_detail', workout_id=w.id) }}">{{ w.workout_date }}</a></td>
-      <td>{{ "{:,}".format(w.distance_meters) if w.distance_meters else "—" }}m</td>
-      <td>{{ w.time_formatted }}</td>
-      <td>{{ w.avg_pace_formatted }}/500m</td>
-      <td>{{ w.avg_stroke_rate or "—" }}</td>
-      <td>{{ w.total_calories or "—" }}</td>
+      <td data-label="Distance">{{ "{:,}".format(w.distance_meters) if w.distance_meters else "—" }}m</td>
+      <td data-label="Time">{{ w.time_formatted }}</td>
+      <td data-label="Avg Pace">{{ w.avg_pace_formatted }}/500m</td>
+      <td data-label="SPM">{{ w.avg_stroke_rate or "—" }}</td>
+      <td data-label="Calories">{{ w.total_calories or "—" }}</td>
     </tr>
     {% endfor %}
   </tbody>
