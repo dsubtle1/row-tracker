@@ -80,9 +80,9 @@
                 label: "Workout pace",
                 data: data.map(d => d.pace_seconds),
                 borderColor: "transparent",
-                backgroundColor: dotColor,
-                pointRadius: 4,
-                pointHoverRadius: 6,
+                backgroundColor: isDark ? "rgba(96,165,250,0.25)" : "rgba(59,130,246,0.3)",
+                pointRadius: 2,
+                pointHoverRadius: 5,
                 showLine: false,
                 order: 2,
               },
@@ -91,7 +91,7 @@
                 data: data.map(d => d.rolling_avg_seconds),
                 borderColor: lineColor,
                 backgroundColor: "transparent",
-                borderWidth: 2,
+                borderWidth: 2.5,
                 pointRadius: 0,
                 pointHoverRadius: 4,
                 tension: 0.3,
@@ -104,9 +104,7 @@
             maintainAspectRatio: true,
             interaction: { mode: "index", intersect: false },
             plugins: {
-              legend: {
-                labels: { color: textColor, boxWidth: 12, padding: 16 },
-              },
+              legend: { display: false },
               tooltip: {
                 callbacks: {
                   title: items => {

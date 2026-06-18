@@ -44,14 +44,8 @@
         const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
         const textColor = isDark ? "#7a8399" : "#64748b";
 
-        // Colour each CAWR point by zone
-        const pointColors = data.map(d => {
-          if (d.cawr === null)  return "transparent";
-          if (d.cawr < 0.8)    return "#f59e0b";   // amber — under-training
-          if (d.cawr <= 1.3)   return "#22c55e";   // green  — optimal
-          if (d.cawr <= 1.5)   return "#f97316";   // orange — strain
-          return "#ef4444";                         // red    — risk
-        });
+        const lineCol  = isDark ? "#3b82f6" : "#0369a1";
+        const refColor = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.18)";
 
         const labels = data.map(d => d.date);
         const cawrValues = data.map(d => d.cawr);
@@ -62,38 +56,38 @@
           data: {
             labels,
             datasets: [
-              // Optimal zone band — upper edge
+              // Reference line — upper optimal boundary
               {
-                label: "_zone_top",
+                label: "_ref_top",
                 data: data.map(() => 1.3),
-                borderColor: "transparent",
-                backgroundColor: isDark
-                  ? "rgba(34,197,94,0.08)"
-                  : "rgba(34,197,94,0.10)",
-                fill: "-1",   // fill down to next dataset
+                borderColor: refColor,
+                borderWidth: 1,
+                borderDash: [4, 4],
                 pointRadius: 0,
+                fill: false,
                 order: 3,
               },
-              // Optimal zone band — lower edge
+              // Reference line — lower optimal boundary
               {
-                label: "_zone_bottom",
+                label: "_ref_bottom",
                 data: data.map(() => 0.8),
-                borderColor: "transparent",
-                backgroundColor: "transparent",
-                fill: false,
+                borderColor: refColor,
+                borderWidth: 1,
+                borderDash: [4, 4],
                 pointRadius: 0,
+                fill: false,
                 order: 4,
               },
               // CAWR line
               {
                 label: "CAWR",
                 data: cawrValues,
-                borderColor: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.15)",
-                borderWidth: 1.5,
-                backgroundColor: pointColors,
-                pointRadius: 3,
+                borderColor: lineCol,
+                borderWidth: 2,
+                backgroundColor: lineCol,
+                pointRadius: 2,
                 pointHoverRadius: 5,
-                pointBackgroundColor: pointColors,
+                pointBackgroundColor: lineCol,
                 tension: 0.2,
                 order: 1,
                 fill: false,

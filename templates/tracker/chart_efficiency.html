@@ -61,16 +61,7 @@
         const gridColor  = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
         const textColor  = isDark ? "#7a8399" : "#64748b";
 
-        // Colour points by recency — older = more muted
-        const n = data.length;
-        const pointColors = data.map((_, i) => {
-          const t = i / Math.max(n - 1, 1);
-          // Fade from muted teal to bright blue
-          const r = Math.round(30  + t * (59  - 30));
-          const g = Math.round(100 + t * (130 - 100));
-          const b = Math.round(180 + t * (246 - 180));
-          return `rgba(${r},${g},${b},0.65)`;
-        });
+        const dotCol = isDark ? "rgba(96,165,250,0.4)" : "rgba(59,130,246,0.45)";
 
         const ctx = document.getElementById("efficiencyChart").getContext("2d");
         chart = new Chart(ctx, {
@@ -79,9 +70,9 @@
             datasets: [{
               label: "Workouts",
               data: data.map(d => ({ x: d.stroke_rate, y: d.pace_seconds, _d: d })),
-              backgroundColor: pointColors,
-              pointRadius: 5,
-              pointHoverRadius: 7,
+              backgroundColor: dotCol,
+              pointRadius: 4,
+              pointHoverRadius: 6,
             }],
           },
           options: {
