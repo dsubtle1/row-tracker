@@ -166,14 +166,28 @@
 </section>
 {% endif %}
 
-{# ── Stroke data note ────────────────────────────────────────────────────── #}
-{% if extras.has_stroke_data %}
+{# ── Stroke data ─────────────────────────────────────────────────────────── #}
+{% if stroke_data %}
+<section class="wd-section">
+  <h2 class="wd-section-title">🚣 Stroke Data</h2>
+  <div class="chart-card">
+    <div class="chart-wrap">
+      <canvas id="strokeChart"></canvas>
+    </div>
+    <p class="chart-note">
+      Pace and stroke rate for every stroke of this workout. Left axis: pace, lower is faster.
+      Right axis: stroke rate (spm). Hover for heart rate.
+    </p>
+  </div>
+</section>
+<script id="strokeDataJson" type="application/json">{{ stroke_data | tojson }}</script>
+{% elif extras.has_stroke_data %}
 <section class="wd-section">
   <h2 class="wd-section-title">🚣 Stroke Data</h2>
   <div class="wd-stroke-note">
     <span class="wd-stroke-note-icon">ℹ️</span>
-    <p>Per-stroke data was recorded for this workout by ErgData and is stored in the Concept2 Logbook.
-    Fetching and visualising it requires an additional API call per workout and is planned for a future build.</p>
+    <p>Per-stroke data was recorded for this workout by ErgData and is stored in the Concept2 Logbook,
+    but couldn't be fetched just now. Check that the C2 API credentials are configured and reload this page to retry.</p>
   </div>
 </section>
 {% endif %}
@@ -196,4 +210,125 @@
 
 <a href="{{ url_for('tracker.workout_list') }}" class="back-link">← Back to workouts</a>
 
+{% endblock %}
+
+{% block extra_js %}
+{% if stroke_data %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function () {
+  const strokes = JSON.parse(document.getElementById("strokeDataJson").textContent);
+  let chart = null;
+
+  function fmtPace(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.round(sec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+  function fmtTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.round(sec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
+  // C2 native units: t = tenths of a second elapsed, p = tenths of a
+  // second per 500m pace, spm = stroke rate, hr = heart rate (bpm).
+  const elapsed = strokes.map(s => s.t / 10);
+  const pace    = strokes.map(s => s.p / 10);
+  const spm     = strokes.map(s => s.spm);
+  const hr      = strokes.map(s => s.hr);
+
+  function render() {
+    const isDark    = document.documentElement.getAttribute("data-theme") !== "light";
+    const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
+    const textColor = isDark ? "#7a8399" : "#64748b";
+    const paceColor = "#3b82f6";
+    const spmColor  = isDark ? "#f59e0b" : "#d97706";
+
+    if (chart) chart.destroy();
+
+    const ctx = document.getElementById("strokeChart").getContext("2d");
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: elapsed,
+        datasets: [
+          {
+            label: "Pace",
+            data: pace,
+            yAxisID: "yPace",
+            borderColor: paceColor,
+            backgroundColor: "transparent",
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.15,
+          },
+          {
+            label: "Stroke rate",
+            data: spm,
+            yAxisID: "ySpm",
+            borderColor: spmColor,
+            backgroundColor: "transparent",
+            borderWidth: 1.5,
+            pointRadius: 0,
+            tension: 0.15,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            display: true,
+            labels: { color: textColor, boxWidth: 12, font: { size: 11 } },
+          },
+          tooltip: {
+            callbacks: {
+              title: items => `  ${fmtTime(elapsed[items[0].dataIndex])} elapsed`,
+              label: item => {
+                const i = item.dataIndex;
+                if (item.datasetIndex === 0) return `  Pace: ${fmtPace(pace[i])}/500m`;
+                const lines = [`  Stroke rate: ${spm[i]} spm`];
+                if (hr[i]) lines.push(`  HR: ${hr[i]} bpm`);
+                return lines;
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: {
+              color: textColor,
+              maxTicksLimit: 10,
+              maxRotation: 0,
+              callback: (val, idx) => fmtTime(elapsed[idx]),
+            },
+            grid: { color: gridColor },
+          },
+          yPace: {
+            reverse: true,
+            position: "left",
+            ticks: { color: textColor, callback: val => fmtPace(val) },
+            grid: { color: gridColor },
+            title: { display: true, text: "Pace / 500m", color: textColor, font: { size: 11 } },
+          },
+          ySpm: {
+            position: "right",
+            ticks: { color: textColor },
+            grid: { display: false },
+            title: { display: true, text: "Stroke rate (spm)", color: textColor, font: { size: 11 } },
+          },
+        },
+      },
+    });
+  }
+
+  render();
+  const observer = new MutationObserver(render);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
+{% endif %}
 {% endblock %}

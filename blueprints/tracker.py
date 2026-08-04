@@ -11,7 +11,7 @@ HR zone filters: register in app.py after blueprint import:
 from datetime import date, timedelta
 from collections import defaultdict
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, current_app, jsonify, render_template, request
 from sqlalchemy import func
 
 from models import db, Workout, PersonalBest
@@ -302,6 +302,30 @@ def workout_detail(workout_id):
     else:
         extras["avg_watts"] = None
 
+    # ── Per-stroke chart data ───────────────────────────────────────────────
+    # C2 flags stroke data as available on the result but doesn't include it
+    # inline — it's one extra API call per workout, so fetch lazily on first
+    # view and cache it in workout.stroke_data rather than during sync.
+    # Older rows may still carry the pre-fix boolean flag in this column
+    # (see c2_api._map_result_to_workout) — anything that isn't an actual
+    # list of strokes is treated as not-yet-fetched and re-fetched below.
+    stroke_data = workout.stroke_data
+    if not isinstance(stroke_data, list):
+        stroke_data = None
+    if extras["has_stroke_data"] and not stroke_data:
+        from c2_api import C2ApiClient
+        client = C2ApiClient(
+            client_id     = current_app.config.get("C2_CLIENT_ID", ""),
+            client_secret = current_app.config.get("C2_CLIENT_SECRET", ""),
+            refresh_token = current_app.config.get("C2_REFRESH_TOKEN", ""),
+        )
+        if client.is_configured():
+            fetched = client.get_stroke_data(workout.id)
+            if fetched:
+                workout.stroke_data = fetched
+                db.session.commit()
+                stroke_data = fetched
+
     # ── Splits ────────────────────────────────────────────────────────────
     raw_splits = (raw.get("workout") or {}).get("splits") or []
     splits = []
@@ -343,6 +367,7 @@ def workout_detail(workout_id):
         heart_rate=heart_rate,
         extras=extras,
         splits=splits,
+        stroke_data=stroke_data,
     )
 
 

@@ -6,8 +6,10 @@ in .env as C2_REFRESH_TOKEN. On each sync we exchange it for a short-lived
 access token, use it, then store the new refresh token back to .env.
 
 Endpoints used:
-  POST /oauth/access_token        — token refresh
-  GET  /api/users/me/results      — paginated workout list (read-only)
+  POST /oauth/access_token             — token refresh
+  GET  /api/users/me/results           — paginated workout list (read-only)
+  GET  /api/users/me/results/{id}/strokes — per-stroke detail for one workout,
+                                             fetched on demand (see get_stroke_data)
 
 Scopes: user:read, results:read
 """
@@ -135,6 +137,32 @@ class C2ApiClient:
         logger.info(f"Fetched {len(results)} results from C2 API.")
         return results
 
+    def get_stroke_data(self, workout_id: int) -> list | None:
+        """
+        Fetch per-stroke detail for a single workout.
+
+        Deliberately not part of sync_workouts() / get_results() — it's one
+        extra API call per workout, so it's called lazily from the workout
+        detail page (and cached in Workout.stroke_data) rather than for
+        every historical result on every sync.
+
+        Returns a list of stroke dicts in C2's native units — t: tenths of
+        a second elapsed, d: cumulative metres, p: tenths of a second per
+        500m pace, spm: stroke rate, hr: heart rate — or None on failure.
+        """
+        if not self.access_token:
+            if not self.refresh_access_token():
+                return None
+
+        url = f"{C2_BASE_URL}/api/users/me/results/{workout_id}/strokes"
+        try:
+            resp = requests.get(url, headers=self._get_headers(), timeout=30)
+            resp.raise_for_status()
+            return resp.json().get("data", [])
+        except requests.RequestException as e:
+            logger.error(f"C2 stroke-data request failed for workout {workout_id}: {e}")
+            return None
+
     # ------------------------------------------------------------------
     # Sync
     # ------------------------------------------------------------------
@@ -247,9 +275,12 @@ def _map_result_to_workout(result: dict):
     if calories:
         calories = int(calories)
 
-    # Stroke data (per-stroke detail if present)
-    stroke_data = result.get("stroke_data") or None
-
+    # result["stroke_data"] is just a boolean flag from the results-list
+    # endpoint ("per-stroke detail exists on C2 for this workout"), not the
+    # actual stroke array — that's stored in raw_json and read via
+    # blueprints.tracker's has_stroke_data check. The real array is fetched
+    # on demand by C2ApiClient.get_stroke_data() and cached here on first
+    # view of the workout detail page, so it starts out empty at sync time.
     return Workout(
         id               = result["id"],
         workout_date     = workout_date,
@@ -259,7 +290,7 @@ def _map_result_to_workout(result: dict):
         avg_pace_seconds = pace_s,
         avg_stroke_rate  = stroke_rate,
         total_calories   = calories,
-        stroke_data      = stroke_data,
+        stroke_data      = None,
         raw_json         = result,
         synced_at        = datetime.utcnow(),
     )

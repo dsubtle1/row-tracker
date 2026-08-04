@@ -8,7 +8,9 @@ context is still needed because models.py binds Workout to Flask-SQLAlchemy.
 
 from datetime import date
 
-from c2_api import _map_result_to_workout
+import pytest
+
+from c2_api import C2ApiClient, _map_result_to_workout
 
 
 def _raw_result(**overrides):
@@ -69,3 +71,68 @@ def test_malformed_date_falls_back_to_today(app_ctx):
 def test_missing_date_falls_back_to_today(app_ctx):
     w = _map_result_to_workout(_raw_result(date=""))
     assert w.workout_date == date.today()
+
+
+def test_stroke_data_column_starts_empty_regardless_of_the_availability_flag(app_ctx):
+    """
+    result["stroke_data"] is just a boolean "detail exists on C2" flag, not
+    the actual per-stroke array — the real array is fetched lazily via
+    C2ApiClient.get_stroke_data() from the workout detail page, so the
+    column must start out None at sync time either way.
+    """
+    w = _map_result_to_workout(_raw_result(stroke_data=True))
+    assert w.stroke_data is None
+
+    w2 = _map_result_to_workout(_raw_result(stroke_data=False))
+    assert w2.stroke_data is None
+
+
+# ---------------------------------------------------------------------------
+# C2ApiClient.get_stroke_data
+# ---------------------------------------------------------------------------
+
+class _FakeResponse:
+    def __init__(self, status_code=200, json_data=None):
+        self.status_code = status_code
+        self._json_data = json_data or {}
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            import requests
+            raise requests.HTTPError(f"{self.status_code} error")
+
+    def json(self):
+        return self._json_data
+
+
+def _client():
+    return C2ApiClient(client_id="id", client_secret="secret", refresh_token="token")
+
+
+def test_get_stroke_data_returns_the_stroke_array(monkeypatch):
+    strokes = [{"t": 11, "d": 27, "p": 2082, "spm": 0, "hr": 150}]
+    monkeypatch.setattr("c2_api.requests.get", lambda *a, **k: _FakeResponse(200, {"data": strokes}))
+
+    client = _client()
+    result = client.get_stroke_data(12345)
+    assert result == strokes
+
+
+def test_get_stroke_data_refreshes_token_if_missing(monkeypatch):
+    monkeypatch.setattr("c2_api.requests.get", lambda *a, **k: _FakeResponse(200, {"data": []}))
+    client = _client()
+    assert client.access_token is None
+
+    client.get_stroke_data(12345)
+    assert client.access_token == "token"
+
+
+def test_get_stroke_data_returns_none_on_http_error(monkeypatch):
+    monkeypatch.setattr("c2_api.requests.get", lambda *a, **k: _FakeResponse(404))
+    client = _client()
+    assert client.get_stroke_data(12345) is None
+
+
+def test_get_stroke_data_returns_none_when_not_configured():
+    client = C2ApiClient(client_id="", client_secret="", refresh_token="")
+    assert client.get_stroke_data(12345) is None
