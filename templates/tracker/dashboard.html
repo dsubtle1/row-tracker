@@ -10,12 +10,19 @@
     <span class="stat-value">{{ "{:,}".format(summary.lifetime_meters) }}</span>
     <span class="stat-label">metres lifetime</span>
     {% if summary.next_milestone %}
-    <div class="milestone-track">
-      <div class="milestone-bar" style="width: {{ summary.milestone_pct }}%"></div>
+    {# Ring geometry: r=26 -> circumference = 2*pi*26 ~= 163.36 #}
+    <div class="gauge-row">
+      <svg class="gauge-ring" viewBox="0 0 64 64" width="52" height="52">
+        <circle class="gauge-ring-track" cx="32" cy="32" r="26" />
+        <circle class="gauge-ring-fill" cx="32" cy="32" r="26"
+                stroke-dasharray="163.36"
+                stroke-dashoffset="{{ (163.36 * (1 - (summary.milestone_pct or 0) / 100)) | round(2) }}" />
+      </svg>
+      <div class="gauge-text">
+        <span class="gauge-pct">{{ summary.milestone_pct }}%</span>
+        <span class="gauge-sub">{{ "{:,}".format(summary.meters_to_milestone) }}m to {{ summary.next_label }}</span>
+      </div>
     </div>
-    <span class="milestone-label">
-      {{ "{:,}".format(summary.meters_to_milestone) }}m to {{ summary.next_label }}
-    </span>
     {% endif %}
   </div>
 
