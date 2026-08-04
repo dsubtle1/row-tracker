@@ -625,6 +625,66 @@ code {
   line-height: 1.5;
 }
 
+/* ---- Dashboard trend sparklines ---- */
+.trends-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.trend-card {
+  flex: 1;
+  min-width: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 1.1rem 1.25rem;
+}
+
+.trend-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.trend-card-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.trend-card-link {
+  font-size: 0.75rem;
+  color: var(--color-accent);
+}
+
+.trend-sparkline-wrap {
+  position: relative;
+  height: 56px;
+}
+
+.trend-sparkline-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.trend-card-sub {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .trends-row {
+    flex-direction: column;
+  }
+}
+
 /* ---- CAWR zone legend ---- */
 .cawr-zones {
   display: flex;

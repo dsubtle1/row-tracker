@@ -59,6 +59,30 @@
   <a href="{{ url_for('tracker.import_csv_view') }}" class="btn btn-ghost btn-sm">Import CSV</a>
 </div>
 
+{# ── Trend sparklines ─────────────────────────────────────────────────── #}
+<div class="trends-row">
+  <div class="trend-card">
+    <div class="trend-card-header">
+      <span class="trend-card-title">Pace Trend</span>
+      <a href="{{ url_for('tracker.chart_pace') }}" class="trend-card-link">View →</a>
+    </div>
+    <div class="trend-sparkline-wrap">
+      <canvas id="paceSparkline"></canvas>
+    </div>
+    <span class="trend-card-sub" id="paceSparklineSub">Last 90 days</span>
+  </div>
+
+  <div class="trend-card">
+    <div class="trend-card-header">
+      <span class="trend-card-title">Weekly Volume</span>
+    </div>
+    <div class="trend-sparkline-wrap">
+      <canvas id="volumeSparkline"></canvas>
+    </div>
+    <span class="trend-card-sub" id="volumeSparklineSub">Last 12 weeks</span>
+  </div>
+</div>
+
 {# ── Volume Heatmap ───────────────────────────────────────────────────── #}
 <section class="section">
   <div class="section-header">
@@ -95,10 +119,14 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
+// Heatmap data injected from Flask — shared by the heatmap grid below
+// and the weekly-volume sparkline (no second data fetch needed).
+const heatmapDays = {{ heatmap | tojson }};
+
 (function () {
-  // Heatmap data injected from Flask
-  const days = {{ heatmap | tojson }};
+  const days = heatmapDays;
 
   const grid = document.getElementById("heatmap");
   if (!grid) return;
@@ -175,6 +203,141 @@
     }
     grid.appendChild(col);
   });
+})();
+
+// ── Trend sparklines ─────────────────────────────────────────────────────
+// Pace reuses the same /api/data/pace endpoint as the full Pace Trend
+// chart; weekly volume is derived client-side from heatmapDays above —
+// no second data fetch needed.
+(function () {
+  let paceChart = null, volumeChart = null;
+
+  function accentColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim() || "#cdfa3f";
+  }
+
+  function fmtPace(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.round(sec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
+  function renderVolumeSparkline() {
+    const canvas = document.getElementById("volumeSparkline");
+    if (!canvas) return;
+
+    // Group heatmapDays (oldest first, dow 0=Mon..6=Sun) into weekly totals.
+    const weeks = [];
+    let weekTotal = 0, weekStart = null;
+    heatmapDays.forEach((d, i) => {
+      if (weekStart === null) weekStart = d.date;
+      weekTotal += d.meters;
+      if (d.dow === 6 || i === heatmapDays.length - 1) {
+        weeks.push({ start: weekStart, meters: weekTotal });
+        weekTotal = 0;
+        weekStart = null;
+      }
+    });
+    const recent = weeks.slice(-12);
+    if (!recent.length) return;
+
+    if (volumeChart) volumeChart.destroy();
+    volumeChart = new Chart(canvas.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: recent.map(w => w.start),
+        datasets: [{
+          data: recent.map(w => w.meters),
+          backgroundColor: accentColor(),
+          borderRadius: 2,
+          barPercentage: 0.7,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: items => new Date(recent[items[0].dataIndex].start + "T00:00:00")
+                .toLocaleDateString("default", { month: "short", day: "numeric" }),
+              label: item => `  ${(item.raw / 1000).toFixed(1)}km`,
+            },
+          },
+        },
+        scales: {
+          x: { display: false },
+          y: { display: false, beginAtZero: true },
+        },
+      },
+    });
+
+    const latest = recent[recent.length - 1];
+    document.getElementById("volumeSparklineSub").textContent =
+      `${(latest.meters / 1000).toFixed(1)}km this week`;
+  }
+
+  function renderPaceSparkline() {
+    const canvas = document.getElementById("paceSparkline");
+    if (!canvas) return;
+
+    fetch("/api/data/pace?days=90")
+      .then(r => r.json())
+      .then(data => {
+        if (paceChart) paceChart.destroy();
+        if (!data.length) return;
+
+        paceChart = new Chart(canvas.getContext("2d"), {
+          type: "line",
+          data: {
+            labels: data.map(d => d.date),
+            datasets: [{
+              data: data.map(d => d.pace_seconds),
+              borderColor: accentColor(),
+              backgroundColor: "transparent",
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.3,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: items => new Date(data[items[0].dataIndex].date + "T00:00:00")
+                    .toLocaleDateString("default", { month: "short", day: "numeric" }),
+                  label: item => `  ${data[item.dataIndex].pace_str}/500m`,
+                },
+              },
+            },
+            scales: {
+              x: { display: false },
+              y: { display: false, reverse: true },
+            },
+          },
+        });
+
+        const latest = data[data.length - 1];
+        document.getElementById("paceSparklineSub").textContent =
+          `Last 90 days · ${fmtPace(latest.pace_seconds)}/500m latest`;
+      });
+  }
+
+  renderVolumeSparkline();
+  renderPaceSparkline();
+
+  // Re-render on theme toggle so the sparkline color follows the accent.
+  const observer = new MutationObserver(() => {
+    renderVolumeSparkline();
+    renderPaceSparkline();
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 })();
 
 // ── Day modal ────────────────────────────────────────────────────────────

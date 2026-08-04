@@ -77,7 +77,13 @@
           },
           options: {
             responsive: true,
-            maintainAspectRatio: true,
+            // .chart-wrap fixes the container's CSS height already; with
+            // maintainAspectRatio:true Chart.js instead sizes its internal
+            // layout from width/aspectRatio, so its own notion of "height"
+            // drifts from the actual rendered box and mouse-to-chart hit
+            // testing goes wrong (tooltip becomes hard to trigger).
+            maintainAspectRatio: false,
+            interaction: { mode: "nearest", intersect: false },
             plugins: {
               legend: { display: false },
               tooltip: {
