@@ -90,6 +90,15 @@
   </div>
 </div>
 
+{# ── Your Progress (active journeys) ──────────────────────────────────── #}
+<section class="section" id="journeyProgressSection" style="display: none;">
+  <div class="section-header">
+    <h2 class="section-title">Your Progress</h2>
+    <a href="{{ url_for('gamification.journeys') }}" class="section-link">All journeys →</a>
+  </div>
+  <div class="progress-checklist" id="journeyChecklist"></div>
+</section>
+
 {# ── Volume Heatmap ───────────────────────────────────────────────────── #}
 <section class="section">
   <div class="section-header">
@@ -345,6 +354,47 @@ const heatmapDays = {{ heatmap | tojson }};
     renderPaceSparkline();
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+
+// ── Your Progress (active journeys) ─────────────────────────────────────
+// Pulls the same JSON endpoints the route detail pages use — no new
+// backend. Only journeys that are active or complete get a row; a
+// journey that's never been started has nothing worth showing here
+// (the full Journeys page already offers "Start Journey").
+(function () {
+  const ROUTES = [
+    { key: "rhine",    label: "Rhine River",          emoji: "🇨🇭", api: "/gamification/api/rhine",    href: "{{ url_for('gamification.route') }}" },
+    { key: "holland",  label: "Holland Tour",         emoji: "🌷", api: "/gamification/api/holland",  href: "{{ url_for('gamification.route_holland') }}" },
+    { key: "transcan", label: "Trans-Canada Highway", emoji: "🍁", api: "/gamification/api/transcan", href: "{{ url_for('gamification.route_transcan') }}" },
+    { key: "route66",  label: "Route 66",             emoji: "🛣️", api: "/gamification/api/route66",  href: "{{ url_for('gamification.route_route66') }}" },
+  ];
+
+  Promise.all(
+    ROUTES.map(r => fetch(r.api).then(res => res.json()).then(data => ({ ...r, data })))
+  ).then(results => {
+    const relevant = results.filter(r => r.data.active || r.data.complete);
+    if (!relevant.length) return;   // section stays hidden
+
+    const list = document.getElementById("journeyChecklist");
+    relevant.forEach(r => {
+      const row = document.createElement("div");
+      row.className = "progress-check-row";
+      row.onclick = () => { window.location.href = r.href; };
+
+      row.innerHTML = r.data.complete
+        ? `<span class="progress-check-icon">${r.emoji}</span>
+           <span class="progress-check-label">${r.label}</span>
+           <span class="progress-check-complete">✓ Complete</span>`
+        : `<span class="progress-check-icon">${r.emoji}</span>
+           <span class="progress-check-label">${r.label}</span>
+           <div class="progress-check-bar-track"><div class="progress-check-bar-fill" style="width:${r.data.pct}%"></div></div>
+           <span class="progress-check-pct">${r.data.pct}%</span>`;
+
+      list.appendChild(row);
+    });
+
+    document.getElementById("journeyProgressSection").style.display = "";
+  });
 })();
 
 // ── Day modal ────────────────────────────────────────────────────────────

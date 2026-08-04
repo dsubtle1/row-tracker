@@ -710,6 +710,83 @@ code {
   }
 }
 
+/* ---- Your Progress checklist (active journeys, dashboard) ---- */
+.progress-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.progress-check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm, 8px);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.progress-check-row:hover {
+  background: var(--color-surface-2);
+}
+
+.progress-check-icon {
+  flex-shrink: 0;
+  width: 1.5rem;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.progress-check-label {
+  flex: 0 0 160px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.progress-check-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-check-bar-fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.progress-check-pct {
+  flex-shrink: 0;
+  width: 3.2rem;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.progress-check-complete {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+@media (max-width: 640px) {
+  .progress-check-label {
+    flex-basis: 110px;
+  }
+}
+
 /* ---- CAWR zone legend ---- */
 .cawr-zones {
   display: flex;
