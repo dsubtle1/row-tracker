@@ -5,21 +5,25 @@
 
 /* ---- Custom Properties ---- */
 :root {
-  --color-bg:         #0f1117;
-  --color-surface:    #1a1d27;
-  --color-surface-2:  #232739;
-  --color-border:     #2e3347;
-  --color-text:       #e2e8f0;
+  --color-bg:         #0a0b10;
+  --color-surface:    #16181f;
+  --color-surface-2:  #1e212b;
+  --color-border:     #262a35;
+  --color-text:       #e6e9ef;
   --color-text-muted: #7a8399;
-  --color-accent:     #3b82f6;
-  --color-accent-2:   #60a5fa;
+  --color-accent:     #cdfa3f;
+  --color-accent-2:   #e2ff85;
+  --color-teal:       var(--color-accent);
   --color-green:      #22c55e;
   --color-red:        #ef4444;
   --color-amber:      #f59e0b;
-  --color-nav-bg:     #13151f;
+  --color-nav-bg:     #0e0f14;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "SF Mono", "Fira Code", "Fira Mono", monospace;
-  --radius:    6px;
+  --radius:      18px;
+  --radius-sm:   10px;
+  --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  --accent-glow: 0 0 18px color-mix(in srgb, var(--color-accent) 45%, transparent);
   --transition: 150ms ease;
 }
 
@@ -31,12 +35,14 @@
   --color-text:         #0f172a;
   --color-text-muted:   #475569;
   --color-nav-bg:       #1e293b;
-  --color-accent:       #0369a1;
-  --color-accent-2:     #0284c7;
+  /* Same hue as the dark-theme neon accent (~75°), darkened for
+     sufficient contrast against a light background. --color-teal
+     (defined in :root) resolves through this automatically. */
+  --color-accent:       #67840b;
+  --color-accent-2:     #516808;
 
   /* Variables used as fallbacks in later-phase components */
   --color-text-primary: #0f172a;
-  --color-teal:         #006d82;
   --color-accent-val:   #f59e0b;
 
   /* Heatmap — distinct greens on light background */
@@ -149,6 +155,7 @@ code {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
   padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
 }
@@ -190,7 +197,8 @@ code {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 1rem;
+  box-shadow: var(--card-shadow);
+  padding: 1.1rem 1.25rem;
 }
 
 .pb-card.pb-stale { border-color: var(--color-amber); }
@@ -235,6 +243,7 @@ code {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
   padding: 1.25rem;
   max-width: 500px;
 }
@@ -262,11 +271,7 @@ code {
 /* ---- Summary Bar ---- */
 .summary-bar {
   display: flex;
-  gap: 1px;
-  background: var(--color-border);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  overflow: hidden;
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
@@ -277,11 +282,16 @@ code {
   gap: 0.2rem;
   padding: 1.25rem 1.5rem;
   background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
   min-width: 0;
 }
 
 .stat-block--primary {
   flex: 1.6;
+  border-color: var(--color-accent);
+  box-shadow: var(--card-shadow), var(--accent-glow);
 }
 
 .stat-block--last {
@@ -348,7 +358,12 @@ code {
 
 /* ---- Section ---- */
 .section {
-  margin-bottom: 2.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .section-header {
@@ -440,10 +455,10 @@ code {
 
 /* Levels */
 .heatmap-cell[data-level="0"]    { background: var(--color-surface-2); }
-.heatmap-cell[data-level="1"]    { background: #1e3a5f; }
-.heatmap-cell[data-level="2"]    { background: #1d4ed8; }
-.heatmap-cell[data-level="3"]    { background: #3b82f6; }
-.heatmap-cell[data-level="4"]    { background: #93c5fd; }
+.heatmap-cell[data-level="1"]    { background: #2e4a1c; }
+.heatmap-cell[data-level="2"]    { background: #4d7c2b; }
+.heatmap-cell[data-level="3"]    { background: #8bc93f; }
+.heatmap-cell[data-level="4"]    { background: var(--color-accent); }
 .heatmap-cell[data-level="empty"]{ background: transparent; }
 
 [data-theme="light"] .heatmap-cell[data-level="0"]  { background: #e2e8f0; }
@@ -845,8 +860,15 @@ code {
   background: var(--color-accent);
   color: #fff;
   border-color: var(--color-accent);
+  font-weight: 600;
 }
 .btn-primary:hover { background: var(--color-accent-2); border-color: var(--color-accent-2); color: #fff; text-decoration: none; }
+
+/* Dark theme's neon accent is too light for white text */
+:root:not([data-theme="light"]) .btn-primary,
+:root:not([data-theme="light"]) .btn-primary:hover {
+  color: #0a0b10;
+}
 
 .btn-ghost {
   background: transparent;
@@ -1496,17 +1518,21 @@ code {
   padding: 0.45rem 1rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--color-teal, #00829b);
+  color: var(--color-accent);
   background: transparent;
-  border: 1px solid var(--color-teal, #00829b);
-  border-radius: 6px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm, 6px);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 
 .sync-btn:hover:not(:disabled) {
-  background: var(--color-teal, #00829b);
+  background: var(--color-accent);
   color: #fff;
+}
+
+:root:not([data-theme="light"]) .sync-btn:hover:not(:disabled) {
+  color: #0a0b10;
 }
 
 .sync-btn:disabled {
@@ -2197,10 +2223,7 @@ body.mobile-nav-open { overflow: hidden; }
   .summary-bar {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1px;
-    background: var(--color-border);
-    border-radius: var(--radius);
-    overflow: hidden;
+    gap: 0.75rem;
   }
 
   .stat-block {
