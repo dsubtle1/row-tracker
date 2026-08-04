@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Import CSV — Row Tracker{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Import CSV</h1>
+  <p class="page-subtitle">For workouts from before your Concept2 account had API access — the nightly sync won't backfill those on its own.</p>
+</div>
+
+<div class="chart-card">
+  <p class="muted">
+    Export a season from the Concept2 Online Logbook (Profile → Season → Export) and upload the CSV(s) here.
+    Only RowErg workouts are imported; anything already synced is skipped automatically by its C2 Log ID, so
+    it's safe to re-upload the same file.
+  </p>
+
+  <form method="post" enctype="multipart/form-data">
+    <div class="feedback-field">
+      <label for="csv_files">CSV file(s)</label>
+      <input type="file" id="csv_files" name="csv_files" accept=".csv" multiple required />
+    </div>
+    <button type="submit" class="btn btn-primary">Import</button>
+  </form>
+</div>
+
+{% if results is not none %}
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title">Results</h2>
+  </div>
+
+  {% if results %}
+  <div class="wd-splits-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Inserted</th>
+          <th>Skipped</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        <tr>
+          <td>{{ r.filename }}</td>
+          {% if r.error %}
+          <td colspan="2">{{ r.error }}</td>
+          {% else %}
+          <td>{{ r.inserted }}</td>
+          <td>{{ r.skipped }}</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">
+    {{ results | sum(attribute="inserted") }} new workout(s) imported.
+    {% if results | sum(attribute="inserted") > 0 %}Personal bests and badges have been recalculated.{% endif %}
+  </p>
+  {% else %}
+  <p class="muted">Choose at least one CSV file to import.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+{% endblock %}

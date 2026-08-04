@@ -66,7 +66,9 @@
       <details class="faq-item">
         <summary class="faq-question">Can I import workouts from a CSV or other file?</summary>
         <div class="faq-answer">
-          Not currently. Row Tracker only pulls data via the Concept2 Logbook API.
+          Yes — for seasons your Concept2 account didn't have API access for yet, export a season CSV from the
+          Concept2 Online Logbook and upload it on the <a href="{{ url_for('tracker.import_csv_view') }}">Import CSV</a> page.
+          Already-synced workouts are skipped automatically.
         </div>
       </details>
 

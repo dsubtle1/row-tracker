@@ -6,7 +6,7 @@
   <h1>Workout History</h1>
 </div>
 
-{% if workouts %}
+{% if workouts.items %}
 <table class="data-table">
   <thead>
     <tr>
@@ -32,6 +32,6 @@
   </tbody>
 </table>
 {% else %}
-<p class="muted">No workouts found. Import your CSV data first.</p>
+<p class="muted">No workouts found. Sync from the Dashboard, or <a href="{{ url_for('tracker.import_csv_view') }}">import a CSV</a>.</p>
 {% endif %}
 {% endblock %}

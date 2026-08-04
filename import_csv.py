@@ -137,53 +137,64 @@ def parse_row(row: dict) -> Workout | None:
 #  Main import logic                                                            #
 # --------------------------------------------------------------------------- #
 
+def import_rows(csv_file) -> dict:
+    """
+    Import RowErg rows from an open, text-mode, csv.DictReader-compatible
+    file object (a local file handle or a decoded upload stream). Requires
+    an active Flask app context. Shared by the CLI script (import_files,
+    below) and the web upload route in blueprints/tracker.py.
+
+    Returns {"inserted": int, "skipped": int}.
+    """
+    reader = csv.DictReader(csv_file)
+    inserted = 0
+    skipped  = 0
+
+    for row in reader:
+        workout = parse_row(row)
+
+        if workout is None:
+            skipped += 1
+            continue
+
+        # Use merge (INSERT OR IGNORE equivalent via SQLAlchemy)
+        existing = db.session.get(Workout, workout.id)
+        if existing is not None:
+            skipped += 1
+            continue
+
+        db.session.add(workout)
+        inserted += 1
+
+        # Commit in batches to avoid large memory usage
+        if inserted % 100 == 0:
+            db.session.commit()
+
+    db.session.commit()
+    return {"inserted": inserted, "skipped": skipped}
+
+
 def import_files(file_paths: list[str]) -> None:
     app = create_app()
 
     with app.app_context():
         total_inserted = 0
         total_skipped  = 0
-        total_errors   = 0
 
         for file_path in sorted(file_paths):
-            file_inserted = 0
-            file_skipped  = 0
-
             print(f"\n→ {os.path.basename(file_path)}")
 
             with open(file_path, newline="", encoding="utf-8-sig") as f:
-                reader = csv.DictReader(f)
+                stats = import_rows(f)
 
-                for line_num, row in enumerate(reader, start=2):
-                    workout = parse_row(row)
-
-                    if workout is None:
-                        file_skipped += 1
-                        continue
-
-                    # Use merge (INSERT OR IGNORE equivalent via SQLAlchemy)
-                    existing = db.session.get(Workout, workout.id)
-                    if existing is not None:
-                        file_skipped += 1
-                        continue
-
-                    db.session.add(workout)
-                    file_inserted += 1
-
-                    # Commit in batches to avoid large memory usage
-                    if file_inserted % 100 == 0:
-                        db.session.commit()
-
-            db.session.commit()
-            print(f"   inserted: {file_inserted}   skipped/non-RowErg: {file_skipped}")
-            total_inserted += file_inserted
-            total_skipped  += file_skipped
+            print(f"   inserted: {stats['inserted']}   skipped/non-RowErg: {stats['skipped']}")
+            total_inserted += stats["inserted"]
+            total_skipped  += stats["skipped"]
 
         print(f"\n{'='*50}")
         print(f"Import complete.")
         print(f"  Total inserted : {total_inserted}")
         print(f"  Total skipped  : {total_skipped}")
-        print(f"  Errors         : {total_errors}")
 
         # After import, recalculate personal bests
         if total_inserted > 0:

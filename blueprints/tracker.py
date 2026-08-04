@@ -490,6 +490,50 @@ def sync():
     })
 
 
+@tracker_bp.route("/import", methods=["GET", "POST"])
+def import_csv_view():
+    """
+    CSV import — for historical workouts C2's API sync doesn't cover
+    (e.g. seasons rowed before the account had API access). Accepts one
+    or more Concept2 Logbook season-export CSVs, reuses the same row
+    parser as the CLI script (import_csv.py), and skips duplicates by
+    C2 Log ID exactly like sync does.
+    """
+    import io
+    from import_csv import import_rows
+
+    results = None
+    if request.method == "POST":
+        uploads = [f for f in request.files.getlist("csv_files") if f and f.filename]
+        results = []
+        total_inserted = 0
+
+        for upload in uploads:
+            if not upload.filename.lower().endswith(".csv"):
+                results.append({"filename": upload.filename, "inserted": 0, "skipped": 0,
+                                 "error": "Not a .csv file — skipped."})
+                continue
+            try:
+                stream = io.TextIOWrapper(upload.stream, encoding="utf-8-sig")
+                stats = import_rows(stream)
+            except Exception as e:
+                db.session.rollback()
+                results.append({"filename": upload.filename, "inserted": 0, "skipped": 0,
+                                 "error": f"Couldn't read this file: {e}"})
+                continue
+
+            results.append({"filename": upload.filename, "error": None, **stats})
+            total_inserted += stats["inserted"]
+
+        if total_inserted > 0:
+            from pb_engine import recalculate_all_pbs
+            from badge_engine import evaluate_badges
+            recalculate_all_pbs()
+            evaluate_badges()
+
+    return render_template("tracker/import.html", results=results)
+
+
 @tracker_bp.route("/faq")
 def faq():
     return render_template("tracker/faq.html")

@@ -31,7 +31,7 @@ Automatically every night at 3:00 AM Toronto time. You can also click the Sync b
 First, make sure your workout has synced to the Concept2 Online Logbook via ErgData. Then click the Sync button on the Dashboard. If it still doesn't appear, wait a few minutes and try again — occasionally the Concept2 API has a short delay.
 
 **Can I import workouts from a CSV or other file?**
-Not currently. Row Tracker only pulls data via the Concept2 Logbook API.
+Yes — for seasons your Concept2 account didn't have API access for yet, export a season CSV from the Concept2 Online Logbook and upload it on the Import CSV page (linked from the Dashboard). Already-synced workouts are skipped automatically.
 
 **Will my historical workouts appear?**
 Yes. The first time Row Tracker syncs, it backfills your full workout history from the Concept2 Logbook.

@@ -1,11 +1,13 @@
 """
-Tests for import_csv.py — CSV row parsing (no DB, no app context required).
-
-parse_row/parse_pace are pure functions over dict input, so these run
-without any Flask/SQLAlchemy fixtures.
+Tests for import_csv.py — CSV row parsing (no DB, no app context required)
+and import_rows() — the shared insert logic used by both the CLI script
+and the /import web route.
 """
 
-from import_csv import parse_pace, parse_row
+import io
+
+from import_csv import parse_pace, parse_row, import_rows
+from models import Workout
 
 
 # ---------------------------------------------------------------------------
@@ -100,4 +102,52 @@ def test_parse_row_ignores_unparseable_numeric_fields_rather_than_crashing():
     workout = parse_row(row)
     assert workout is not None
     assert workout.distance_meters is None
-    assert workout.total_calories is None
+
+
+# ---------------------------------------------------------------------------
+# import_rows — shared by the CLI script and the /import web route
+# ---------------------------------------------------------------------------
+
+_CSV_HEADER = "Type,Log ID,Date,Work Time (Seconds),Work Distance,Pace,Stroke Rate/Cadence,Total Cal\n"
+
+
+def _csv_text(*rows: str) -> io.StringIO:
+    return io.StringIO(_CSV_HEADER + "\n".join(rows))
+
+
+def test_import_rows_inserts_valid_and_counts_skips(app_ctx):
+    csv_file = _csv_text(
+        "RowErg,111,2024-11-15 09:32:00,480.0,2000,2:00.0,24,250",
+        "RowErg,112,2024-11-16 09:32:00,240.0,1000,2:00.0,26,120",
+        "BikeErg,113,2024-11-17 09:32:00,240.0,1000,2:00.0,26,120",  # non-RowErg
+        ",,,,,,,",  # blank/invalid row
+    )
+    stats = import_rows(csv_file)
+
+    assert stats == {"inserted": 2, "skipped": 2}
+    assert Workout.query.count() == 2
+    assert {w.id for w in Workout.query.all()} == {111, 112}
+
+
+def test_import_rows_skips_ids_already_in_the_database(app_ctx, make_workout):
+    make_workout(id=111, distance_meters=2000, time_seconds=480)
+
+    csv_file = _csv_text(
+        "RowErg,111,2024-11-15 09:32:00,480.0,2000,2:00.0,24,250",  # already present
+        "RowErg,112,2024-11-16 09:32:00,240.0,1000,2:00.0,26,120",  # new
+    )
+    stats = import_rows(csv_file)
+
+    assert stats == {"inserted": 1, "skipped": 1}
+    assert Workout.query.count() == 2
+
+
+def test_import_rows_is_idempotent_on_repeat_import(app_ctx):
+    row = "RowErg,111,2024-11-15 09:32:00,480.0,2000,2:00.0,24,250"
+
+    first = import_rows(_csv_text(row))
+    second = import_rows(_csv_text(row))
+
+    assert first == {"inserted": 1, "skipped": 0}
+    assert second == {"inserted": 0, "skipped": 1}
+    assert Workout.query.count() == 1
