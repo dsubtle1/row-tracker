@@ -753,7 +753,14 @@ def check_badges():
 @gamification_bp.route("/api/badges", methods=["GET"])
 def api_badges():
     badges = Badge.query.order_by(Badge.earned_date.desc().nullslast()).all()
-    return jsonify([b.to_dict() for b in badges])
+    return jsonify([{
+        "badge_key":   b.badge_key,
+        "badge_name":  b.badge_name,
+        "badge_desc":  b.badge_desc,
+        "earned_date": b.earned_date.isoformat() if b.earned_date else None,
+        "is_earned":   b.is_earned,
+        "workout_id":  b.workout_id,
+    } for b in badges])
 
 
 # ---------------------------------------------------------------------------

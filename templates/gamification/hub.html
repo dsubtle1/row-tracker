@@ -21,6 +21,7 @@
     <div class="mt-2 text-muted small">
       {{ "{:,}".format(stats.total_metres) }}m lifetime · {{ stats.earned_badges }} badges earned
     </div>
+    <button class="btn btn-ghost btn-sm mt-3" onclick="triggerBadgeCheck()">Check for new badges</button>
   </div>
 </div>
 
@@ -259,7 +260,7 @@
 
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
 function triggerBadgeCheck() {
   fetch('/gamification/api/badges/check', { method: 'POST' })

@@ -44,6 +44,14 @@ def create_app():
     with app.app_context():
         db.create_all()
 
+        # Badge rows must exist before evaluate_badges() has anything to
+        # check against — seed_badges() never ran anywhere in the app
+        # before, so the badges table was always empty. Both are
+        # idempotent and cheap, safe to run on every startup.
+        from badge_engine import seed_badges, evaluate_badges
+        seed_badges()
+        evaluate_badges()
+
     # --------------------------------------------------------------- blueprints
     from blueprints.tracker import tracker_bp, hr_zone_class, hr_zone_name
     from blueprints.wod import wod_bp
