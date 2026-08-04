@@ -6,11 +6,17 @@ Once a badge is earned (earned_date set), it is never re-evaluated.
 """
 
 import logging
+from collections import defaultdict
 from datetime import date, timedelta
 from sqlalchemy import func, and_, extract
-from models import db, Workout, PersonalBest, Badge
+from models import db, Workout, PersonalBest, Badge, WodHistory
 
 logger = logging.getLogger(__name__)
+
+# Minimum planned WOD days in a calendar month for Iron Month to be
+# meaningful — otherwise a couple of visits with nothing missed would
+# trivially qualify.
+IRON_MONTH_MIN_PLANNED_SESSIONS = 20
 
 # ---------------------------------------------------------------------------
 # Badge definitions
@@ -160,15 +166,36 @@ def _check_week_warrior():
 
 def _check_iron_month():
     """
-    Simplified Iron Month: at least 20 workouts in any calendar month
-    (proxy for no-missed-days — full planned-session tracking not yet implemented).
+    Iron Month: every planned session (WodHistory row) in a calendar month
+    was completed — genuinely no missed planned days, not a workout-count
+    proxy. Requires at least IRON_MONTH_MIN_PLANNED_SESSIONS planned days
+    in the month so a handful of visits can't trivially qualify.
+
+    If a day has more than one WodHistory row (e.g. "Generate another"
+    was used), the latest one generated that day is treated as the plan
+    for that day — matching get_or_create_today()'s "today's WOD" semantics.
     """
-    result = db.session.query(
-        extract('year', Workout.workout_date).label('yr'),
-        extract('month', Workout.workout_date).label('mo'),
-        func.count(Workout.id).label('cnt')
-    ).group_by('yr', 'mo').having(func.count(Workout.id) >= 20).first()
-    return (True, None) if result else (False, None)
+    rows = WodHistory.query.order_by(
+        WodHistory.generated_date.asc(), WodHistory.id.asc()
+    ).all()
+    if not rows:
+        return (False, None)
+
+    latest_by_day = {}
+    for row in rows:
+        latest_by_day[row.generated_date] = row
+
+    by_month = defaultdict(list)
+    for day, row in latest_by_day.items():
+        by_month[(day.year, day.month)].append(row)
+
+    for month_rows in by_month.values():
+        if len(month_rows) < IRON_MONTH_MIN_PLANNED_SESSIONS:
+            continue
+        if all(row.completed for row in month_rows):
+            return (True, None)
+
+    return (False, None)
 
 def _check_streak_30():
     """30 consecutive calendar days each with at least one workout."""

@@ -105,11 +105,10 @@ Click the 💬 Feedback button in the navigation bar on any page. Fill in the ca
 | 2 | Mobile / iPad | No responsive CSS — the app is not optimised for small screens or touch interfaces | Planned |
 | 3 | Heart rate | Heart rate data is captured from your Concept2 workouts and stored, but is not yet displayed anywhere in the app | Planned |
 | 4 | Stroke data | Per-stroke data is stored per workout but no visualisation has been built yet | Planned |
-| 5 | Iron Month badge | The Iron Month badge (20+ workouts in a calendar month) uses a session count proxy. Planned session tracking has not been built yet | Known limitation |
-| 6 | AI-assisted WOD | The AI coaching mode for the WOD generator has been deferred and is not available in this alpha | Deferred |
-| 7 | Notifications | There are no push or email notifications for badges, milestones, or journey completions | Planned |
-| 8 | Multi-user | Row Tracker is single-user only in this release | Out of scope for alpha |
-| 9 | Social / sharing | There are no sharing features — the app is for personal use only | Out of scope for alpha |
+| 5 | AI-assisted WOD | The AI coaching mode for the WOD generator has been deferred and is not available in this alpha | Deferred |
+| 6 | Notifications | There are no push or email notifications for badges, milestones, or journey completions | Planned |
+| 7 | Multi-user | Row Tracker is single-user only in this release | Out of scope for alpha |
+| 8 | Social / sharing | There are no sharing features — the app is for personal use only | Out of scope for alpha |
 
 ---
 

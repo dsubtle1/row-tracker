@@ -26,7 +26,7 @@ from badge_engine import (
     _check_technique_gain,
     _check_load_master,
 )
-from models import db, Badge, PersonalBest
+from models import db, Badge, PersonalBest, WodHistory
 
 
 # ---------------------------------------------------------------------------
@@ -111,13 +111,76 @@ def test_century_month_earned_within_single_month(app_ctx, make_workout):
     assert earned is True
 
 
-def test_iron_month_proxy_requires_20_sessions_in_a_month(app_ctx, make_workout):
+def test_iron_month_not_earned_below_planned_session_threshold(app_ctx):
+    start = date(2025, 4, 1)
     for i in range(19):
-        make_workout(id=i + 1, distance_meters=2000, time_seconds=420, workout_date=date(2025, 4, i + 1))
+        db.session.add(WodHistory(generated_date=start + timedelta(days=i),
+                                   wod_type="steady_state", completed=True))
+    db.session.commit()
     assert _check_iron_month()[0] is False
 
-    make_workout(id=20, distance_meters=2000, time_seconds=420, workout_date=date(2025, 4, 20))
+
+def test_iron_month_earned_when_every_planned_day_is_completed(app_ctx):
+    start = date(2025, 4, 1)
+    for i in range(20):
+        db.session.add(WodHistory(generated_date=start + timedelta(days=i),
+                                   wod_type="steady_state", completed=True))
+    db.session.commit()
     assert _check_iron_month()[0] is True
+
+
+def test_iron_month_not_earned_with_a_missed_planned_day(app_ctx):
+    start = date(2025, 4, 1)
+    for i in range(20):
+        completed = not (i == 10)  # one missed session in an otherwise full month
+        db.session.add(WodHistory(generated_date=start + timedelta(days=i),
+                                   wod_type="steady_state", completed=completed))
+    db.session.commit()
+    assert _check_iron_month()[0] is False
+
+
+def test_iron_month_only_actual_workouts_no_longer_count_on_their_own(app_ctx, make_workout):
+    """
+    The old proxy earned this badge from 20 synced Workout rows alone,
+    with no notion of a plan or completion. That must no longer be enough.
+    """
+    for i in range(20):
+        make_workout(id=i + 1, distance_meters=2000, time_seconds=420,
+                     workout_date=date(2025, 4, i + 1))
+    assert _check_iron_month()[0] is False
+
+
+def test_iron_month_collapses_same_day_rows_to_the_latest(app_ctx):
+    start = date(2025, 6, 1)
+    for i in range(19):
+        db.session.add(WodHistory(generated_date=start + timedelta(days=i),
+                                   wod_type="steady_state", completed=True))
+    db.session.commit()
+
+    # Day 20: first WOD generated was skipped, then regenerated and completed.
+    last_day = start + timedelta(days=19)
+    db.session.add(WodHistory(generated_date=last_day, wod_type="steady_state", completed=False))
+    db.session.commit()
+    db.session.add(WodHistory(generated_date=last_day, wod_type="steady_state", completed=True))
+    db.session.commit()
+
+    assert _check_iron_month()[0] is True
+
+
+def test_iron_month_regenerating_a_completed_day_into_incomplete_breaks_it(app_ctx):
+    start = date(2025, 6, 1)
+    for i in range(19):
+        db.session.add(WodHistory(generated_date=start + timedelta(days=i),
+                                   wod_type="steady_state", completed=True))
+    db.session.commit()
+
+    last_day = start + timedelta(days=19)
+    db.session.add(WodHistory(generated_date=last_day, wod_type="steady_state", completed=True))
+    db.session.commit()
+    db.session.add(WodHistory(generated_date=last_day, wod_type="steady_state", completed=False))
+    db.session.commit()
+
+    assert _check_iron_month()[0] is False
 
 
 # ---------------------------------------------------------------------------
