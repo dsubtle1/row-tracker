@@ -30,5 +30,6 @@ desktop.ini
 # CSV data if you don't want it in the repo
 csv-data/
 
-# Project spec file
+# Project spec files
 row-tracker-spec.md
+docs/redesign-spec.md
