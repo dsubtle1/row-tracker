@@ -13,6 +13,13 @@ __pycache__/
 # Flask session files
 flask_session/
 
+# Virtual environments
+.venv/
+venv/
+
+# Test cache
+.pytest_cache/
+
 # macOS system files
 .DS_Store
 

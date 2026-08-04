@@ -109,18 +109,19 @@ def _upsert_pb(category: str, value_seconds: int, value_meters, workout: Workout
 
 def recalculate_all_pbs() -> None:
     """
-    Recalculate all personal bests from scratch.
-    Clears existing PB rows and rebuilds from the workouts table.
+    Recalculate all personal bests from the workouts table.
+    Existing PB rows are updated in place via _upsert_pb, which preserves
+    previous_value for delta display when a genuinely better result is
+    found. Categories with no matching workout at all are removed.
     Safe to call repeatedly — idempotent.
     """
-    # Clear existing PBs
-    PersonalBest.query.delete()
-    db.session.commit()
+    matched_categories = set()
 
     # Fixed-distance PBs
     for category, meters in DISTANCE_CATEGORIES.items():
         best = _best_for_exact_distance(meters)
         if best is not None:
+            matched_categories.add(category)
             _upsert_pb(
                 category      = category,
                 value_seconds = best.time_seconds,
@@ -132,11 +133,17 @@ def recalculate_all_pbs() -> None:
     for category, seconds in TIME_CATEGORIES.items():
         best = _best_for_time_piece(seconds)
         if best is not None:
+            matched_categories.add(category)
             _upsert_pb(
                 category      = category,
                 value_seconds = seconds,
                 value_meters  = best.distance_meters,
                 workout       = best,
             )
+
+    # Drop PBs for categories that no longer have any matching workout
+    stale_categories = (set(DISTANCE_CATEGORIES) | set(TIME_CATEGORIES)) - matched_categories
+    if stale_categories:
+        PersonalBest.query.filter(PersonalBest.category.in_(stale_categories)).delete(synchronize_session=False)
 
     db.session.commit()
