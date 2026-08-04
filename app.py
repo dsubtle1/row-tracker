@@ -6,9 +6,11 @@ Single container, single port (7376), three Blueprint modules.
 import os
 from flask import Flask
 from flask_mail import Mail
+from flask_wtf.csrf import CSRFProtect
 from models import db
 
 mail = Mail()
+csrf = CSRFProtect()
 
 
 def create_app():
@@ -40,6 +42,7 @@ def create_app():
     # ---------------------------------------------------------- init extensions
     db.init_app(app)
     mail.init_app(app)
+    csrf.init_app(app)
 
     with app.app_context():
         db.create_all()

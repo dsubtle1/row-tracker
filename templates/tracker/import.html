@@ -16,6 +16,7 @@
   </p>
 
   <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <div class="feedback-field">
       <label for="csv_files">CSV file(s)</label>
       <input type="file" id="csv_files" name="csv_files" accept=".csv" multiple required />

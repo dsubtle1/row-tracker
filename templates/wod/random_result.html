@@ -57,6 +57,7 @@
   <div class="wod-actions">
     {% if not wod.completed %}
     <form method="POST" action="{{ url_for('wod.wod_complete') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <input type="hidden" name="wod_id" value="{{ wod_id }}" />
       <button type="submit" class="btn btn-primary">✓ Mark Complete</button>
     </form>

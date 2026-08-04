@@ -263,7 +263,7 @@
 {% block extra_js %}
 <script>
 function triggerBadgeCheck() {
-  fetch('/gamification/api/badges/check', { method: 'POST' })
+  fetch('/gamification/api/badges/check', { method: 'POST', headers: { 'X-CSRFToken': csrfToken() } })
     .then(r => r.json())
     .then(data => {
       if (data.newly_awarded && data.newly_awarded.length > 0) {

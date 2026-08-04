@@ -75,6 +75,7 @@
   <div class="wod-actions">
     {% if not wod.completed %}
     <form method="POST" action="{{ url_for('wod.wod_complete') }}" class="wod-complete-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <input type="hidden" name="wod_id" value="{{ wod_id }}" />
       <button type="submit" class="btn btn-primary">✓ Mark Complete</button>
     </form>
@@ -82,6 +83,7 @@
     <div class="wod-completed-badge">✓ Completed</div>
     {% endif %}
     <form method="POST" action="{{ url_for('wod.wod_generate') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" class="btn btn-ghost">↺ Regenerate</button>
     </form>
     <a href="{{ url_for('wod.wod_library') }}" class="btn btn-ghost">Browse Library</a>
@@ -111,6 +113,7 @@
   </p>
 
   <form method="POST" action="{{ url_for('wod.wod_random') }}" class="random-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
     {# ── Intensity ── #}
     <div class="rf-group">

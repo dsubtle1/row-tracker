@@ -22,6 +22,7 @@
       </div>
       <p class="library-coaching">{{ w.coaching }}</p>
       <form method="POST" action="{{ url_for('wod.wod_generate') }}" class="library-assign-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="hidden" name="force_type" value="{{ section.type }}" />
         <button type="submit" class="btn btn-ghost btn-sm">Assign today →</button>
       </form>

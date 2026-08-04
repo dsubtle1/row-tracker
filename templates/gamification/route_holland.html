@@ -19,6 +19,7 @@
       Metres are counted from the day you start, not your lifetime total.
     </p>
     <form method="POST" action="{{ url_for('gamification.journey_holland_start') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" class="btn btn-primary btn-lg mt-3">🚴 Start Holland Tour</button>
     </form>
   </div>
@@ -34,6 +35,7 @@
       Started {{ holland.start_date }} · Completed {{ holland.completed_date }}
     </p>
     <form method="POST" action="{{ url_for('gamification.journey_holland_start') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" class="btn btn-primary mt-3">🚴 Tour It Again</button>
     </form>
   </div>
@@ -269,6 +271,7 @@
 <div class="text-center mb-4">
   <form method="POST" action="{{ url_for('gamification.journey_holland_start') }}"
         onsubmit="return confirm('This will abandon your current tour and start fresh from today. Are you sure?')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <button type="submit" class="btn btn-ghost btn-sm">↺ Restart Tour from Today</button>
   </form>
 </div>

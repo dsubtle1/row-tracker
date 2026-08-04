@@ -22,6 +22,7 @@
       14 waypoints along the way, from Strasbourg to Cologne to the North Sea.
     </p>
     <form method="POST" action="{{ url_for('gamification.journey_start') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" class="btn btn-primary btn-lg mt-3">🚣 Start Journey</button>
     </form>
   </div>
@@ -41,6 +42,7 @@
       Started {{ rhine.start_date }} · Completed {{ rhine.completed_date }}
     </p>
     <form method="POST" action="{{ url_for('gamification.journey_start') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" class="btn btn-primary mt-3">🚣 Row It Again</button>
     </form>
   </div>
@@ -205,6 +207,7 @@
 <div class="text-center mb-4">
   <form method="POST" action="{{ url_for('gamification.journey_start') }}"
         onsubmit="return confirm('This will abandon your current journey and start fresh from today. Are you sure?')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <button type="submit" class="btn btn-ghost btn-sm">↺ Restart Journey from Today</button>
   </form>
 </div>

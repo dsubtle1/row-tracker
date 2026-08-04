@@ -19,6 +19,7 @@
       Metres counted from the day you start.
     </p>
     <form method="POST" action="{{ url_for('gamification.journey_transcan_start') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" class="btn btn-primary btn-lg mt-3">🚗 Start Trans-Canada</button>
     </form>
   </div>
@@ -34,6 +35,7 @@
       Started {{ transcan.start_date }} · Completed {{ transcan.completed_date }}
     </p>
     <form method="POST" action="{{ url_for('gamification.journey_transcan_start') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" class="btn btn-primary mt-3">🚗 Drive It Again</button>
     </form>
   </div>
@@ -316,6 +318,7 @@
 <div class="text-center mb-4">
   <form method="POST" action="{{ url_for('gamification.journey_transcan_start') }}"
         onsubmit="return confirm('This will abandon your current journey and start fresh from today. Are you sure?')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
     <button type="submit" class="btn btn-ghost btn-sm">↺ Restart from Today</button>
   </form>
 </div>

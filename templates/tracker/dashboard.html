@@ -463,7 +463,7 @@ function triggerSync() {
   status.textContent = "";
   status.className   = "sync-status";
 
-  fetch("/sync", { method: "POST" })
+  fetch("/sync", { method: "POST", headers: { "X-CSRFToken": csrfToken() } })
     .then(r => r.json())
     .then(data => {
       btn.disabled    = false;
