@@ -12,6 +12,7 @@ No Claude API key required. AI-assisted mode is Build 2B (feature-flagged).
 
 from __future__ import annotations
 
+import calendar
 import random
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -606,6 +607,57 @@ def get_or_create_today() -> tuple[WodHistory, bool]:
     spec = generate_wod()
     row  = save_wod(spec)
     return row, True
+
+
+def build_month_calendar(year: int, month: int) -> list[list[dict]]:
+    """
+    Return a Mon-Sun week grid for the given year/month.
+
+    Each cell is a dict:
+        {"date": date, "day": int, "in_month": bool,
+         "status": "none" | "pending" | "completed"}
+
+    Days outside the requested month (padding to complete the first/last
+    week) always get status "none" and in_month=False.
+    """
+    first_day = date(year, month, 1)
+    last_day = date(year, month, calendar.monthrange(year, month)[1])
+
+    rows = (
+        WodHistory.query
+        .filter(WodHistory.generated_date >= first_day, WodHistory.generated_date <= last_day)
+        .order_by(WodHistory.id.asc())
+        .all()
+    )
+    # A day can have multiple rows if the WOD was regenerated — the latest
+    # (highest id) row wins, matching get_or_create_today()'s convention.
+    latest_by_date: dict[date, WodHistory] = {}
+    for row in rows:
+        latest_by_date[row.generated_date] = row
+
+    weeks = []
+    for week in calendar.Calendar(firstweekday=0).monthdatescalendar(year, month):
+        week_cells = []
+        for d in week:
+            in_month = d.month == month
+            row = latest_by_date.get(d) if in_month else None
+            if row is None:
+                status = "none"
+            else:
+                status = "completed" if row.completed else "pending"
+            week_cells.append({"date": d, "day": d.day, "in_month": in_month, "status": status})
+        weeks.append(week_cells)
+    return weeks
+
+
+def get_wod_for_date(target_date: date) -> Optional[WodHistory]:
+    """Return the most recently created WodHistory row for target_date, or None."""
+    return (
+        WodHistory.query
+        .filter(WodHistory.generated_date == target_date)
+        .order_by(WodHistory.id.desc())
+        .first()
+    )
 
 
 # ── Random WOD Generator ──────────────────────────────────────────────────

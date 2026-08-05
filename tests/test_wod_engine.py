@@ -21,6 +21,8 @@ from wod_engine import (
     _current_cawr,
     _choose_session_type,
     generate_wod,
+    build_month_calendar,
+    get_wod_for_date,
 )
 
 
@@ -152,3 +154,79 @@ def test_generate_wod_produces_a_complete_spec(app_ctx):
     assert spec.intervals
     assert spec.target_pace_seconds > 0
     assert spec.target_pace_str == _fmt_pace(spec.target_pace_seconds)
+
+
+# ---------------------------------------------------------------------------
+# build_month_calendar — month grid shape, padding, and per-day status
+# ---------------------------------------------------------------------------
+
+def test_build_month_calendar_shape_and_padding(app_ctx):
+    # August 2026: starts on a Friday, so the grid pads 5 days from July
+    # and 6 days from September to complete Mon-Sun weeks.
+    weeks = build_month_calendar(2026, 8)
+
+    assert len(weeks) == 6
+    assert all(len(week) == 7 for week in weeks)
+
+    first_week_dates = [c["date"] for c in weeks[0]]
+    assert first_week_dates == [
+        date(2026, 7, 27), date(2026, 7, 28), date(2026, 7, 29),
+        date(2026, 7, 30), date(2026, 7, 31), date(2026, 8, 1), date(2026, 8, 2),
+    ]
+    first_week_in_month = [c["in_month"] for c in weeks[0]]
+    assert first_week_in_month == [False, False, False, False, False, True, True]
+
+    last_week = weeks[-1]
+    assert last_week[0]["date"] == date(2026, 8, 31)
+    assert last_week[0]["in_month"] is True
+    assert last_week[1]["date"] == date(2026, 9, 1)
+    assert last_week[1]["in_month"] is False
+
+
+def test_build_month_calendar_status_per_day(app_ctx):
+    db.session.add_all([
+        WodHistory(generated_date=date(2026, 8, 5), wod_type="interval", wod_json={}, completed=True),
+        WodHistory(generated_date=date(2026, 8, 6), wod_type="steady_state", wod_json={}, completed=False),
+    ])
+    db.session.commit()
+
+    weeks = build_month_calendar(2026, 8)
+    by_date = {c["date"]: c for week in weeks for c in week}
+
+    assert by_date[date(2026, 8, 5)]["status"] == "completed"
+    assert by_date[date(2026, 8, 6)]["status"] == "pending"
+    assert by_date[date(2026, 8, 7)]["status"] == "none"
+    # Out-of-month padding days are always "none" regardless of any data
+    assert by_date[date(2026, 7, 27)]["status"] == "none"
+
+
+def test_build_month_calendar_latest_row_wins_on_regeneration(app_ctx):
+    # A day can have multiple WodHistory rows if the WOD was regenerated
+    # (wod_generate() always inserts a new row rather than updating).
+    db.session.add(WodHistory(id=1, generated_date=date(2026, 8, 5), wod_type="interval", wod_json={}, completed=True))
+    db.session.commit()
+    db.session.add(WodHistory(id=2, generated_date=date(2026, 8, 5), wod_type="steady_state", wod_json={}, completed=False))
+    db.session.commit()
+
+    weeks = build_month_calendar(2026, 8)
+    by_date = {c["date"]: c for week in weeks for c in week}
+    assert by_date[date(2026, 8, 5)]["status"] == "pending"
+
+
+# ---------------------------------------------------------------------------
+# get_wod_for_date
+# ---------------------------------------------------------------------------
+
+def test_get_wod_for_date_returns_latest_row(app_ctx):
+    db.session.add(WodHistory(id=1, generated_date=date(2026, 8, 5), wod_type="interval", wod_json={"title": "First"}, completed=True))
+    db.session.commit()
+    db.session.add(WodHistory(id=2, generated_date=date(2026, 8, 5), wod_type="steady_state", wod_json={"title": "Second"}, completed=False))
+    db.session.commit()
+
+    row = get_wod_for_date(date(2026, 8, 5))
+    assert row.id == 2
+    assert row.wod_json["title"] == "Second"
+
+
+def test_get_wod_for_date_returns_none_when_absent(app_ctx):
+    assert get_wod_for_date(date(2026, 8, 5)) is None
