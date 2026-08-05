@@ -4,6 +4,7 @@ Single container, single port (7376), three Blueprint modules.
 """
 
 import os
+import secrets
 from flask import Flask
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
@@ -21,7 +22,21 @@ def create_app():
         f"sqlite:///{os.path.join(app.root_path, 'data', 'row_tracker.db')}"
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
+
+    # SECRET_KEY signs session cookies and (as of CSRFProtect, below) CSRF
+    # tokens. A fixed fallback checked into a public repo would be a known
+    # secret to anyone reading the source, defeating both. Fall back to a
+    # random one-time key instead — the app still works if .env is
+    # misconfigured, just with sessions/CSRF tokens that reset on restart.
+    secret_key = os.environ.get("SECRET_KEY")
+    if not secret_key:
+        secret_key = secrets.token_hex(32)
+        app.logger.warning(
+            "SECRET_KEY not set — using a random one-time key for this run. "
+            "Sessions and CSRF tokens will invalidate on every restart. "
+            "Set SECRET_KEY in .env for a stable, secure deployment."
+        )
+    app.config["SECRET_KEY"] = secret_key
 
     # -------------------------------------------------------------------- mail
     app.config["MAIL_SERVER"]         = "smtp.gmail.com"

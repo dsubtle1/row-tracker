@@ -16,16 +16,20 @@ Row Tracker will connect to your Concept2 Logbook and pull in your full workout 
 
 > After the first sync, Row Tracker syncs automatically every night at 3:00 AM. You can always click Sync manually to pull in your latest session straight away.
 
+If you have older seasons your Concept2 account didn't have API access for, click **Import CSV** next to the Sync button to upload a season export from the Concept2 Online Logbook instead. Already-synced workouts are skipped automatically.
+
 ---
 
 ## Step 2 — Explore the Dashboard
 
 Once synced, your Dashboard shows:
 
-- **Lifetime metres** — your total rowing distance with a progress bar toward the next milestone
+- **Lifetime metres** — your total rowing distance with a circular gauge toward the next milestone
 - **Current streak** — consecutive days with at least one workout
 - **This week / this month** — workout counts for the current periods
 - **Last session** — distance, pace, and date of your most recent row
+- **Pace trend & weekly volume** — mini sparkline previews of your recent training
+- **Your Progress** — a checklist of every active or completed virtual journey
 - **52-week heatmap** — a full year of training volume at a glance; click any square to see that day's individual workouts
 
 ---
@@ -70,13 +74,14 @@ If today's WOD doesn't suit you, you can:
 
 Click **Journeys** in the navigation bar.
 
-Pick one of three virtual routes and click **Start**. Every metre you row from that point counts toward your progress along the route:
+Pick one of four virtual routes and click **Start**. Every metre you row from that point counts toward your progress along the route:
 
 - 🇨🇭 **Rhine River** — Basel to Rotterdam, 820 km, 14 waypoints
 - 🇳🇱 **Holland Tour** — Amsterdam scenic loop, 550 km, 17 waypoints
 - 🇨🇦 **Trans-Canada Highway** — Victoria BC to St. John's NL, 7,821 km, 23 waypoints
+- 🇺🇸 **Route 66** — Chicago, IL to Santa Monica, CA, 3,940 km
 
-You can run all three simultaneously. Each shows your current position, upcoming waypoints, and an estimated arrival date based on your recent training pace.
+You can run all four simultaneously. Each shows your current position, upcoming waypoints, and an estimated arrival date based on your recent training pace.
 
 ---
 
@@ -84,7 +89,7 @@ You can run all three simultaneously. Each shows your current position, upcoming
 
 Click **Achievements** in the navigation bar to see:
 
-- **Badges** — 16 badges across Performance, Volume, Consistency, and Efficiency categories, awarded automatically as you hit milestones
+- **Badges** — 17 badges across Performance, Volume, Consistency, and Efficiency categories, awarded automatically as you hit milestones
 - **Season Challenges** — quarterly targets including distance goals, PB attempts, and consistency streaks
 - **You vs. Past You** — a side-by-side comparison of your training across this month, last month, 3 months ago, and 12 months ago
 
@@ -107,4 +112,4 @@ For a list of known issues and common questions, click **FAQ** in the navigation
 
 ---
 
-*Last updated: June 14, 2026*
+*Last updated: August 4, 2026*

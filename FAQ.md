@@ -18,7 +18,7 @@ Yes. Row Tracker pulls your data from the Concept2 Online Logbook. If you row wi
 It connects to the Concept2 Logbook API using your account credentials. Once connected, it syncs your workouts automatically every night at 3:00 AM (Toronto time) and you can also trigger a manual sync at any time from the Dashboard.
 
 **Does it work on my phone or tablet?**
-Row Tracker is browser-based and works best on a desktop or laptop browser. Mobile and iPad layouts are not yet optimised — see Known Issues below.
+Yes — Row Tracker is fully responsive and optimised for iPhone and iPad, with a hamburger nav drawer on smaller screens.
 
 ---
 
@@ -64,7 +64,7 @@ It lets you generate a one-off workout by specifying intensity (light / medium /
 ### Achievements & Badges
 
 **How do I earn badges?**
-Badges are awarded automatically after each sync when the conditions are met. There are 16 badges across four categories: Performance, Volume, Consistency, and Efficiency. Once earned, a badge is yours permanently.
+Badges are awarded automatically after each sync when the conditions are met. There are 17 badges across four categories: Performance, Volume, Consistency, and Efficiency. Once earned, a badge is yours permanently.
 
 **Why hasn't my badge been awarded yet?**
 Badge evaluation runs after each sync. Try triggering a manual sync from the Dashboard. If the conditions have been met and the badge still hasn't appeared, use the Feedback button to let us know.
@@ -77,10 +77,11 @@ Quarterly targets that reset on January 1, April 1, July 1, and October 1. They 
 ### Virtual Journeys
 
 **What are the virtual journeys?**
-Three independent routes you can row your way along using real workout metres:
+Four independent routes you can row your way along using real workout metres:
 - **Rhine River** — Basel to Rotterdam, 820 km, 14 waypoints
 - **Holland Tour** — Amsterdam scenic loop, 550 km, 17 waypoints
 - **Trans-Canada Highway** — Victoria BC to St. John's NL, 7,821 km, 23 waypoints
+- **Route 66** — Chicago, IL to Santa Monica, CA, 3,940 km
 
 **How do I start a journey?**
 Go to Journeys in the navigation and click Start on any route. Metres from workouts completed after that date count toward your progress. Multiple journeys can run at the same time.
@@ -101,16 +102,13 @@ Click the 💬 Feedback button in the navigation bar on any page. Fill in the ca
 
 | # | Area | Issue | Status |
 |---|---|---|---|
-| 1 | Charts | All three charts are functional but visual quality needs improvement — axis labels, tooltips, and colour consistency are being worked on | In progress |
-| 2 | Mobile / iPad | No responsive CSS — the app is not optimised for small screens or touch interfaces | Planned |
-| 3 | Heart rate | Heart rate data is captured from your Concept2 workouts and stored, but is not yet displayed anywhere in the app | Planned |
-| 4 | Stroke data | Per-stroke data is stored per workout but no visualisation has been built yet | Planned |
-| 5 | AI-assisted WOD | The AI coaching mode for the WOD generator has been deferred and is not available in this alpha | Deferred |
-| 6 | Notifications | There are no push or email notifications for badges, milestones, or journey completions | Planned |
-| 7 | Multi-user | Row Tracker is single-user only in this release | Out of scope for alpha |
-| 8 | Social / sharing | There are no sharing features — the app is for personal use only | Out of scope for alpha |
+| 1 | Charts | Hover/tooltip behaviour is fixed; axis labels and colour consistency still need polish | In progress |
+| 2 | AI-assisted WOD | The AI coaching mode for the WOD generator has been deferred and is not available in this alpha | Deferred |
+| 3 | Notifications | There are no push or email notifications for badges, milestones, or journey completions | Planned |
+| 4 | Multi-user | Row Tracker is single-user only in this release | Out of scope for alpha |
+| 5 | Social / sharing | There are no sharing features — the app is for personal use only | Out of scope for alpha |
 
 ---
 
-*Last updated: June 14, 2026*
+*Last updated: August 4, 2026*
 *To report an issue not listed here, use the 💬 Feedback button in the app.*

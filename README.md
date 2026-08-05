@@ -24,10 +24,17 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 
 ## Features
 
+**Dashboard**
+- Circular gauge for lifetime metres, progress toward the next milestone (100k up through 100M)
+- Mini pace-trend and weekly-volume sparklines
+- "Your Progress" checklist — every active or completed virtual journey at a glance
+
 **Training Data**
 - Automatic sync from the Concept2 Logbook API — nightly at 3:00 AM, or on demand
+- CSV import for seasons rowed before API access existed — upload a Concept2 Logbook export, duplicates skipped automatically
 - Full workout history with paginated list and enriched detail view
 - Enriched workout detail — heart rate (min/avg/max/ending with zone classification), per-split breakdown, avg watts, drag factor, stroke count
+- Per-stroke pace & stroke-rate chart on the workout detail page, fetched from Concept2 on first view and cached
 - 52-week volume heatmap — click any day to see that session's details
 
 **Personal Bests**
@@ -49,7 +56,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - 27 distinct workout templates; full WOD history log
 
 **Gamification**
-- 16 badges across Performance, Volume, Consistency, and Efficiency categories
+- 17 badges across Performance, Volume, Consistency, and Efficiency categories
 - Season challenges — quarterly distance, PB attempts, consistency, monthly volume
 - You vs. Past You — compare this month against last month, 3 months ago, and 12 months ago
 - Stale PB nudges on the Achievements hub
@@ -75,7 +82,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 
 | Layer | Technology |
 |---|---|
-| Backend | Python 3.11 · Flask · SQLAlchemy |
+| Backend | Python 3.11 · Flask · SQLAlchemy · Flask-WTF (CSRF) |
 | Database | SQLite (single file, Docker volume) |
 | Scheduler | APScheduler (embedded, nightly sync) |
 | Frontend | Jinja2 · Vanilla JS · Chart.js |
@@ -164,8 +171,8 @@ row-tracker/
 
 ## Roadmap
 
-- [ ] Per-stroke data visualisation (force curve, drive/recovery time per stroke)
-- [ ] Chart visual polish
+- [ ] Force-curve / drive-recovery-time visualisation per stroke (basic pace & stroke-rate-over-time chart already shipped)
+- [ ] Chart axis-label and colour-consistency polish (hover/tooltip behaviour already fixed)
 - [ ] Real map overlays for virtual journeys (Leaflet.js + OpenStreetMap)
 - [ ] Push/email notifications for badges and milestones
 - [ ] AI-assisted WOD generation (Anthropic API — feature-flagged)
