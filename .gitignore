@@ -33,3 +33,6 @@ csv-data/
 # Project spec files
 row-tracker-spec.md
 docs/redesign-spec.md
+
+# Local git worktrees
+.worktrees/
