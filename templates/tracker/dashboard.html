@@ -90,15 +90,6 @@
   </div>
 </div>
 
-{# ── Your Progress (active journeys) ──────────────────────────────────── #}
-<section class="section" id="journeyProgressSection" style="display: none;">
-  <div class="section-header">
-    <h2 class="section-title">Your Progress</h2>
-    <a href="{{ url_for('gamification.journeys') }}" class="section-link">All journeys →</a>
-  </div>
-  <div class="progress-checklist" id="journeyChecklist"></div>
-</section>
-
 {# ── Volume Heatmap ───────────────────────────────────────────────────── #}
 <section class="section">
   <div class="section-header">
@@ -118,6 +109,15 @@
     <span class="heatmap-cell legend-cell" data-level="4"></span>
     <span class="legend-label">More</span>
   </div>
+</section>
+
+{# ── Your Progress (active journeys) ──────────────────────────────────── #}
+<section class="section" id="journeyProgressSection" style="display: none;">
+  <div class="section-header">
+    <h2 class="section-title">Your Progress</h2>
+    <a href="{{ url_for('gamification.journeys') }}" class="section-link">All journeys →</a>
+  </div>
+  <div class="progress-checklist" id="journeyChecklist"></div>
 </section>
 
 {# ── Day detail modal ─────────────────────────────────────────────────── #}
