@@ -7,59 +7,89 @@
   <h1>WOD History</h1>
 </div>
 
-{% if history %}
-<div class="wod-history-table-wrap">
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Workout</th>
-        <th>Type</th>
-        <th>Target Pace</th>
-        <th>Zone</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for w in history %}
-      <tr class="{% if w.completed %}wod-row--completed{% endif %}">
-        <td class="wod-history-date">{{ w.date.strftime("%b %-d, %Y") }}</td>
-        <td>{{ w.title }}</td>
-        <td>
-          <span class="wod-type-badge wod-type-{{ w.wod_type }} wod-type-badge--sm">
-            {{ w.wod_type | replace("_", " ") | title }}
-          </span>
-        </td>
-        <td class="mono">{{ w.target_pace_str }}/500m</td>
-        <td class="mono">{{ w.pace_zone }}</td>
-        <td>
-          {% if w.completed %}
-            <span class="status-done">✓ Done</span>
-          {% else %}
-            <span class="status-pending">—</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="wod-cal-nav">
+  <a href="{{ url_for('wod.wod_history', year=prev_year, month=prev_month) }}" class="wod-cal-nav-link">← Prev</a>
+  <span class="wod-cal-nav-label">{{ month_label }}</span>
+  <a href="{{ url_for('wod.wod_history', year=next_year, month=next_month) }}" class="wod-cal-nav-link">Next →</a>
 </div>
 
-{# Pagination #}
-{% if pagination.pages > 1 %}
-<div class="pagination">
-  {% if pagination.has_prev %}
-    <a href="{{ url_for('wod.wod_history', page=pagination.prev_num) }}" class="page-link">← Newer</a>
-  {% endif %}
-  <span class="page-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
-  {% if pagination.has_next %}
-    <a href="{{ url_for('wod.wod_history', page=pagination.next_num) }}" class="page-link">Older →</a>
-  {% endif %}
+<div class="wod-cal-grid">
+  <div class="wod-cal-header-row">
+    {% for label in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] %}
+      <div class="wod-cal-header-cell">{{ label }}</div>
+    {% endfor %}
+  </div>
+  {% for week in weeks %}
+  <div class="wod-cal-week">
+    {% for cell in week %}
+      <div class="wod-cal-day wod-cal-day--{{ cell.status }}{% if not cell.in_month %} wod-cal-day--outside{% endif %}"
+           {% if cell.in_month %}data-date="{{ cell.date.isoformat() }}"{% endif %}>
+        <span class="wod-cal-daynum">{{ cell.day }}</span>
+      </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
 </div>
-{% endif %}
 
-{% else %}
-<p class="muted">No WODs generated yet. <a href="{{ url_for('wod.wod') }}">Generate today's workout →</a></p>
-{% endif %}
+{# Day detail modal #}
+<div class="day-modal-backdrop" id="wodDayModalBackdrop" onclick="closeWodDayModal()"></div>
+<div class="day-modal" id="wodDayModal">
+  <div class="day-modal-header">
+    <span class="day-modal-date" id="wodDayModalDate"></span>
+    <button class="day-modal-close" onclick="closeWodDayModal()">✕</button>
+  </div>
+  <div class="day-modal-body" id="wodDayModalBody">
+    <div class="day-modal-loading">Loading…</div>
+  </div>
+</div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll(".wod-cal-day[data-date]").forEach(function (cell) {
+  cell.addEventListener("click", function () {
+    openWodDayModal(this.dataset.date);
+  });
+});
+
+function openWodDayModal(dateStr) {
+  const backdrop = document.getElementById("wodDayModalBackdrop");
+  const modal    = document.getElementById("wodDayModal");
+  const dateEl   = document.getElementById("wodDayModalDate");
+  const body     = document.getElementById("wodDayModalBody");
+
+  const dt = new Date(dateStr + "T00:00:00");
+  dateEl.textContent = dt.toLocaleDateString("default", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric"
+  });
+
+  body.innerHTML = '<div class="day-modal-loading">Loading…</div>';
+  backdrop.classList.add("day-modal-backdrop--open");
+  modal.classList.add("day-modal--open");
+
+  fetch("/api/wod/day?date=" + dateStr)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.exists) {
+        body.innerHTML = '<p class="day-modal-empty">No WOD generated this day.</p>';
+        return;
+      }
+      body.innerHTML =
+        '<div class="day-modal-workout">' +
+          '<div class="day-modal-stats">' +
+            '<div class="dms-block"><span class="dms-value">' + data.title + '</span><span class="dms-label">workout</span></div>' +
+            '<div class="dms-block"><span class="dms-value">' + data.target_pace_str + '/500m</span><span class="dms-label">target pace</span></div>' +
+            '<div class="dms-block"><span class="dms-value">' + data.pace_zone + '</span><span class="dms-label">zone</span></div>' +
+            '<div class="dms-block"><span class="dms-value">' + (data.completed ? "✓ Done" : "—") + '</span><span class="dms-label">status</span></div>' +
+          '</div>' +
+        '</div>';
+    });
+}
+
+function closeWodDayModal() {
+  document.getElementById("wodDayModalBackdrop").classList.remove("day-modal-backdrop--open");
+  document.getElementById("wodDayModal").classList.remove("day-modal--open");
+}
+</script>
 {% endblock %}
