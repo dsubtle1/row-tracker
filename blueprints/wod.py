@@ -8,7 +8,15 @@ from datetime import date, timedelta
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 
 from models import db, Workout, WodHistory
-from wod_engine import WOD_LIBRARY, generate_wod, generate_random_wod, get_or_create_today, save_wod
+from wod_engine import (
+    WOD_LIBRARY,
+    build_month_calendar,
+    generate_wod,
+    generate_random_wod,
+    get_or_create_today,
+    get_wod_for_date,
+    save_wod,
+)
 
 wod_bp = Blueprint("wod", __name__)
 
@@ -44,6 +52,13 @@ def _fmt_duration(seconds: int) -> str:
     if s:
         return f"{m}:{s:02d} min"
     return f"{m} min"
+
+
+def _adjacent_month(year: int, month: int, delta: int) -> tuple[int, int]:
+    """Return (year, month) shifted by delta months (delta is +1 or -1)."""
+    total = year * 12 + (month - 1) + delta
+    shifted_year, shifted_month0 = divmod(total, 12)
+    return shifted_year, shifted_month0 + 1
 
 
 # ── Routes ─────────────────────────────────────────────────────────────────
@@ -115,15 +130,22 @@ def wod_complete():
 
 @wod_bp.route("/wod/history")
 def wod_history():
-    """Past WODs with completion status — most recent first."""
-    page = request.args.get("page", 1, type=int)
-    rows = (
-        WodHistory.query
-        .order_by(WodHistory.generated_date.desc())
-        .paginate(page=page, per_page=30, error_out=False)
+    """Calendar view of past WODs — browse month by month, click a day for detail."""
+    today = date.today()
+    year  = request.args.get("year", today.year, type=int)
+    month = request.args.get("month", today.month, type=int)
+
+    weeks = build_month_calendar(year, month)
+    prev_year, prev_month = _adjacent_month(year, month, -1)
+    next_year, next_month = _adjacent_month(year, month, 1)
+
+    return render_template(
+        "wod/history.html",
+        weeks=weeks,
+        month_label=date(year, month, 1).strftime("%B %Y"),
+        prev_year=prev_year, prev_month=prev_month,
+        next_year=next_year, next_month=next_month,
     )
-    history = [_enrich(r) for r in rows.items]
-    return render_template("wod/history.html", history=history, pagination=rows)
 
 
 @wod_bp.route("/wod/library")
@@ -170,3 +192,23 @@ def api_wod_today():
         "pace_zone":       j.get("pace_zone"),
         "completed":       row.completed,
     })
+
+
+@wod_bp.route("/api/wod/day")
+def api_wod_day():
+    """JSON — WOD detail for a single date. Powers the calendar's click-to-detail modal."""
+    date_str = request.args.get("date", "")
+    try:
+        target = date.fromisoformat(date_str)
+    except ValueError:
+        return jsonify({"error": "Invalid date"}), 400
+
+    row = get_wod_for_date(target)
+    if row is None:
+        return jsonify({"exists": False})
+
+    data = _enrich(row)
+    data.pop("actual_workout", None)   # SQLAlchemy object — not JSON serializable
+    data["date"] = data["date"].isoformat()
+    data["exists"] = True
+    return jsonify(data)
