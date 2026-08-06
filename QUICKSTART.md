@@ -101,6 +101,7 @@ Click **Achievements** in the navigation bar to see:
 ## A Few Tips
 
 - **Dark/light mode** — use the ☀️ toggle in the top-right corner to switch themes
+- **Install as an app** — on iPhone/iPad, tap Share → Add to Home Screen in Safari for a full-screen, icon-launched app. On Android/Chrome, use the browser's Install app option (needs HTTPS to appear — see the FAQ)
 - **Heatmap drill-down** — click any square in the 52-week heatmap to see that day's individual workouts in detail
 - **Keeping your app running** — if you want Row Tracker to run in the background without keeping a terminal window open, use `docker compose up -d` instead of `docker compose up`. See the Installation Guide for details.
 - **Your data** — all workout data is stored in `row-tracker/data/row_tracker.db`. Back this file up occasionally to keep it safe.
@@ -115,4 +116,4 @@ For a list of known issues and common questions, click **FAQ** in the navigation
 
 ---
 
-*Last updated: August 5, 2026*
+*Last updated: August 6, 2026*

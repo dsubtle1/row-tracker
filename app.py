@@ -5,7 +5,7 @@ Single container, single port (7376), three Blueprint modules.
 
 import os
 import secrets
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from models import db
@@ -84,6 +84,17 @@ def create_app():
     app.register_blueprint(wod_bp)
     app.register_blueprint(gamification_bp)
     app.register_blueprint(feedback_bp)
+
+    # Served from the root path (not /static/js/sw.js) so its default scope
+    # covers the whole app — a service worker can only control pages under
+    # the path it's served from unless the server opts in via a response
+    # header, which send_from_directory doesn't set.
+    @app.route("/sw.js")
+    def service_worker():
+        response = send_from_directory(os.path.join(app.static_folder, "js"), "sw.js")
+        response.headers["Service-Worker-Allowed"] = "/"
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
     return app
 

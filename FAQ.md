@@ -20,6 +20,9 @@ It connects to the Concept2 Logbook API using your account credentials. Once con
 **Does it work on my phone or tablet?**
 Yes — Row Tracker is fully responsive and optimised for iPhone and iPad, with a hamburger nav drawer on smaller screens.
 
+**Can I install Row Tracker like an app on my phone?**
+Yes. On iPhone/iPad, open Row Tracker in Safari, tap the Share icon, then **Add to Home Screen** — it launches full-screen with its own icon, no browser chrome. On Android/Chrome, look for an **Install app** option in the browser menu. Full install support (the browser-native install prompt) requires the app to be served over HTTPS — on a plain-HTTP homelab setup, iOS's Add to Home Screen still works, but Android's install prompt may not appear until you put a reverse proxy with a certificate in front of it.
+
 ---
 
 ### Data & Sync
@@ -122,5 +125,5 @@ Click the 💬 Feedback button in the navigation bar on any page. Fill in the ca
 
 ---
 
-*Last updated: August 5, 2026*
+*Last updated: August 6, 2026*
 *To report an issue not listed here, use the 💬 Feedback button in the app.*

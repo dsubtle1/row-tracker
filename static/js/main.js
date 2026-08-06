@@ -32,6 +32,15 @@ function updateThemeIcon(theme) {
   updateThemeIcon(saved);
 })();
 
+// ---- PWA install support ----
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((err) => {
+      console.warn("Service worker registration failed:", err);
+    });
+  });
+}
+
 // ── Shared theme-color reader for Chart.js instances ────────────────────
 // Canvas colors must be resolved strings (Chart.js can't consume raw
 // var(...) syntax), so every chart re-reads these from the live CSS
