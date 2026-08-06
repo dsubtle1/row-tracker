@@ -59,15 +59,36 @@ def evaluate_badges():
         logger.error(f"Badge evaluation failed: {e}")
 
 
+def run_backup():
+    """Nightly database snapshot with retention pruning."""
+    from flask import current_app
+    from backup import backup_database
+    try:
+        backup_database(current_app._get_current_object())
+    except Exception as e:
+        logger.error(f"Database backup failed: {e}")
+
+
 def init_scheduler(app):
     """
     Initialise and start the background scheduler.
     Call from the app factory after all blueprints are registered.
+
+    APScheduler runs jobs on its own background thread, so none of them
+    have a Flask application context by default — every job function here
+    reaches for `current_app` or the `db` session, both of which need one.
+    Each job is wrapped to push app.app_context() before running.
     """
     scheduler = BackgroundScheduler(timezone="America/Toronto")
 
+    def with_app_context(func):
+        def wrapper():
+            with app.app_context():
+                func()
+        return wrapper
+
     scheduler.add_job(
-        func             = nightly_sync,
+        func             = with_app_context(nightly_sync),
         trigger          = CronTrigger(hour=3, minute=0),
         id               = "nightly_sync",
         name             = "Nightly C2 sync",
@@ -75,7 +96,7 @@ def init_scheduler(app):
     )
 
     scheduler.add_job(
-        func             = recalculate_pbs,
+        func             = with_app_context(recalculate_pbs),
         trigger          = CronTrigger(hour=3, minute=15),
         id               = "recalculate_pbs",
         name             = "Recalculate personal bests",
@@ -83,10 +104,18 @@ def init_scheduler(app):
     )
 
     scheduler.add_job(
-        func             = evaluate_badges,
+        func             = with_app_context(evaluate_badges),
         trigger          = CronTrigger(hour=3, minute=20),
         id               = "evaluate_badges",
         name             = "Evaluate badges",
+        replace_existing = True,
+    )
+
+    scheduler.add_job(
+        func             = with_app_context(run_backup),
+        trigger          = CronTrigger(hour=3, minute=30),
+        id               = "run_backup",
+        name             = "Nightly database backup",
         replace_existing = True,
     )
 

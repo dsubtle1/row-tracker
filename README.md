@@ -74,6 +74,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Multiple journeys can run simultaneously
 
 **Other**
+- Nightly automated database backup (30-day retention), written to `data/backups/`
 - Dark mode default with light mode toggle (persisted)
 - Fully responsive — iPhone and iPad optimised with hamburger nav drawer
 - Installable as a home-screen app (PWA) — manifest, app icon, and a service worker that caches static assets for a faster reload

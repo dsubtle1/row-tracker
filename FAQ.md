@@ -39,6 +39,9 @@ Yes — for seasons your Concept2 account didn't have API access for yet, export
 **Will my historical workouts appear?**
 Yes. The first time Row Tracker syncs, it backfills your full workout history from the Concept2 Logbook.
 
+**Is my data backed up?**
+Yes — every night at 3:30 AM (right after sync, PB recalculation, and badge evaluation), Row Tracker copies the database to `data/backups/`, keeping the last 30 days. It's still worth copying that folder to another disk or machine occasionally in case the whole server goes down.
+
 ---
 
 ### Personal Bests

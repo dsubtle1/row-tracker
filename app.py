@@ -5,10 +5,21 @@ Single container, single port (7376), three Blueprint modules.
 
 import os
 import secrets
+import logging
 from flask import Flask, send_from_directory
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from models import db
+
+# Without a handler, module-level loggers (scheduler.py, badge_engine.py,
+# pb_engine.py, c2_api.py) fall back to Python's "last resort" handler,
+# which only prints WARNING and above — so a nightly sync/backup success,
+# or the specific error behind a failure, would never reach `docker compose
+# logs`. This makes the scheduler's nightly jobs actually observable.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
 
 mail = Mail()
 csrf = CSRFProtect()
@@ -95,6 +106,10 @@ def create_app():
         response.headers["Service-Worker-Allowed"] = "/"
         response.headers["Cache-Control"] = "no-cache"
         return response
+
+    # ---------------------------------------------------------------- scheduler
+    from scheduler import init_scheduler
+    init_scheduler(app)
 
     return app
 
