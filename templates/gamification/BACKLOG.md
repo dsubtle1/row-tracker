@@ -1,6 +1,6 @@
 # Row Tracker — Product Backlog
 
-> Last updated: 2026-06-14
+> Last updated: 2026-08-06
 
 ---
 
@@ -17,26 +17,26 @@ Add new items as they come up. Update **Status** and **Priority** as work progre
 
 | # | Item | Area | Priority | Status |
 |---|------|------|----------|--------|
-| 1 | Colours in light mode — review and refine palette | UI / Design | Medium | Open |
-| 2 | Achievements page refinement | Gamification | Medium | Open |
+| 1 | Colours in light mode — review and refine palette | UI / Design | Medium | Done |
+| 2 | Achievements page refinement | Gamification | Medium | Done |
 | 3 | Improve virtual journey maps | Virtual Journeys | Low | Open |
-| 4 | Virtual Journeys — click on city/waypoint for facts | Virtual Journeys | Low | Open |
+| 4 | Virtual Journeys — click on city/waypoint for facts | Virtual Journeys | Low | Done |
 
 ---
 
 ## Item Details
 
 ### 1 — Colours in light mode
-**Area:** UI / Design · **Priority:** Medium · **Status:** Open
+**Area:** UI / Design · **Priority:** Medium · **Status:** Done
 
-Light mode colours are functional but need polish. Review contrast ratios, hover states, card backgrounds, and any components that look better in dark mode than light.
+Light mode now has 87 dedicated `[data-theme="light"]` overrides in `main.css` covering cards, badges, challenges, journeys, WOD, charts, and modals. Charts were brought in line with the site palette (see "Finish chart work: match site palette, add empty/error states").
 
 ---
 
 ### 2 — Achievements page refinement
-**Area:** Gamification · **Priority:** Medium · **Status:** Open
+**Area:** Gamification · **Priority:** Medium · **Status:** Done
 
-Add clear visual separation between **In Progress**, **Completed**, and **Locked** badge states. Consider progress indicators for in-progress badges and a summary count at the top of the page.
+`templates/gamification/badges.html` now has distinct `earned` / `locked` badge-card states, per-category earned/total counts, in-progress badges show a progress bar with current/target, and a summary progress bar sits at the top of the page.
 
 ---
 
@@ -52,13 +52,9 @@ SVG maps are in place for Rhine, Holland Tour, Trans-Canada, and Route 66. Furth
 ---
 
 ### 4 — Virtual Journeys — click on city/waypoint for facts
-**Area:** Virtual Journeys · **Priority:** Low · **Status:** Open
+**Area:** Virtual Journeys · **Priority:** Low · **Status:** Done
 
-Clicking a waypoint city could surface information about that location. Options to evaluate:
-- Wikipedia summary API (free, no key required)
-- Inline facts card rendered in the SVG or as a page overlay
-- Simple external link to Google Maps or Wikipedia
-- Fun trivia pulled from a static JSON file bundled with the app
+Implemented via the Wikipedia summary API (no key required) — clicking a waypoint (map or list) opens `_waypoint_modal.html` with details and a Wikipedia link, using the original-resolution photo rather than a rescaled thumbnail.
 
 ---
 
