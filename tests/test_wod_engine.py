@@ -161,7 +161,7 @@ def test_generate_wod_produces_a_complete_spec(app_ctx):
 # ---------------------------------------------------------------------------
 
 def test_build_month_calendar_shape_and_padding(app_ctx):
-    # August 2026: starts on a Friday, so the grid pads 5 days from July
+    # August 2026: starts on a Saturday, so the grid pads 5 days from July
     # and 6 days from September to complete Mon-Sun weeks.
     weeks = build_month_calendar(2026, 8)
 

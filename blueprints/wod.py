@@ -135,6 +135,11 @@ def wod_history():
     year  = request.args.get("year", today.year, type=int)
     month = request.args.get("month", today.month, type=int)
 
+    try:
+        date(year, month, 1)
+    except ValueError:
+        year, month = today.year, today.month
+
     weeks = build_month_calendar(year, month)
     prev_year, prev_month = _adjacent_month(year, month, -1)
     next_year, next_month = _adjacent_month(year, month, 1)

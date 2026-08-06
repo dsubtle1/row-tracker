@@ -69,7 +69,10 @@ function openWodDayModal(dateStr) {
   modal.classList.add("day-modal--open");
 
   fetch("/api/wod/day?date=" + dateStr)
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) throw new Error("Request failed");
+      return r.json();
+    })
     .then(data => {
       if (!data.exists) {
         body.innerHTML = '<p class="day-modal-empty">No WOD generated this day.</p>';
@@ -78,18 +81,31 @@ function openWodDayModal(dateStr) {
       body.innerHTML =
         '<div class="day-modal-workout">' +
           '<div class="day-modal-stats">' +
-            '<div class="dms-block"><span class="dms-value">' + data.title + '</span><span class="dms-label">workout</span></div>' +
-            '<div class="dms-block"><span class="dms-value">' + data.target_pace_str + '/500m</span><span class="dms-label">target pace</span></div>' +
-            '<div class="dms-block"><span class="dms-value">' + data.pace_zone + '</span><span class="dms-label">zone</span></div>' +
+            '<div class="dms-block"><span class="dms-value">' + esc(data.title) + '</span><span class="dms-label">workout</span></div>' +
+            '<div class="dms-block"><span class="dms-value">' + esc(data.target_pace_str) + '/500m</span><span class="dms-label">target pace</span></div>' +
+            '<div class="dms-block"><span class="dms-value">' + esc(data.pace_zone) + '</span><span class="dms-label">zone</span></div>' +
             '<div class="dms-block"><span class="dms-value">' + (data.completed ? "✓ Done" : "—") + '</span><span class="dms-label">status</span></div>' +
           '</div>' +
         '</div>';
+    })
+    .catch(function() {
+      body.innerHTML = '<p class="day-modal-empty">Failed to load workout data.</p>';
     });
 }
 
 function closeWodDayModal() {
   document.getElementById("wodDayModalBackdrop").classList.remove("day-modal-backdrop--open");
   document.getElementById("wodDayModal").classList.remove("day-modal--open");
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") closeWodDayModal();
+});
+
+function esc(s) {
+  const div = document.createElement("div");
+  div.textContent = s;
+  return div.innerHTML;
 }
 </script>
 {% endblock %}

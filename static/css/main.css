@@ -1041,9 +1041,6 @@ code {
 
 .btn-sm { font-size: 0.78rem; padding: 0.3rem 0.75rem; }
 
-.status-done    { color: var(--color-green); font-size: 0.85rem; font-weight: 500; }
-.status-pending { color: var(--color-text-muted); font-size: 0.85rem; }
-
 .mono { font-family: var(--font-mono); font-size: 0.85rem; }
 
 /* ---- WOD Calendar (history page) ---- */
@@ -2660,11 +2657,6 @@ body.mobile-nav-open { overflow: hidden; }
     grid-template-columns: repeat(2, 1fr);
   }
 
-  /* ── Pagination ── */
-  .pagination {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
 }
 
 /* ================================================================
