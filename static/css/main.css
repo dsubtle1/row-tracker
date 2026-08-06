@@ -1338,6 +1338,25 @@ code {
   letter-spacing: 0.05em;
 }
 
+.badge-progress {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+}
+
+.badge-progress-track {
+  height: 5px;
+  width: 100%;
+}
+
+.badge-progress-label {
+  font-size: 0.68rem;
+  color: var(--color-text-muted, #7a82a0);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Section title with count */
 .section-title {
   font-size: 1rem;
@@ -2258,6 +2277,7 @@ code {
 [data-theme="light"] .day-modal-empty,
 [data-theme="light"] .dms-label,
 [data-theme="light"] .badge-locked-label,
+[data-theme="light"] .badge-progress-label,
 [data-theme="light"] .wod-section-label,
 [data-theme="light"] .text-muted {
   color: var(--color-text-muted);

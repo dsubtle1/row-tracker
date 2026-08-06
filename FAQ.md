@@ -72,6 +72,9 @@ Badges are awarded automatically after each sync when the conditions are met. Th
 **Why hasn't my badge been awarded yet?**
 Badge evaluation runs after each sync. Try triggering a manual sync from the Dashboard. If the conditions have been met and the badge still hasn't appeared, use the Feedback button to let us know.
 
+**Why do some locked badges show a progress bar and others just say "Locked"?**
+Badges with a single clear numeric target (lifetime metres, best single-session distance, streak length, or best 7-day workout count) show a progress bar toward that target. Badges based on a one-off condition (like a specific pace threshold or a PB improvement) don't reduce to a meaningful percentage, so they stay a plain "Locked" until earned.
+
 **What are Season Challenges?**
 Quarterly targets that reset on January 1, April 1, July 1, and October 1. They include a distance target, a PB season checklist, a consistency challenge, and a monthly volume goal.
 

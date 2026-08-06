@@ -6,7 +6,7 @@ Phase 3C (versus board) adds to this file next.
 
 from flask import Blueprint, render_template, jsonify
 from models import db, Badge, Workout, PersonalBest, Journey
-from badge_engine import evaluate_badges
+from badge_engine import evaluate_badges, BADGE_ICONS, get_badge_progress
 from datetime import date, timedelta
 from sqlalchemy import func, extract
 
@@ -40,6 +40,13 @@ def _get_badges_by_category():
     for category, keys in BADGE_CATEGORIES.items():
         categorized[category] = [all_badges[k] for k in keys if k in all_badges]
     return categorized
+
+def _attach_badge_display(badges):
+    """Attach transient .icon / .progress attributes for template rendering.
+    Not mapped columns, so nothing is persisted by this."""
+    for badge in badges:
+        badge.icon = BADGE_ICONS.get(badge.badge_key, "🏅")
+        badge.progress = None if badge.earned_date else get_badge_progress(badge.badge_key)
 
 def _get_stale_pbs():
     cutoff = date.today() - timedelta(days=90)
@@ -561,6 +568,9 @@ def hub():
         Badge.earned_date != None,
         Badge.earned_date >= recent_cutoff
     ).order_by(Badge.earned_date.desc()).all()
+    for badge_list in by_category.values():
+        _attach_badge_display(badge_list)
+    _attach_badge_display(recently_earned)
     rhine          = _get_rhine_data()
     holland        = _get_holland_data()
     transcan       = _get_transcan_data()
@@ -586,6 +596,8 @@ def hub():
 @gamification_bp.route("/badges")
 def badges():
     by_category = _get_badges_by_category()
+    for badge_list in by_category.values():
+        _attach_badge_display(badge_list)
     stats       = _get_gamification_stats()
     return render_template(
         "gamification/badges.html",

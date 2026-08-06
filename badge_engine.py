@@ -293,6 +293,33 @@ def _check_load_master():
 # Check function registry — maps badge_key -> check function
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Badge icons — one distinct emoji per badge, shown instead of a generic
+# medal so the grid reads as 17 different achievements, not 17 copies of
+# the same icon.
+# ---------------------------------------------------------------------------
+
+BADGE_ICONS = {
+    "sub_2_06_pace":   "💨",
+    "sub_2_00_pace":   "⚡",
+    "sub_1_55_pace":   "🚀",
+    "pb_crusher":      "💥",
+    "2k_legend":       "🏆",
+    "10k_club":        "🎽",
+    "half_marathon":   "🏔️",
+    "first_100k":      "🌊",
+    "quarter_million": "🚣",
+    "half_million":    "⚓",
+    "one_million":     "🐋",
+    "century_month":   "📆",
+    "week_warrior":    "⚔️",
+    "iron_month":      "🛡️",
+    "streak_30":       "🔥",
+    "technique_gain":  "🎯",
+    "load_master":     "⚖️",
+}
+
+
 CHECK_FUNCTIONS = {
     "sub_2_06_pace":   _check_sub_2_06_pace,
     "sub_2_00_pace":   _check_sub_2_00_pace,
@@ -349,3 +376,79 @@ def evaluate_badges():
         db.session.commit()
 
     return newly_awarded
+
+
+# ---------------------------------------------------------------------------
+# Progress toward locked badges
+# Only badges with a single clear numeric target get a progress bar — the
+# rest (pace thresholds, PB Crusher, Iron Month, Technique Gain, Load
+# Master) don't reduce to a meaningful "current / target" the way a
+# distance or streak count does, so they stay a plain "Locked" label.
+# ---------------------------------------------------------------------------
+
+def _make_lifetime_progress(target):
+    def fn():
+        total = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
+        return {"current": total, "target": target}
+    return fn
+
+def _make_best_session_progress(target):
+    def fn():
+        best = db.session.query(func.max(Workout.distance_meters)).scalar() or 0
+        return {"current": best, "target": target}
+    return fn
+
+def _progress_century_month():
+    rows = db.session.query(
+        extract('year', Workout.workout_date).label('yr'),
+        extract('month', Workout.workout_date).label('mo'),
+        func.sum(Workout.distance_meters).label('total')
+    ).group_by('yr', 'mo').all()
+    best = max((r.total for r in rows), default=0)
+    return {"current": best, "target": 100_000}
+
+def _progress_week_warrior():
+    workouts = Workout.query.order_by(Workout.workout_date.asc()).all()
+    dates = [w.workout_date for w in workouts]
+    best = 0
+    for d in dates:
+        window_end = d + timedelta(days=6)
+        count = sum(1 for x in dates if d <= x <= window_end)
+        best = max(best, count)
+    return {"current": best, "target": 5}
+
+def _progress_streak_30():
+    workouts = Workout.query.order_by(Workout.workout_date.asc()).all()
+    if not workouts:
+        return {"current": 0, "target": 30}
+    active_days = sorted(set(w.workout_date for w in workouts))
+    longest = streak = 1
+    for i in range(1, len(active_days)):
+        streak = streak + 1 if (active_days[i] - active_days[i - 1]).days == 1 else 1
+        longest = max(longest, streak)
+    return {"current": longest, "target": 30}
+
+PROGRESS_FUNCTIONS = {
+    "first_100k":      _make_lifetime_progress(100_000),
+    "quarter_million": _make_lifetime_progress(250_000),
+    "half_million":    _make_lifetime_progress(500_000),
+    "one_million":     _make_lifetime_progress(1_000_000),
+    "century_month":   _progress_century_month,
+    "10k_club":        _make_best_session_progress(10_000),
+    "half_marathon":   _make_best_session_progress(21_097),
+    "week_warrior":    _progress_week_warrior,
+    "streak_30":       _progress_streak_30,
+}
+
+def get_badge_progress(badge_key):
+    """{'current', 'target', 'pct'} for measurable locked badges, else None."""
+    fn = PROGRESS_FUNCTIONS.get(badge_key)
+    if not fn:
+        return None
+    try:
+        progress = fn()
+        progress["pct"] = min(100, round(progress["current"] / progress["target"] * 100, 1))
+        return progress
+    except Exception as e:
+        logger.error(f"Badge progress calc failed for {badge_key}: {e}")
+        return None

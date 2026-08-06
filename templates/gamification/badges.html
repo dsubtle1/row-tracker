@@ -29,14 +29,21 @@
   <div class="badge-grid badge-grid--full">
     {% for badge in badge_list %}
     <div class="badge-card {% if badge.earned_date %}earned{% else %}locked{% endif %}">
-      <div class="badge-icon-large">
-        {% if badge.earned_date %}🏅{% else %}🔒{% endif %}
-      </div>
+      <div class="badge-icon-large">{{ badge.icon }}</div>
       <div class="badge-name">{{ badge.badge_name }}</div>
       <div class="badge-desc">{{ badge.badge_desc }}</div>
       {% if badge.earned_date %}
         <div class="badge-date earned-date">
           ✓ {{ badge.earned_date.strftime('%b %d, %Y') }}
+        </div>
+      {% elif badge.progress %}
+        <div class="badge-progress">
+          <div class="progress-track badge-progress-track">
+            <div class="progress-fill" style="width: {{ badge.progress.pct }}%"></div>
+          </div>
+          <div class="badge-progress-label">
+            {{ "{:,}".format(badge.progress.current) }} / {{ "{:,}".format(badge.progress.target) }}
+          </div>
         </div>
       {% else %}
         <div class="badge-locked-label">Locked</div>
