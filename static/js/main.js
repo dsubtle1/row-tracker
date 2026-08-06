@@ -51,6 +51,8 @@ document.addEventListener("click", function (e) {
   openWaypointModal(hit.dataset);
 });
 
+let waypointModalToken = 0;
+
 function openWaypointModal(data) {
   const backdrop = document.getElementById("waypointModalBackdrop");
   const modal    = document.getElementById("waypointModal");
@@ -69,6 +71,23 @@ function openWaypointModal(data) {
   const wikiTerm = data.name.split("—")[0].split(" (")[0].split(" / ")[0].trim();
   document.getElementById("waypointModalWikiLink").href =
     "https://en.wikipedia.org/wiki/Special:Search/" + encodeURIComponent(wikiTerm);
+
+  const banner = document.getElementById("waypointModalBanner");
+  banner.style.display = "none";
+  banner.style.backgroundImage = "";
+  const token = ++waypointModalToken;
+  fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTerm)}`)
+    .then(r => (r.ok ? r.json() : null))
+    .then(json => {
+      // A later click may have opened a different waypoint before this
+      // resolved — don't paint a stale image over it.
+      if (token !== waypointModalToken) return;
+      const src = json && json.thumbnail && json.thumbnail.source;
+      if (!src) return;
+      banner.style.backgroundImage = `url("${src}")`;
+      banner.style.display = "";
+    })
+    .catch(() => {});
 
   backdrop.classList.add("day-modal-backdrop--open");
   modal.classList.add("day-modal--open");
