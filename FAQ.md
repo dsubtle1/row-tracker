@@ -59,6 +59,9 @@ Yes — click Force Regenerate on the WOD page to get a new one. You can also br
 **What is the Random WOD Generator?**
 It lets you generate a one-off workout by specifying intensity (light / medium / heavy), effort level (low / medium / high), and type (steady state / intervals / threshold / surprise me). You can also add optional notes like "tired legs today."
 
+**What does the WOD History calendar show?**
+Click View all under History on the WOD page to open a month-by-month calendar of every day a WOD was generated. Days are colour-coded for pending vs. completed, and clicking any day opens its workout title, target pace, zone, and status. Use Prev/Next to browse other months, including previous years.
+
 ---
 
 ### Achievements & Badges
@@ -110,5 +113,5 @@ Click the 💬 Feedback button in the navigation bar on any page. Fill in the ca
 
 ---
 
-*Last updated: August 4, 2026*
+*Last updated: August 5, 2026*
 *To report an issue not listed here, use the 💬 Feedback button in the app.*

@@ -68,6 +68,8 @@ If today's WOD doesn't suit you, you can:
 - Browse the **WOD Library** and assign any workout manually
 - Use the **Random WOD Generator** to build your own by choosing intensity, effort level, and type
 
+Click **View all →** under History to open the WOD calendar — a month-by-month grid of every past WOD, colour-coded for pending vs. completed. Click any day to see its workout detail, or use Prev/Next to browse other months.
+
 ---
 
 ## Step 6 — Start a Journey
@@ -112,4 +114,4 @@ For a list of known issues and common questions, click **FAQ** in the navigation
 
 ---
 
-*Last updated: August 4, 2026*
+*Last updated: August 5, 2026*
