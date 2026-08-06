@@ -73,16 +73,16 @@ def seed_badges():
 # ---------------------------------------------------------------------------
 
 def _check_sub_2_06_pace():
-    w = Workout.query.filter(Workout.avg_pace_seconds < 126).first()
-    return (True, w.id) if w else (False, None)
+    w = Workout.query.filter(Workout.avg_pace_seconds < 126).order_by(Workout.workout_date.asc()).first()
+    return (True, w.id, w.workout_date) if w else (False, None, None)
 
 def _check_sub_2_00_pace():
-    w = Workout.query.filter(Workout.avg_pace_seconds < 120).first()
-    return (True, w.id) if w else (False, None)
+    w = Workout.query.filter(Workout.avg_pace_seconds < 120).order_by(Workout.workout_date.asc()).first()
+    return (True, w.id, w.workout_date) if w else (False, None, None)
 
 def _check_sub_1_55_pace():
-    w = Workout.query.filter(Workout.avg_pace_seconds < 115).first()
-    return (True, w.id) if w else (False, None)
+    w = Workout.query.filter(Workout.avg_pace_seconds < 115).order_by(Workout.workout_date.asc()).first()
+    return (True, w.id, w.workout_date) if w else (False, None, None)
 
 def _check_pb_crusher():
     """Any PB improvement > 5 seconds."""
@@ -90,49 +90,48 @@ def _check_pb_crusher():
         PersonalBest.previous_value != None,
         PersonalBest.previous_value - PersonalBest.value_seconds > 5
     ).first()
-    return (True, pb.workout_id) if pb else (False, None)
+    return (True, pb.workout_id, pb.achieved_date) if pb else (False, None, None)
 
 def _check_2k_legend():
     """Any workout at exactly 2000m."""
-    w = Workout.query.filter(Workout.distance_meters == 2000).first()
-    return (True, w.id) if w else (False, None)
+    w = Workout.query.filter(Workout.distance_meters == 2000).order_by(Workout.workout_date.asc()).first()
+    return (True, w.id, w.workout_date) if w else (False, None, None)
 
 def _check_10k_club():
-    w = Workout.query.filter(Workout.distance_meters >= 10000).first()
-    return (True, w.id) if w else (False, None)
+    w = Workout.query.filter(Workout.distance_meters >= 10000).order_by(Workout.workout_date.asc()).first()
+    return (True, w.id, w.workout_date) if w else (False, None, None)
 
 def _check_half_marathon():
-    w = Workout.query.filter(Workout.distance_meters >= 21097).first()
-    return (True, w.id) if w else (False, None)
+    w = Workout.query.filter(Workout.distance_meters >= 21097).order_by(Workout.workout_date.asc()).first()
+    return (True, w.id, w.workout_date) if w else (False, None, None)
 
 def _check_first_100k():
     total = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
     if total >= 100_000:
-        # Find the workout that pushed it over
         w = _find_milestone_workout(100_000)
-        return (True, w.id if w else None)
-    return (False, None)
+        return (True, w.id if w else None, w.workout_date if w else None)
+    return (False, None, None)
 
 def _check_quarter_million():
     total = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
     if total >= 250_000:
         w = _find_milestone_workout(250_000)
-        return (True, w.id if w else None)
-    return (False, None)
+        return (True, w.id if w else None, w.workout_date if w else None)
+    return (False, None, None)
 
 def _check_half_million():
     total = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
     if total >= 500_000:
         w = _find_milestone_workout(500_000)
-        return (True, w.id if w else None)
-    return (False, None)
+        return (True, w.id if w else None, w.workout_date if w else None)
+    return (False, None, None)
 
 def _check_one_million():
     total = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
     if total >= 1_000_000:
         w = _find_milestone_workout(1_000_000)
-        return (True, w.id if w else None)
-    return (False, None)
+        return (True, w.id if w else None, w.workout_date if w else None)
+    return (False, None, None)
 
 def _find_milestone_workout(target_metres):
     """Walk workouts in date order to find the one that crossed a cumulative target."""
@@ -150,8 +149,22 @@ def _check_century_month():
         extract('year', Workout.workout_date).label('yr'),
         extract('month', Workout.workout_date).label('mo'),
         func.sum(Workout.distance_meters).label('total')
-    ).group_by('yr', 'mo').having(func.sum(Workout.distance_meters) >= 100_000).first()
-    return (True, None) if result else (False, None)
+    ).group_by('yr', 'mo').having(func.sum(Workout.distance_meters) >= 100_000) \
+     .order_by('yr', 'mo').first()
+    if not result:
+        return (False, None, None)
+    # Walk that month's workouts to find the day the cumulative total crossed 100k.
+    yr, mo = int(result.yr), int(result.mo)
+    month_workouts = Workout.query.filter(
+        extract('year', Workout.workout_date) == yr,
+        extract('month', Workout.workout_date) == mo,
+    ).order_by(Workout.workout_date.asc()).all()
+    cumulative = 0
+    for w in month_workouts:
+        cumulative += w.distance_meters
+        if cumulative >= 100_000:
+            return (True, w.id, w.workout_date)
+    return (True, None, month_workouts[-1].workout_date if month_workouts else None)
 
 def _check_week_warrior():
     """5 workouts in any rolling 7-day window."""
@@ -159,10 +172,10 @@ def _check_week_warrior():
     dates = [w.workout_date for w in workouts]
     for i, d in enumerate(dates):
         window_end = d + timedelta(days=6)
-        count = sum(1 for x in dates if d <= x <= window_end)
-        if count >= 5:
-            return (True, None)
-    return (False, None)
+        window_dates = sorted(x for x in dates if d <= x <= window_end)
+        if len(window_dates) >= 5:
+            return (True, None, window_dates[4])  # date the 5th workout landed
+    return (False, None, None)
 
 def _check_iron_month():
     """
@@ -193,25 +206,25 @@ def _check_iron_month():
         if len(month_rows) < IRON_MONTH_MIN_PLANNED_SESSIONS:
             continue
         if all(row.completed for row in month_rows):
-            return (True, None)
+            return (True, None, max(row.generated_date for row in month_rows))
 
-    return (False, None)
+    return (False, None, None)
 
 def _check_streak_30():
     """30 consecutive calendar days each with at least one workout."""
     workouts = Workout.query.order_by(Workout.workout_date.asc()).all()
     if not workouts:
-        return (False, None)
+        return (False, None, None)
     active_days = sorted(set(w.workout_date for w in workouts))
     streak = 1
     for i in range(1, len(active_days)):
         if (active_days[i] - active_days[i - 1]).days == 1:
             streak += 1
             if streak >= 30:
-                return (True, None)
+                return (True, None, active_days[i])
         else:
             streak = 1
-    return (False, None)
+    return (False, None, None)
 
 def _check_technique_gain():
     """
@@ -237,7 +250,7 @@ def _check_technique_gain():
     ).all()
 
     if not recent or not old:
-        return (False, None)
+        return (False, None, None)
 
     recent_pace = sum(w.avg_pace_seconds for w in recent) / len(recent)
     recent_spm  = sum(w.avg_stroke_rate  for w in recent) / len(recent)
@@ -248,7 +261,9 @@ def _check_technique_gain():
     pace_similar = abs(recent_pace - old_pace) <= 3
     spm_dropped  = (old_spm - recent_spm) >= 3
 
-    return (True, None) if (pace_similar and spm_dropped) else (False, None)
+    if pace_similar and spm_dropped:
+        return (True, None, max(w.workout_date for w in recent))
+    return (False, None, None)
 
 def _check_load_master():
     """
@@ -257,7 +272,7 @@ def _check_load_master():
     """
     workouts = Workout.query.order_by(Workout.workout_date.asc()).all()
     if not workouts:
-        return (False, None)
+        return (False, None, None)
 
     # Build dict: iso_week_key -> total metres
     from collections import defaultdict
@@ -268,7 +283,7 @@ def _check_load_master():
 
     keys = sorted(weekly.keys())
     if len(keys) < 4:
-        return (False, None)
+        return (False, None, None)
 
     # Need at least 5 weeks of data to compute a 28-day chronic average
     consecutive = 0
@@ -282,11 +297,12 @@ def _check_load_master():
         if 0.8 <= cawr <= 1.3:
             consecutive += 1
             if consecutive >= 4:
-                return (True, None)
+                yr, wk = keys[i]
+                return (True, None, date.fromisocalendar(yr, wk, 7))
         else:
             consecutive = 0
 
-    return (False, None)
+    return (False, None, None)
 
 
 # ---------------------------------------------------------------------------
@@ -361,13 +377,17 @@ def evaluate_badges():
             continue
 
         try:
-            earned, workout_id = check_fn()
+            earned, workout_id, achieved_date = check_fn()
         except Exception as e:
             logger.error(f"Badge check failed for {badge.badge_key}: {e}")
             continue
 
         if earned:
-            badge.earned_date = date.today()
+            # Use the date the milestone actually happened, not the date this
+            # evaluation ran — otherwise a bulk-imported history stamps every
+            # already-true badge with today's date. Fall back to today only
+            # if a check function genuinely has no date to offer.
+            badge.earned_date = achieved_date or date.today()
             badge.workout_id  = workout_id
             newly_awarded.append(badge.badge_key)
             logger.info(f"Badge awarded: {badge.badge_name}")
