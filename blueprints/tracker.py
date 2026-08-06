@@ -8,10 +8,12 @@ HR zone filters: register in app.py after blueprint import:
     app.jinja_env.filters['hr_zone_name']  = hr_zone_name
 """
 
+import csv
+import io
 from datetime import date, timedelta
 from collections import defaultdict
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, Response, current_app, jsonify, render_template, request
 from sqlalchemy import func
 
 from models import db, Workout, PersonalBest
@@ -534,6 +536,111 @@ def import_csv_view():
             evaluate_badges()
 
     return render_template("tracker/import.html", results=results)
+
+
+def _csv_response(filename, header, rows):
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(header)
+    writer.writerows(rows)
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+def _json_response(filename, data):
+    response = jsonify(data)
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    return response
+
+
+@tracker_bp.route("/export")
+def export_page():
+    return render_template("tracker/export.html")
+
+
+@tracker_bp.route("/export/workouts.csv")
+def export_workouts_csv():
+    workouts = _rower().order_by(Workout.workout_date.asc()).all()
+    header = [
+        "id", "date", "time_seconds", "time_formatted", "distance_meters",
+        "avg_pace_seconds", "avg_pace_formatted", "avg_stroke_rate",
+        "total_calories", "synced_at",
+    ]
+    rows = [
+        [
+            w.id, w.workout_date.isoformat(), w.time_seconds, w.time_formatted,
+            w.distance_meters, w.avg_pace_seconds, w.avg_pace_formatted,
+            w.avg_stroke_rate, w.total_calories,
+            w.synced_at.isoformat() if w.synced_at else "",
+        ]
+        for w in workouts
+    ]
+    filename = f"row-tracker-workouts-{date.today().isoformat()}.csv"
+    return _csv_response(filename, header, rows)
+
+
+@tracker_bp.route("/export/workouts.json")
+def export_workouts_json():
+    workouts = _rower().order_by(Workout.workout_date.asc()).all()
+    data = [
+        {
+            "id":                 w.id,
+            "date":               w.workout_date.isoformat(),
+            "time_seconds":       w.time_seconds,
+            "time_formatted":     w.time_formatted,
+            "distance_meters":    w.distance_meters,
+            "avg_pace_seconds":   w.avg_pace_seconds,
+            "avg_pace_formatted": w.avg_pace_formatted,
+            "avg_stroke_rate":    w.avg_stroke_rate,
+            "total_calories":     w.total_calories,
+            "synced_at":          w.synced_at.isoformat() if w.synced_at else None,
+        }
+        for w in workouts
+    ]
+    filename = f"row-tracker-workouts-{date.today().isoformat()}.json"
+    return _json_response(filename, data)
+
+
+@tracker_bp.route("/export/pbs.csv")
+def export_pbs_csv():
+    pbs = PersonalBest.query.order_by(PersonalBest.category.asc()).all()
+    header = [
+        "category", "value_formatted", "value_seconds", "value_meters",
+        "achieved_date", "previous_value", "delta_seconds", "workout_id",
+    ]
+    rows = [
+        [
+            pb.category, pb.value_formatted, pb.value_seconds, pb.value_meters,
+            pb.achieved_date.isoformat() if pb.achieved_date else "",
+            pb.previous_value, pb.delta_seconds, pb.workout_id,
+        ]
+        for pb in pbs
+    ]
+    filename = f"row-tracker-pbs-{date.today().isoformat()}.csv"
+    return _csv_response(filename, header, rows)
+
+
+@tracker_bp.route("/export/pbs.json")
+def export_pbs_json():
+    pbs = PersonalBest.query.order_by(PersonalBest.category.asc()).all()
+    data = [
+        {
+            "category":         pb.category,
+            "value_formatted":  pb.value_formatted,
+            "value_seconds":    pb.value_seconds,
+            "value_meters":     pb.value_meters,
+            "achieved_date":    pb.achieved_date.isoformat() if pb.achieved_date else None,
+            "previous_value":   pb.previous_value,
+            "delta_seconds":    pb.delta_seconds,
+            "workout_id":       pb.workout_id,
+        }
+        for pb in pbs
+    ]
+    filename = f"row-tracker-pbs-{date.today().isoformat()}.json"
+    return _json_response(filename, data)
 
 
 @tracker_bp.route("/faq")

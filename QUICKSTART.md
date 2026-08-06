@@ -104,7 +104,7 @@ Click **Achievements** in the navigation bar to see:
 - **Install as an app** — on iPhone/iPad, tap Share → Add to Home Screen in Safari for a full-screen, icon-launched app. On Android/Chrome, use the browser's Install app option (needs HTTPS to appear — see the FAQ)
 - **Heatmap drill-down** — click any square in the 52-week heatmap to see that day's individual workouts in detail
 - **Keeping your app running** — if you want Row Tracker to run in the background without keeping a terminal window open, use `docker compose up -d` instead of `docker compose up`. See the Installation Guide for details.
-- **Your data** — all workout data is stored in `row-tracker/data/row_tracker.db`. It's backed up automatically every night to `row-tracker/data/backups/`, keeping the last 30 days — worth copying that folder somewhere off the server occasionally too.
+- **Your data** — all workout data is stored in `row-tracker/data/row_tracker.db`. It's backed up automatically every night to `row-tracker/data/backups/`, keeping the last 30 days — worth copying that folder somewhere off the server occasionally too. Want just your workouts or PBs as a CSV or JSON file? Use **Export Data** next to the Sync button on the Dashboard.
 
 ---
 

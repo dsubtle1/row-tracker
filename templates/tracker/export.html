@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Export Data — Row Tracker{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Export Data</h1>
+  <p class="page-subtitle">Download your data to use outside Row Tracker, or as a portable backup.</p>
+</div>
+
+<div class="chart-card">
+  <h2 class="section-title" style="margin-bottom: 0.5rem;">Workout History</h2>
+  <p class="muted">Every synced or imported rowing workout — date, time, distance, pace, stroke rate, and calories.</p>
+  <div class="export-actions">
+    <a href="{{ url_for('tracker.export_workouts_csv') }}" class="btn btn-primary">Download CSV</a>
+    <a href="{{ url_for('tracker.export_workouts_json') }}" class="btn btn-ghost">Download JSON</a>
+  </div>
+</div>
+
+<div class="chart-card" style="margin-top: 1.5rem;">
+  <h2 class="section-title" style="margin-bottom: 0.5rem;">Personal Bests</h2>
+  <p class="muted">Your best time or distance in each of the 8 PB categories.</p>
+  <div class="export-actions">
+    <a href="{{ url_for('tracker.export_pbs_csv') }}" class="btn btn-primary">Download CSV</a>
+    <a href="{{ url_for('tracker.export_pbs_json') }}" class="btn btn-ghost">Download JSON</a>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .export-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+</style>
+{% endblock %}
