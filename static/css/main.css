@@ -1041,35 +1041,92 @@ code {
 
 .btn-sm { font-size: 0.78rem; padding: 0.3rem 0.75rem; }
 
-/* ---- History table ---- */
-.wod-history-table-wrap {
-  overflow-x: auto;
-  margin-bottom: 1.5rem;
-}
-
-.wod-row--completed td { opacity: 0.7; }
-
 .status-done    { color: var(--color-green); font-size: 0.85rem; font-weight: 500; }
 .status-pending { color: var(--color-text-muted); font-size: 0.85rem; }
 
 .mono { font-family: var(--font-mono); font-size: 0.85rem; }
 
-/* ---- Pagination ---- */
-.pagination {
+/* ---- WOD Calendar (history page) ---- */
+.wod-cal-nav {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
 }
 
-.page-link {
+.wod-cal-nav-link {
   font-size: 0.85rem;
+  font-weight: 600;
   color: var(--color-accent);
 }
 
-.page-info {
-  font-size: 0.8rem;
+.wod-cal-nav-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.wod-cal-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wod-cal-header-row,
+.wod-cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.wod-cal-header-cell {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--color-text-muted);
+  padding-bottom: 0.4rem;
+}
+
+.wod-cal-day {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--color-surface-2);
+  padding: 0.4rem;
+  transition: opacity var(--transition);
+}
+
+.wod-cal-day[data-date] {
+  cursor: pointer;
+}
+
+.wod-cal-day[data-date]:hover {
+  opacity: 0.8;
+}
+
+.wod-cal-daynum {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.wod-cal-day--outside {
+  background: transparent;
+  opacity: 0.35;
+}
+
+.wod-cal-day--pending {
+  background: color-mix(in srgb, var(--color-accent) 20%, var(--color-surface-2));
+}
+
+.wod-cal-day--completed {
+  background: color-mix(in srgb, var(--color-green) 55%, var(--color-surface-2));
+}
+
+@media (max-width: 640px) {
+  .wod-cal-header-cell { font-size: 0.6rem; }
+  .wod-cal-daynum { font-size: 0.7rem; }
 }
 
 /* ---- WOD history link ---- */
