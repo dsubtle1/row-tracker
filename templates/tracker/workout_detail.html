@@ -239,11 +239,10 @@
   const hr      = strokes.map(s => s.hr);
 
   function render() {
-    const isDark    = document.documentElement.getAttribute("data-theme") !== "light";
-    const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
-    const textColor = isDark ? "#7a8399" : "#64748b";
-    const paceColor = "#3b82f6";
-    const spmColor  = isDark ? "#f59e0b" : "#d97706";
+    const gridColor = cssVar("--color-border", "#262a35");
+    const textColor = cssVar("--color-text-muted", "#7a8399");
+    const paceColor = cssVar("--color-accent", "#cdfa3f");
+    const spmColor  = cssVar("--color-amber", "#f59e0b");
 
     if (chart) chart.destroy();
 

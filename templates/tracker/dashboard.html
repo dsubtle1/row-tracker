@@ -75,6 +75,7 @@
     </div>
     <div class="trend-sparkline-wrap">
       <canvas id="paceSparkline"></canvas>
+      <div class="chart-message chart-message--sm" id="paceSparklineMessage" style="display: none;"></div>
     </div>
     <span class="trend-card-sub" id="paceSparklineSub">Last 90 days</span>
   </div>
@@ -85,6 +86,7 @@
     </div>
     <div class="trend-sparkline-wrap">
       <canvas id="volumeSparkline"></canvas>
+      <div class="chart-message chart-message--sm" id="volumeSparklineMessage" style="display: none;"></div>
     </div>
     <span class="trend-card-sub" id="volumeSparklineSub">Last 12 weeks</span>
   </div>
@@ -267,7 +269,8 @@ const heatmapDays = {{ heatmap | tojson }};
   }
 
   function renderVolumeSparkline() {
-    const canvas = document.getElementById("volumeSparkline");
+    const canvas  = document.getElementById("volumeSparkline");
+    const message = document.getElementById("volumeSparklineMessage");
     if (!canvas) return;
 
     // Group heatmapDays (oldest first, dow 0=Mon..6=Sun) into weekly totals.
@@ -283,7 +286,14 @@ const heatmapDays = {{ heatmap | tojson }};
       }
     });
     const recent = weeks.slice(-12);
-    if (!recent.length) return;
+    if (!recent.length) {
+      canvas.style.display = "none";
+      message.style.display = "";
+      message.textContent = "No workouts yet";
+      return;
+    }
+    canvas.style.display = "";
+    message.style.display = "none";
 
     if (volumeChart) volumeChart.destroy();
     volumeChart = new Chart(canvas.getContext("2d"), {
@@ -324,14 +334,25 @@ const heatmapDays = {{ heatmap | tojson }};
   }
 
   function renderPaceSparkline() {
-    const canvas = document.getElementById("paceSparkline");
+    const canvas  = document.getElementById("paceSparkline");
+    const message = document.getElementById("paceSparklineMessage");
     if (!canvas) return;
 
     fetch("/api/data/pace?days=90")
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
         if (paceChart) paceChart.destroy();
-        if (!data.length) return;
+        if (!data.length) {
+          canvas.style.display = "none";
+          message.style.display = "";
+          message.textContent = "No workouts yet";
+          return;
+        }
+        canvas.style.display = "";
+        message.style.display = "none";
 
         paceChart = new Chart(canvas.getContext("2d"), {
           type: "line",
@@ -370,6 +391,11 @@ const heatmapDays = {{ heatmap | tojson }};
         const latest = data[data.length - 1];
         document.getElementById("paceSparklineSub").textContent =
           `Last 90 days · ${fmtPace(latest.pace_seconds)}/500m latest`;
+      })
+      .catch(() => {
+        canvas.style.display = "none";
+        message.style.display = "";
+        message.textContent = "Couldn't load";
       });
   }
 

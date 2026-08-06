@@ -21,9 +21,10 @@
 <div class="chart-card">
   <div class="chart-wrap">
     <canvas id="paceChart"></canvas>
+    <div class="chart-message" id="paceChartMessage" style="display: none;"></div>
   </div>
   <p class="chart-note">
-    Each point is one workout. The blue line is a 10-session rolling average.
+    Each point is one workout. The highlighted line is a 10-session rolling average.
     Y-axis: lower = faster. Hover for date, pace, and distance.
   </p>
 </div>
@@ -56,21 +57,36 @@
 
   // ── Build chart ──────────────────────────────────────────────────────
   function loadChart(days) {
+    const canvas  = document.getElementById("paceChart");
+    const message = document.getElementById("paceChartMessage");
+
     const url = `/api/data/pace?days=${days}`;
     fetch(url)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
         if (chart) chart.destroy();
 
-        const isDark = document.documentElement.getAttribute("data-theme") !== "light";
-        const gridColor  = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)";
-        const textColor  = isDark ? "#7a8399" : "#64748b";
-        const dotColor   = isDark ? "rgba(96,165,250,0.45)" : "rgba(59,130,246,0.45)";
-        const lineColor  = "#3b82f6";
+        if (!data.length) {
+          canvas.style.display = "none";
+          message.style.display = "";
+          message.textContent = "Not enough data yet for this range — row a few more sessions.";
+          return;
+        }
+        canvas.style.display = "";
+        message.style.display = "none";
+
+        const accent     = cssVar("--color-accent", "#cdfa3f");
+        const gridColor  = cssVar("--color-border", "#262a35");
+        const textColor  = cssVar("--color-text-muted", "#7a8399");
+        const dotColor   = `color-mix(in srgb, ${accent} 40%, transparent)`;
+        const lineColor  = accent;
 
         const labels = data.map(d => d.date);
 
-        const ctx = document.getElementById("paceChart").getContext("2d");
+        const ctx = canvas.getContext("2d");
         chart = new Chart(ctx, {
           type: "line",
           data: {
@@ -80,7 +96,7 @@
                 label: "Workout pace",
                 data: data.map(d => d.pace_seconds),
                 borderColor: "transparent",
-                backgroundColor: isDark ? "rgba(96,165,250,0.25)" : "rgba(59,130,246,0.3)",
+                backgroundColor: dotColor,
                 pointRadius: 2,
                 pointHoverRadius: 5,
                 showLine: false,
@@ -157,6 +173,11 @@
             },
           },
         });
+      })
+      .catch(() => {
+        canvas.style.display = "none";
+        message.style.display = "";
+        message.textContent = "Couldn't load chart data — try refreshing the page.";
       });
   }
 

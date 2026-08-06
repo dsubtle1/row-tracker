@@ -32,6 +32,15 @@ function updateThemeIcon(theme) {
   updateThemeIcon(saved);
 })();
 
+// ── Shared theme-color reader for Chart.js instances ────────────────────
+// Canvas colors must be resolved strings (Chart.js can't consume raw
+// var(...) syntax), so every chart re-reads these from the live CSS
+// custom properties instead of hardcoding a duplicate palette guess.
+function cssVar(name, fallback) {
+  const val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return val || fallback;
+}
+
 // ── Journey waypoint modal ──────────────────────────────────────────────
 // Delegated so it works on every journey route page without per-page
 // init code — .wp-hit is used on both SVG waypoint markers and the
