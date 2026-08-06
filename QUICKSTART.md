@@ -30,6 +30,7 @@ Once synced, your Dashboard shows:
 - **Last session** — distance, pace, and date of your most recent row
 - **Pace trend & weekly volume** — mini sparkline previews of your recent training
 - **Your Progress** — a checklist of every active or completed virtual journey
+- **Journey Map** — a small map preview of whichever active journey you're furthest along on, with a link to its full route page
 - **52-week heatmap** — a full year of training volume at a glance; click any square to see that day's individual workouts
 
 ---

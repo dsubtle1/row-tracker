@@ -120,6 +120,34 @@
   <div class="progress-checklist" id="journeyChecklist"></div>
 </section>
 
+{# ── Journey Map teaser (most-progressed active journey) ─────────────── #}
+<section class="section" id="journeyMapSection" style="display: none;">
+  <div class="section-header">
+    <h2 class="section-title">Journey Map</h2>
+    <a href="#" class="section-link" id="journeyMapLink">View journey →</a>
+  </div>
+  <div class="journey-map-teaser">
+    <svg class="journey-map-svg" id="journeyMapSvg" viewBox="0 0 320 110" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="journeyMapGlow">
+          <feGaussianBlur stdDeviation="2.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <path class="journey-map-path-bg"
+        d="M 10,85 C 60,25 110,25 160,60 C 210,95 250,35 310,20"/>
+      <path class="journey-map-path" id="journeyMapPathFill"
+        d="M 10,85 C 60,25 110,25 160,60 C 210,95 250,35 310,20"/>
+      <circle class="journey-map-marker" id="journeyMapMarker" r="6" cx="10" cy="85" filter="url(#journeyMapGlow)"/>
+    </svg>
+    <div class="journey-map-caption">
+      <span class="journey-map-emoji" id="journeyMapEmoji"></span>
+      <span class="journey-map-name" id="journeyMapName"></span>
+      <span class="journey-map-pct" id="journeyMapPct"></span>
+    </div>
+  </div>
+</section>
+
 {# ── Day detail modal ─────────────────────────────────────────────────── #}
 <div class="day-modal-backdrop" id="dayModalBackdrop" onclick="closeDayModal()"></div>
 <div class="day-modal" id="dayModal">
@@ -394,7 +422,37 @@ const heatmapDays = {{ heatmap | tojson }};
     });
 
     document.getElementById("journeyProgressSection").style.display = "";
+
+    const activeOnly = results.filter(r => r.data.active);
+    if (activeOnly.length) {
+      const best = activeOnly.reduce((a, b) => (b.data.pct > a.data.pct ? b : a));
+      renderJourneyMap(best);
+    }
   });
+
+  function renderJourneyMap(route) {
+    const section  = document.getElementById("journeyMapSection");
+    const pathFill = document.getElementById("journeyMapPathFill");
+    const marker   = document.getElementById("journeyMapMarker");
+    const link     = document.getElementById("journeyMapLink");
+    const pct      = Math.max(0, Math.min(100, route.data.pct));
+
+    const total = pathFill.getTotalLength();
+    const dist  = total * (pct / 100);
+    pathFill.style.strokeDasharray = `${dist}, ${total}`;
+
+    const pt = pathFill.getPointAtLength(dist);
+    marker.setAttribute("cx", pt.x);
+    marker.setAttribute("cy", pt.y);
+
+    document.getElementById("journeyMapEmoji").textContent = route.emoji;
+    document.getElementById("journeyMapName").textContent = route.label;
+    document.getElementById("journeyMapPct").textContent = pct + "%";
+    link.href = route.href;
+    link.textContent = "Continue journey →";
+
+    section.style.display = "";
+  }
 })();
 
 // ── Day modal ────────────────────────────────────────────────────────────

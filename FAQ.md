@@ -92,6 +92,9 @@ Go to Journeys in the navigation and click Start on any route. Metres from worko
 **Do journey metres count from my full history?**
 No — only workouts completed after you clicked Start count. This is intentional so the journey feels like a real ongoing trip.
 
+**What's the "Journey Map" card on the dashboard?**
+A small decorative map preview showing whichever active journey you're furthest along on (by percent complete). It's purely a visual teaser — not to scale, no real geography — and links through to that journey's full route page. It only appears once at least one journey is active.
+
 ---
 
 ### Feedback

@@ -28,6 +28,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Circular gauge for lifetime metres, progress toward the next milestone (100k up through 100M)
 - Mini pace-trend and weekly-volume sparklines
 - "Your Progress" checklist — every active or completed virtual journey at a glance
+- "Journey Map" teaser — a decorative mini map preview of your most-progressed active journey, linking through to its full route page
 
 **Training Data**
 - Automatic sync from the Concept2 Logbook API — nightly at 3:00 AM, or on demand

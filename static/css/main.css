@@ -787,6 +787,60 @@ code {
   }
 }
 
+/* ---- Journey Map teaser (dashboard) ---- */
+.journey-map-teaser {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.journey-map-svg {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+}
+
+.journey-map-path-bg {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.journey-map-path {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.6s ease;
+}
+
+.journey-map-marker {
+  fill: var(--color-accent);
+  stroke: var(--color-surface);
+  stroke-width: 2;
+}
+
+.journey-map-caption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.journey-map-name {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.journey-map-pct {
+  font-weight: 600;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---- CAWR zone legend ---- */
 .cawr-zones {
   display: flex;
