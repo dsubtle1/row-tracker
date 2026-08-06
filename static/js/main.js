@@ -74,7 +74,9 @@ function openWaypointModal(data) {
 
   const banner = document.getElementById("waypointModalBanner");
   banner.style.display = "none";
-  banner.style.backgroundImage = "";
+  banner.onload = null;
+  banner.onerror = null;
+  banner.removeAttribute("src");
   const token = ++waypointModalToken;
   fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTerm)}`)
     .then(r => (r.ok ? r.json() : null))
@@ -84,8 +86,27 @@ function openWaypointModal(data) {
       if (token !== waypointModalToken) return;
       const src = json && json.thumbnail && json.thumbnail.source;
       if (!src) return;
-      banner.style.backgroundImage = `url("${src}")`;
-      banner.style.display = "";
+
+      // The API's default thumbnail is ~330px wide — plenty grainy for a
+      // 600px-wide banner. Asking Wikimedia's thumb service to render a
+      // different, not-already-cached width for a hotlinked request
+      // reliably 503s (their on-demand thumbnailing isn't open to
+      // external callers this way), so use the original full-resolution
+      // file instead — it's a direct file fetch with no render step, and
+      // object-fit:cover downsizes it for display regardless of its
+      // native size. Fall back to the known-good default thumbnail if
+      // the original is somehow unavailable.
+      const sharpSrc = json.originalimage && json.originalimage.source;
+      banner.onerror = () => {
+        if (token !== waypointModalToken) return;
+        banner.onerror = null;
+        banner.src = src;
+      };
+      banner.onload = () => {
+        if (token !== waypointModalToken) return;
+        banner.style.display = "";
+      };
+      banner.src = sharpSrc || src;
     })
     .catch(() => {});
 
