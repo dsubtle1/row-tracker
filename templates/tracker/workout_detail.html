@@ -214,7 +214,7 @@
 
 {% block extra_js %}
 {% if stroke_data %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/vendor/chart.umd.min.js') }}"></script>
 <script>
 (function () {
   const strokes = JSON.parse(document.getElementById("strokeDataJson").textContent);
