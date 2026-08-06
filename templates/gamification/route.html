@@ -73,13 +73,16 @@
       {% set path_points = [(350,470),(338,432),(325,395),(345,358),(335,322),(320,286),(342,250),(330,214),(325,195),(318,170),(328,148),(335,112),(338,82),(340,50)] %}
       {% for wp in rhine.waypoints %}
         {% set pt = path_points[loop.index0] %}
-        <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="7"
-          fill="var(--color-teal,#00829b)" stroke="var(--color-surface,#1e2130)" stroke-width="2" filter="url(#glow)"/>
-        {% if loop.index0 % 2 == 0 %}
-          <text x="{{ pt[0] + 14 }}" y="{{ pt[1] + 4 }}" class="wp-label wp-passed">{{ wp.emoji }} {{ wp.name }}</text>
-        {% else %}
-          <text x="{{ pt[0] - 14 }}" y="{{ pt[1] + 4 }}" class="wp-label wp-passed" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
-        {% endif %}
+        <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="true">
+          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="12" fill="transparent"/>
+          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="7"
+            fill="var(--color-teal,#00829b)" stroke="var(--color-surface,#1e2130)" stroke-width="2" filter="url(#glow)"/>
+          {% if loop.index0 % 2 == 0 %}
+            <text x="{{ pt[0] + 14 }}" y="{{ pt[1] + 4 }}" class="wp-label wp-passed">{{ wp.emoji }} {{ wp.name }}</text>
+          {% else %}
+            <text x="{{ pt[0] - 14 }}" y="{{ pt[1] + 4 }}" class="wp-label wp-passed" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
+          {% endif %}
+        </g>
       {% endfor %}
       <text x="340" y="28" class="position-label" text-anchor="middle">🏆 Rotterdam reached!</text>
     </svg>
@@ -151,15 +154,18 @@
       {% for wp in rhine.waypoints %}
         {% set pt = path_points[loop.index0] %}
         {% set passed = wp.passed %}
-        <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="7"
-          fill="{% if passed %}var(--color-teal,#00829b){% else %}var(--color-border,#2e3350){% endif %}"
-          stroke="var(--color-surface,#1e2130)" stroke-width="2"
-          {% if passed %}filter="url(#glow)"{% endif %}/>
-        {% if loop.index0 % 2 == 0 %}
-          <text x="{{ pt[0] + 14 }}" y="{{ pt[1] + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}">{{ wp.emoji }} {{ wp.name }}</text>
-        {% else %}
-          <text x="{{ pt[0] - 14 }}" y="{{ pt[1] + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
-        {% endif %}
+        <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="{{ 'true' if passed else 'false' }}">
+          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="12" fill="transparent"/>
+          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="7"
+            fill="{% if passed %}var(--color-teal,#00829b){% else %}var(--color-border,#2e3350){% endif %}"
+            stroke="var(--color-surface,#1e2130)" stroke-width="2"
+            {% if passed %}filter="url(#glow)"{% endif %}/>
+          {% if loop.index0 % 2 == 0 %}
+            <text x="{{ pt[0] + 14 }}" y="{{ pt[1] + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}">{{ wp.emoji }} {{ wp.name }}</text>
+          {% else %}
+            <text x="{{ pt[0] - 14 }}" y="{{ pt[1] + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
+          {% endif %}
+        </g>
       {% endfor %}
 
       {# Current position marker #}
@@ -187,7 +193,8 @@
     <h3 class="card-title mb-3">Waypoints</h3>
     <div class="waypoint-timeline">
       {% for wp in rhine.waypoints %}
-      <div class="wpt-row {% if wp.passed %}wpt-passed{% else %}wpt-locked{% endif %}">
+      <div class="wpt-row wp-hit {% if wp.passed %}wpt-passed{% else %}wpt-locked{% endif %}"
+           data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="{{ 'true' if wp.passed else 'false' }}">
         <div class="wpt-marker">{% if wp.passed %}✓{% else %}○{% endif %}</div>
         <div class="wpt-km">{{ wp.km }} km</div>
         <div class="wpt-name">{{ wp.emoji }} {{ wp.name }}</div>
@@ -213,5 +220,7 @@
 </div>
 
 {% endif %}
+
+{% include "gamification/_waypoint_modal.html" %}
 
 {% endblock %}

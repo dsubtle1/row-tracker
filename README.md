@@ -70,6 +70,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Trans-Canada Highway — Victoria, BC to St. John's, NL · 7,821 km · 23 waypoints
 - Route 66 — Chicago, IL to Santa Monica, CA · 3,940 km
 - Waypoint ETAs based on 28-day rolling average pace
+- Click any waypoint (map or list) for a popup with details and a Wikipedia link
 - Multiple journeys can run simultaneously
 
 **Other**

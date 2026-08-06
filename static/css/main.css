@@ -1539,7 +1539,11 @@ code {
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   font-size: 0.85rem;
+  cursor: pointer;
 }
+.wpt-row:hover { background: var(--color-surface-2); }
+
+.wp-hit { cursor: pointer; }
 .wpt-passed {
   background: color-mix(in srgb, var(--color-teal, #00829b) 8%, transparent);
 }
@@ -2104,6 +2108,29 @@ code {
 }
 .day-modal-detail-link:hover { text-decoration: underline; }
 
+.waypoint-modal-km {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #7a82a0);
+  margin-bottom: 0.4rem;
+}
+
+.waypoint-modal-status {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+.waypoint-modal-status.wpt-passed { color: var(--color-teal, #00829b); background: none; }
+.waypoint-modal-status.wpt-locked { color: var(--color-text-muted, #7a82a0); opacity: 1; }
+
+.waypoint-modal-wiki-link {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-teal, #00829b);
+  text-decoration: none;
+}
+.waypoint-modal-wiki-link:hover { text-decoration: underline; }
+
 /* ============================================================
    Journey start / complete states
    ============================================================ */
@@ -2278,6 +2305,8 @@ code {
 [data-theme="light"] .dms-label,
 [data-theme="light"] .badge-locked-label,
 [data-theme="light"] .badge-progress-label,
+[data-theme="light"] .waypoint-modal-km,
+[data-theme="light"] .waypoint-modal-status.wpt-locked,
 [data-theme="light"] .wod-section-label,
 [data-theme="light"] .text-muted {
   color: var(--color-text-muted);

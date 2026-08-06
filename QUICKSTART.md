@@ -84,7 +84,7 @@ Pick one of four virtual routes and click **Start**. Every metre you row from th
 - 🇨🇦 **Trans-Canada Highway** — Victoria BC to St. John's NL, 7,821 km, 23 waypoints
 - 🇺🇸 **Route 66** — Chicago, IL to Santa Monica, CA, 3,940 km
 
-You can run all four simultaneously. Each shows your current position, upcoming waypoints, and an estimated arrival date based on your recent training pace.
+You can run all four simultaneously. Each shows your current position, upcoming waypoints, and an estimated arrival date based on your recent training pace. Click any waypoint — on the map or in the list — for a popup with more detail and a link to look it up on Wikipedia.
 
 ---
 

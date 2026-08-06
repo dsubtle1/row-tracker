@@ -31,3 +31,41 @@ function updateThemeIcon(theme) {
   document.documentElement.setAttribute("data-theme", saved);
   updateThemeIcon(saved);
 })();
+
+// ── Journey waypoint modal ──────────────────────────────────────────────
+// Delegated so it works on every journey route page without per-page
+// init code — .wp-hit is used on both SVG waypoint markers and the
+// waypoint-timeline rows.
+document.addEventListener("click", function (e) {
+  const hit = e.target.closest(".wp-hit");
+  if (!hit) return;
+  openWaypointModal(hit.dataset);
+});
+
+function openWaypointModal(data) {
+  const backdrop = document.getElementById("waypointModalBackdrop");
+  const modal    = document.getElementById("waypointModal");
+  if (!backdrop || !modal) return;
+
+  const passed = data.passed === "true";
+  document.getElementById("waypointModalTitle").textContent = `${data.emoji} ${data.name}`;
+  document.getElementById("waypointModalKm").textContent = `${Number(data.km).toLocaleString()} km mark`;
+
+  const statusEl = document.getElementById("waypointModalStatus");
+  statusEl.textContent = passed ? "✓ Passed" : "Not yet reached";
+  statusEl.className = "waypoint-modal-status " + (passed ? "wpt-passed" : "wpt-locked");
+
+  // Strip decorative suffixes/parentheticals so the search lands on the
+  // actual place (e.g. "St. Louis, MO — Gateway Arch" -> "St. Louis, MO").
+  const wikiTerm = data.name.split("—")[0].split(" (")[0].split(" / ")[0].trim();
+  document.getElementById("waypointModalWikiLink").href =
+    "https://en.wikipedia.org/wiki/Special:Search/" + encodeURIComponent(wikiTerm);
+
+  backdrop.classList.add("day-modal-backdrop--open");
+  modal.classList.add("day-modal--open");
+}
+
+function closeWaypointModal() {
+  document.getElementById("waypointModalBackdrop").classList.remove("day-modal-backdrop--open");
+  document.getElementById("waypointModal").classList.remove("day-modal--open");
+}

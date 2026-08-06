@@ -1,0 +1,17 @@
+{# ── Waypoint modal — shared by every journey route page ───────────────
+   Triggered by clicking any .wp-hit element (SVG waypoint or timeline
+   row); see the click-delegation handler in static/js/main.js. #}
+<div class="day-modal-backdrop" id="waypointModalBackdrop" onclick="closeWaypointModal()"></div>
+<div class="day-modal waypoint-modal" id="waypointModal">
+  <div class="day-modal-header">
+    <span class="day-modal-date" id="waypointModalTitle"></span>
+    <button class="day-modal-close" onclick="closeWaypointModal()">✕</button>
+  </div>
+  <div class="day-modal-body">
+    <div class="waypoint-modal-km" id="waypointModalKm"></div>
+    <div class="waypoint-modal-status" id="waypointModalStatus"></div>
+    <a href="#" id="waypointModalWikiLink" target="_blank" rel="noopener noreferrer" class="waypoint-modal-wiki-link">
+      Read more on Wikipedia ↗
+    </a>
+  </div>
+</div>
