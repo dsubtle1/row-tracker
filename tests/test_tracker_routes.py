@@ -43,7 +43,7 @@ def test_app_version_is_read_and_rendered(full_app, client):
 
     # rendered into the site-wide footer via the app_version Jinja global
     resp = client.get("/")
-    assert f"Row Tracker v{full_app.config['VERSION']}".encode() in resp.data
+    assert f"v{full_app.config['VERSION']}".encode() in resp.data
 
 
 def test_auth_callback(client):
@@ -260,6 +260,14 @@ def test_service_worker_served_at_root_scope(client):
     resp = client.get("/sw.js")
     assert resp.status_code == 200
     assert resp.headers.get("Service-Worker-Allowed") == "/"
+    assert resp.headers.get("Cache-Control") == "no-cache"
+    assert resp.mimetype == "application/javascript"
+
+
+def test_service_worker_cache_name_tracks_app_version(full_app, client):
+    resp = client.get("/sw.js")
+    version = full_app.config["VERSION"]
+    assert f'CACHE_NAME = "row-tracker-static-v{version}"'.encode() in resp.data
 
 
 def test_manifest_served(client):

@@ -9,6 +9,19 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.1] — 2026-08-07
+
+### Changed
+- The version display moved from a centered line at the bottom of page content to a small,
+  low-opacity `vX.Y.Z` badge fixed to the bottom-right corner of the viewport on every page
+
+### Fixed
+- The service worker's static-asset cache (`CACHE_NAME`) was a fixed string that never changed
+  across deploys, so any CSS/JS update was invisible to a browser that had already loaded the app
+  once — cache-first meant it just kept serving the old file forever. `sw.js` is now rendered from
+  a Jinja template with `CACHE_NAME` tied to `app_version`, so every version bump automatically
+  invalidates the old cache instead of silently serving stale static assets
+
 ## [0.9.0] — 2026-08-07
 
 ### Added
