@@ -95,26 +95,12 @@
         Amsterdam (centre-top) → north to Volendam/Edam/Alkmaar
         → west to Zandvoort coast → south through Haarlem/Keukenhof/Leiden/Delft/The Hague/Rotterdam
         → east to Kinderdijk/Gouda/Utrecht → northeast back to Amsterdam
+      Map coordinates and label side are computed in blueprints/gamification.py
+      (HOLLAND_PATH_POINTS / _holland_waypoint_side); only the marker's
+      clearance is dynamic (_layout_side_alternating_route).
     #}
-    {% set path_points = [
-      (360, 120),
-      (400, 85),
-      (420, 68),
-      (435, 42),
-      (320, 42),
-      (255, 85),
-      (210, 135),
-      (225, 185),
-      (235, 230),
-      (220, 268),
-      (265, 318),
-      (330, 330),
-      (370, 295),
-      (415, 250),
-      (460, 245),
-      (430, 180),
-      (370, 120)
-    ] %}
+    {% from "gamification/_position_marker.html" import position_marker_side %}
+    <div class="map-scroll-wrap">
     <svg class="rhine-map" viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="hollandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -201,39 +187,24 @@
 
       {# Waypoint dots #}
       {% for wp in holland.waypoints %}
-        {% set pt = path_points[loop.index0] %}
         {% set passed = wp.passed %}
         <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="{{ 'true' if passed else 'false' }}">
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="11" fill="transparent"/>
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="6"
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="11" fill="transparent"/>
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="6"
             fill="{% if passed %}var(--color-teal,#00829b){% else %}var(--color-border,#2e3350){% endif %}"
             stroke="var(--color-surface,#1e2130)" stroke-width="2"
             {% if passed %}filter="url(#glow)"{% endif %}/>
-          {# Alternate label sides to avoid overlap #}
-          {% if loop.index0 in [0, 4, 5, 6, 7, 8, 9] %}
-            <text x="{{ pt[0] - 12 }}" y="{{ pt[1] + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" text-anchor="end" font-size="10">{{ wp.emoji }} {{ wp.name }}</text>
+          {% if wp.label_right %}
+            <text x="{{ wp.x + 12 }}" y="{{ wp.y + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" font-size="10">{{ wp.emoji }} {{ wp.name }}</text>
           {% else %}
-            <text x="{{ pt[0] + 12 }}" y="{{ pt[1] + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" font-size="10">{{ wp.emoji }} {{ wp.name }}</text>
+            <text x="{{ wp.x - 12 }}" y="{{ wp.y + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" text-anchor="end" font-size="10">{{ wp.emoji }} {{ wp.name }}</text>
           {% endif %}
         </g>
       {% endfor %}
 
       {# Current position marker #}
       {% if holland.active %}
-        {% set pos_pct = holland.pct / 100 %}
-        {% set n = path_points | length %}
-        {% set idx_f = pos_pct * (n - 1) %}
-        {% set idx_i = idx_f | int %}
-        {% set idx_j = [idx_i + 1, n - 1] | min %}
-        {% set frac = idx_f - idx_i %}
-        {% set px = path_points[idx_i][0] + frac * (path_points[idx_j][0] - path_points[idx_i][0]) %}
-        {% set py = path_points[idx_i][1] + frac * (path_points[idx_j][1] - path_points[idx_i][1]) %}
-        <circle cx="{{ px | round }}" cy="{{ py | round }}" r="10"
-          fill="var(--color-accent,#f4c542)" stroke="var(--color-surface,#1e2130)" stroke-width="3"
-          filter="url(#glow)">
-          <animate attributeName="r" values="10;13;10" dur="2s" repeatCount="indefinite"/>
-        </circle>
-        <text x="{{ (px + 14) | round }}" y="{{ (py - 10) | round }}" class="position-label">You are here</text>
+        {{ position_marker_side(holland.marker) }}
       {% endif %}
 
       {# North arrow #}
@@ -246,6 +217,7 @@
       {# North Sea label #}
       <text x="140" y="80" text-anchor="middle" font-size="9" fill="var(--color-teal,#00829b)" fill-opacity="0.45" font-style="italic" font-family="inherit">North Sea</text>
     </svg>
+    </div>
   </div>
 </div>
 

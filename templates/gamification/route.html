@@ -51,6 +51,7 @@
 {# Show completed map below #}
 <div class="card mb-4">
   <div class="card-body">
+   <div class="map-scroll-wrap">
     <svg class="rhine-map" viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="riverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -70,22 +71,21 @@
         d="M 350,470 C 320,420 380,380 340,330 C 300,280 370,240 330,190 C 290,140 360,100 340,50"
         fill="none" stroke="url(#riverGrad)" stroke-width="6" stroke-linecap="round"
         stroke-dasharray="800, 800"/>
-      {% set path_points = [(350,470),(338,432),(325,395),(345,358),(335,322),(320,286),(342,250),(330,214),(325,195),(318,170),(328,148),(335,112),(338,82),(340,50)] %}
       {% for wp in rhine.waypoints %}
-        {% set pt = path_points[loop.index0] %}
         <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="true">
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="12" fill="transparent"/>
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="7"
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="12" fill="transparent"/>
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="7"
             fill="var(--color-teal,#00829b)" stroke="var(--color-surface,#1e2130)" stroke-width="2" filter="url(#glow)"/>
-          {% if loop.index0 % 2 == 0 %}
-            <text x="{{ pt[0] + 14 }}" y="{{ pt[1] + 4 }}" class="wp-label wp-passed">{{ wp.emoji }} {{ wp.name }}</text>
+          {% if wp.label_right %}
+            <text x="{{ wp.x + 14 }}" y="{{ wp.y + 4 }}" class="wp-label wp-passed">{{ wp.emoji }} {{ wp.name }}</text>
           {% else %}
-            <text x="{{ pt[0] - 14 }}" y="{{ pt[1] + 4 }}" class="wp-label wp-passed" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
+            <text x="{{ wp.x - 14 }}" y="{{ wp.y + 4 }}" class="wp-label wp-passed" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
           {% endif %}
         </g>
       {% endfor %}
       <text x="340" y="28" class="position-label" text-anchor="middle">🏆 Rotterdam reached!</text>
     </svg>
+   </div>
   </div>
 </div>
 
@@ -127,9 +127,13 @@
   </div>
 </div>
 
-{# SVG map #}
+{# SVG map — map coordinates and label placement (side + marker clearance,
+   so "You are here" doesn't land on top of a nearby waypoint label) are
+   computed in blueprints/gamification.py, see _layout_side_alternating_route. #}
+{% from "gamification/_position_marker.html" import position_marker_side %}
 <div class="card mb-4">
   <div class="card-body">
+   <div class="map-scroll-wrap">
     <svg class="rhine-map" viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="riverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -150,40 +154,26 @@
         fill="none" stroke="url(#riverGrad)" stroke-width="6" stroke-linecap="round"
         stroke-dasharray="{{ rhine.pct * 8 }}, 800"/>
 
-      {% set path_points = [(350,470),(338,432),(325,395),(345,358),(335,322),(320,286),(342,250),(330,214),(325,195),(318,170),(328,148),(335,112),(338,82),(340,50)] %}
       {% for wp in rhine.waypoints %}
-        {% set pt = path_points[loop.index0] %}
         {% set passed = wp.passed %}
         <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="{{ 'true' if passed else 'false' }}">
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="12" fill="transparent"/>
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="7"
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="12" fill="transparent"/>
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="7"
             fill="{% if passed %}var(--color-teal,#00829b){% else %}var(--color-border,#2e3350){% endif %}"
             stroke="var(--color-surface,#1e2130)" stroke-width="2"
             {% if passed %}filter="url(#glow)"{% endif %}/>
-          {% if loop.index0 % 2 == 0 %}
-            <text x="{{ pt[0] + 14 }}" y="{{ pt[1] + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}">{{ wp.emoji }} {{ wp.name }}</text>
+          {% if wp.label_right %}
+            <text x="{{ wp.x + 14 }}" y="{{ wp.y + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}">{{ wp.emoji }} {{ wp.name }}</text>
           {% else %}
-            <text x="{{ pt[0] - 14 }}" y="{{ pt[1] + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
+            <text x="{{ wp.x - 14 }}" y="{{ wp.y + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
           {% endif %}
         </g>
       {% endfor %}
 
       {# Current position marker #}
-      {% set pos_pct = rhine.pct / 100 %}
-      {% set n = path_points | length %}
-      {% set idx_f = pos_pct * (n - 1) %}
-      {% set idx_i = idx_f | int %}
-      {% set idx_j = [idx_i + 1, n - 1] | min %}
-      {% set frac = idx_f - idx_i %}
-      {% set px = path_points[idx_i][0] + frac * (path_points[idx_j][0] - path_points[idx_i][0]) %}
-      {% set py = path_points[idx_i][1] + frac * (path_points[idx_j][1] - path_points[idx_i][1]) %}
-      <circle cx="{{ px | round }}" cy="{{ py | round }}" r="10"
-        fill="var(--color-accent,#f4c542)" stroke="var(--color-surface,#1e2130)" stroke-width="3"
-        filter="url(#glow)">
-        <animate attributeName="r" values="10;13;10" dur="2s" repeatCount="indefinite"/>
-      </circle>
-      <text x="{{ (px + 14) | round }}" y="{{ (py - 10) | round }}" class="position-label">You are here</text>
+      {{ position_marker_side(rhine.marker) }}
     </svg>
+   </div>
   </div>
 </div>
 

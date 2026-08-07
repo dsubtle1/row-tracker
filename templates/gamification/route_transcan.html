@@ -90,6 +90,7 @@
 </div>
 
 {# SVG map — Trans-Canada Highway #}
+{% from "gamification/_position_marker.html" import position_marker_above %}
 <div class="card mb-4">
   <div class="card-body">
     {#
@@ -97,34 +98,12 @@
       Route traces geographic terrain: Rocky Mountain peaks, flat prairies,
       Canadian Shield dip, Great Lakes curve, St. Lawrence valley, Maritime coast,
       ferry gap to Newfoundland.
-      24 waypoints mapped to x positions proportional to km (0–7821).
+      24 waypoints mapped to x positions proportional to km (0–7821). Map
+      coordinates and label placement (side + fan-out rank, to keep closely
+      spaced waypoints like Victoria/Nanaimo/Vancouver/Kamloops from
+      overlapping) are computed in blueprints/gamification.py.
     #}
-    {% set pts = [
-      (18,  165),
-      (27,  155),
-      (38,  148),
-      (62,  130),
-      (98,  108),
-      (116, 118),
-      (162, 128),
-      (198, 130),
-      (244, 130),
-      (270, 128),
-      (348, 125),
-      (413, 120),
-      (457, 118),
-      (508, 115),
-      (533, 112),
-      (573, 108),
-      (638, 112),
-      (662, 115),
-      (693, 118),
-      (720, 116),
-      (755, 122),
-      (790, 128),
-      (818, 132),
-      (876, 148)
-    ] %}
+    <div class="map-scroll-wrap">
     <svg class="rhine-map" viewBox="0 -20 900 240" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="transcanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -233,30 +212,32 @@
         stroke-dasharray="4,4"/>
       <text x="737" y="108" text-anchor="middle" font-size="7" fill="var(--color-teal,#00829b)" fill-opacity="0.5" font-family="inherit">⛴ ferry</text>
 
-      {# Waypoint dots and labels — alternate above/below to avoid overlap #}
-      {% set above = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22] %}
+      {# Waypoint dots and labels — side + fan-out rank precomputed in Python #}
       {% for wp in transcan.waypoints %}
-        {% set pt = pts[loop.index0] %}
         {% set passed = wp.passed %}
-        {% set is_above = loop.index0 in above %}
+        {% set is_above = wp.label_above %}
+        {% set label_y1 = wp.y - (12 + wp.label_rank * 24) %}
+        {% set label_y2 = wp.y - (22 + wp.label_rank * 24) %}
+        {% set label_y1b = wp.y + (18 + wp.label_rank * 24) %}
+        {% set label_y2b = wp.y + (27 + wp.label_rank * 24) %}
         <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="{{ 'true' if passed else 'false' }}">
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="12" fill="transparent"/>
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="{% if loop.index0 == 0 or loop.index0 == 23 %}7{% else %}5{% endif %}"
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="12" fill="transparent"/>
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="{% if loop.index0 == 0 or loop.index0 == 23 %}7{% else %}5{% endif %}"
             fill="{% if passed %}var(--color-teal,#00829b){% else %}var(--color-border,#2e3350){% endif %}"
             stroke="var(--color-surface,#1e2130)" stroke-width="2"
             {% if passed %}filter="url(#glow)"{% endif %}/>
-          {# Tick line #}
-          <line x1="{{ pt[0] }}" y1="{{ pt[1] }}"
-                x2="{{ pt[0] }}" y2="{% if is_above %}{{ pt[1] - 8 }}{% else %}{{ pt[1] + 8 }}{% endif %}"
+          {# Tick line — reaches all the way to the label when it's been fanned out #}
+          <line x1="{{ wp.x }}" y1="{{ wp.y }}"
+                x2="{{ wp.x }}" y2="{{ (label_y1 + 3) if is_above else (label_y1b - 3) }}"
             stroke="var(--color-teal,#00829b)" stroke-width="0.8"
             stroke-opacity="{% if passed %}0.6{% else %}0.25{% endif %}"/>
-          <text x="{{ pt[0] }}"
-                y="{% if is_above %}{{ pt[1] - 12 }}{% else %}{{ pt[1] + 18 }}{% endif %}"
+          <text x="{{ wp.x }}"
+                y="{{ label_y1 if is_above else label_y1b }}"
                 text-anchor="middle"
                 class="wp-label {% if passed %}wp-passed{% endif %}"
                 font-size="7.5">{{ wp.emoji }}</text>
-          <text x="{{ pt[0] }}"
-                y="{% if is_above %}{{ pt[1] - 22 }}{% else %}{{ pt[1] + 27 }}{% endif %}"
+          <text x="{{ wp.x }}"
+                y="{{ label_y2 if is_above else label_y2b }}"
                 text-anchor="middle"
                 class="wp-label {% if passed %}wp-passed{% endif %}"
                 font-size="7">{{ wp.name | replace(' (ferry to mainland)', '') | replace(' — Mile Zero', '') | replace(' — Journey\'s End', '') | replace(' (ferry to NL)', '') | truncate(18, True, '') }}</text>
@@ -265,24 +246,13 @@
 
       {# Current position marker #}
       {% if transcan.active %}
-        {% set pos_pct = transcan.pct / 100 %}
-        {% set n = pts | length %}
-        {% set idx_f = pos_pct * (n - 1) %}
-        {% set idx_i = idx_f | int %}
-        {% set idx_j = [idx_i + 1, n - 1] | min %}
-        {% set frac = idx_f - idx_i %}
-        {% set px = pts[idx_i][0] + frac * (pts[idx_j][0] - pts[idx_i][0]) %}
-        {% set py = pts[idx_i][1] + frac * (pts[idx_j][1] - pts[idx_i][1]) %}
-        <circle cx="{{ px | round }}" cy="{{ py | round }}" r="9"
-          fill="var(--color-accent,#f4c542)" stroke="var(--color-surface,#1e2130)" stroke-width="3"
-          filter="url(#glow)">
-          <animate attributeName="r" values="9;12;9" dur="2s" repeatCount="indefinite"/>
-        </circle>
-        <text x="{{ (px) | round }}" y="{{ (py - 16) | round }}" class="position-label" text-anchor="middle" font-size="9">You are here</text>
+        {{ position_marker_above(transcan.marker, r=9) }}
       {% endif %}
 
-      {# Scale bar #}
-      <g transform="translate(20, 195)">
+      {# Scale bar — kept up in the top margin, not the bottom-left, since
+         the west-coast waypoint cluster (Victoria/Nanaimo/Vancouver/
+         Kamloops) and its fanned-out labels now reach down that far. #}
+      <g transform="translate(20, -8)">
         <line x1="0" y1="0" x2="56" y2="0" stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
         <line x1="0" y1="-3" x2="0" y2="3" stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
         <line x1="56" y1="-3" x2="56" y2="3" stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
@@ -290,9 +260,10 @@
       </g>
 
       {# Pacific / Atlantic labels #}
-      <text x="10" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4" font-style="italic" font-family="inherit">🌊 Pacific</text>
+      <text x="10" y="-10" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4" font-style="italic" font-family="inherit">🌊 Pacific</text>
       <text x="862" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4" font-style="italic" font-family="inherit" text-anchor="end">Atlantic 🌊</text>
     </svg>
+    </div>
   </div>
 </div>
 

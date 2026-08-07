@@ -1,0 +1,42 @@
+{# Current-position marker + "You are here" label, shared by all 4 journey
+   maps. Two variants for the two label orientations the routes use:
+     - _side  : left/right offset — Rhine (vertical) and Holland (loop).
+                marker needs x, y, right (bool), rank (int).
+     - _above : above/below offset — Trans-Canada and Route 66 (horizontal).
+                marker needs x, y, label_above (bool), label_rank (int).
+   rank/label_rank (from the layout helpers in gamification.py) pushes the
+   label further out when the nearest waypoint label is close by. #}
+
+{% macro position_marker_side(marker, r=10) %}
+  {% set dx = 16 + marker.rank * 16 %}
+  {% set dy = 20 + marker.rank * 16 %}
+  {% set label_x = marker.x + (dx if marker.right else -dx) %}
+  {% set label_y = marker.y - dy %}
+  <line x1="{{ marker.x }}" y1="{{ marker.y }}" x2="{{ label_x }}" y2="{{ label_y + 5 }}"
+    stroke="var(--color-accent,#f4c542)" stroke-width="1" stroke-opacity="0.55"/>
+  <rect x="{{ label_x - 42 }}" y="{{ label_y - 12 }}" width="84" height="17" rx="4"
+    fill="var(--color-surface,#1e2130)" fill-opacity="0.92"
+    stroke="var(--color-accent,#f4c542)" stroke-opacity="0.55" stroke-width="1"/>
+  <text x="{{ label_x }}" y="{{ label_y }}" class="position-label" text-anchor="middle">You are here</text>
+  <circle cx="{{ marker.x }}" cy="{{ marker.y }}" r="{{ r }}"
+    fill="var(--color-accent,#f4c542)" stroke="var(--color-surface,#1e2130)" stroke-width="3"
+    filter="url(#glow)">
+    <animate attributeName="r" values="{{ r }};{{ r + 3 }};{{ r }}" dur="2s" repeatCount="indefinite"/>
+  </circle>
+{% endmacro %}
+
+{% macro position_marker_above(marker, r=10) %}
+  {% set dy = 20 + marker.label_rank * 24 %}
+  {% set label_y = marker.y - dy if marker.label_above else marker.y + dy %}
+  <line x1="{{ marker.x }}" y1="{{ marker.y }}" x2="{{ marker.x }}" y2="{{ label_y + (5 if marker.label_above else -5) }}"
+    stroke="var(--color-accent,#f4c542)" stroke-width="1" stroke-opacity="0.55"/>
+  <rect x="{{ marker.x - 42 }}" y="{{ label_y - 12 if marker.label_above else label_y - 4 }}" width="84" height="17" rx="4"
+    fill="var(--color-surface,#1e2130)" fill-opacity="0.92"
+    stroke="var(--color-accent,#f4c542)" stroke-opacity="0.55" stroke-width="1"/>
+  <text x="{{ marker.x }}" y="{{ label_y }}" class="position-label" text-anchor="middle">You are here</text>
+  <circle cx="{{ marker.x }}" cy="{{ marker.y }}" r="{{ r }}"
+    fill="var(--color-accent,#f4c542)" stroke="var(--color-surface,#1e2130)" stroke-width="3"
+    filter="url(#glow)">
+    <animate attributeName="r" values="{{ r }};{{ r + 3 }};{{ r }}" dur="2s" repeatCount="indefinite"/>
+  </circle>
+{% endmacro %}

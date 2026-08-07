@@ -14,6 +14,119 @@ gamification_bp = Blueprint("gamification", __name__, url_prefix="/gamification"
 
 
 # ---------------------------------------------------------------------------
+# Route map label layout — shared by the horizontal routes (Trans-Canada,
+# Route 66). A handful of waypoints on every real route end up close
+# together in x once the whole map is scaled to the full route length (e.g.
+# Trans-Canada's Victoria/Nanaimo/Vancouver/Kamloops all sit inside the
+# first 5% of 7,821 km), so a fixed above/below alternation isn't enough —
+# consecutive same-side labels there collide. This fans them out: each
+# label alternates above/below as before, but if the last label placed on
+# that side is closer than min_gap, it's pushed one more "rung" outward.
+# ---------------------------------------------------------------------------
+
+def _fan_label_layout(coords, min_gap=42):
+    """
+    coords: [(x, y), ...] in path order.
+    Returns a parallel list of {"above": bool, "rank": int} — rank 0 is the
+    closest rung, higher ranks push the label further from the dot.
+    """
+    layout = []
+    last_x = {True: None, False: None}
+    last_rank = {True: -1, False: -1}
+    above = True
+    for x, _y in coords:
+        if last_x[above] is not None and (x - last_x[above]) < min_gap:
+            rank = last_rank[above] + 1
+        else:
+            rank = 0
+        layout.append({"above": above, "rank": rank})
+        last_x[above] = x
+        last_rank[above] = rank
+        above = not above
+    return layout
+
+
+def _marker_label_clearance(flank_a, flank_b, closer_is_a):
+    """
+    Placement for the animated "You are here" label: opposite side from
+    whichever flanking waypoint it's closer to, and pushed one rung further
+    out than either neighbour, so it never lands in the same lane as a
+    waypoint label that happens to be nearby.
+    """
+    near = flank_a if closer_is_a else flank_b
+    return {
+        "above": not near["above"],
+        "rank": max(flank_a["rank"], flank_b["rank"]) + 1,
+    }
+
+
+def _layout_horizontal_route(path_points, waypoints, pct, min_gap=42):
+    """
+    Attach map coordinates + fanned label placement to each waypoint, and
+    compute the current-position marker's coordinates + label placement.
+    Shared by the two horizontal (west-to-east) routes — Trans-Canada and
+    Route 66 — which hit the same problem: a handful of waypoints always
+    end up close together in x once the map is scaled to the full route
+    length (e.g. Victoria/Nanaimo/Vancouver/Kamloops all sit inside the
+    first 5% of Trans-Canada's 7,821 km).
+    """
+    layout = _fan_label_layout(path_points, min_gap=min_gap)
+    out_waypoints = [
+        {**wp, "x": x, "y": y, "label_above": lay["above"], "label_rank": lay["rank"]}
+        for wp, (x, y), lay in zip(waypoints, path_points, layout)
+    ]
+
+    n = len(path_points)
+    idx_f = (pct / 100) * (n - 1)
+    idx_i = int(idx_f)
+    idx_j = min(idx_i + 1, n - 1)
+    frac = idx_f - idx_i
+    mx = path_points[idx_i][0] + frac * (path_points[idx_j][0] - path_points[idx_i][0])
+    my = path_points[idx_i][1] + frac * (path_points[idx_j][1] - path_points[idx_i][1])
+
+    marker_layout = _marker_label_clearance(layout[idx_i], layout[idx_j], closer_is_a=frac < 0.5)
+    marker = {
+        "x": round(mx), "y": round(my),
+        "label_above": marker_layout["above"], "label_rank": marker_layout["rank"],
+    }
+    return out_waypoints, marker
+
+
+def _layout_side_alternating_route(path_points, waypoints, pct, side_fn):
+    """
+    Attach map coordinates + label side to each waypoint (side_fn decides
+    left/right per index, same rule the template used to apply inline),
+    and compute the current-position marker's placement — opposite side
+    from its nearest neighbour, pushed further out — so it doesn't land in
+    the same lane as a nearby waypoint label. Shared by Rhine (mostly
+    vertical) and Holland (loop), whose waypoints alternate sides by a
+    fixed per-index rule rather than the horizontal routes' proximity-based
+    fan-out (see _layout_horizontal_route).
+    """
+    out_waypoints = [
+        {**wp, "x": x, "y": y, "label_right": side_fn(i)}
+        for i, (wp, (x, y)) in enumerate(zip(waypoints, path_points))
+    ]
+
+    n = len(path_points)
+    idx_f = (pct / 100) * (n - 1)
+    idx_i = int(idx_f)
+    idx_j = min(idx_i + 1, n - 1)
+    frac = idx_f - idx_i
+    mx = path_points[idx_i][0] + frac * (path_points[idx_j][0] - path_points[idx_i][0])
+    my = path_points[idx_i][1] + frac * (path_points[idx_j][1] - path_points[idx_i][1])
+
+    flank_a = {"above": side_fn(idx_i), "rank": 0}
+    flank_b = {"above": side_fn(idx_j), "rank": 0}
+    marker_layout = _marker_label_clearance(flank_a, flank_b, closer_is_a=frac < 0.5)
+    marker = {
+        "x": round(mx), "y": round(my),
+        "right": marker_layout["above"], "rank": marker_layout["rank"],
+    }
+    return out_waypoints, marker
+
+
+# ---------------------------------------------------------------------------
 # BADGE helpers (Phase 3A — unchanged)
 # ---------------------------------------------------------------------------
 
@@ -91,6 +204,21 @@ RHINE_WAYPOINTS = [
     {"km": 820, "name": "Rotterdam",                    "emoji": "🚢"},
 ]
 
+# Map coordinates — 700×520 viewBox, index-aligned with RHINE_WAYPOINTS
+# (0=Basel at the bottom, 13=Rotterdam at the top).
+RHINE_PATH_POINTS = [
+    (350, 470), (338, 432), (325, 395), (345, 358), (335, 322), (320, 286),
+    (342, 250), (330, 214), (325, 195), (318, 170), (328, 148), (335, 112),
+    (338, 82),  (340, 50),
+]
+
+
+def _rhine_waypoint_side(i):
+    """Right/left rule the template used inline — kept as-is; only the
+    marker's placement changes (see _layout_side_alternating_route)."""
+    return i % 2 == 0
+
+
 def _get_rhine_data():
     """Compute Rhine journey position from journey start date only."""
     journey = (
@@ -101,11 +229,15 @@ def _get_rhine_data():
     )
 
     if not journey:
+        empty_waypoints, empty_marker = _layout_side_alternating_route(
+            RHINE_PATH_POINTS, [{**wp, "passed": False} for wp in RHINE_WAYPOINTS], pct=0,
+            side_fn=_rhine_waypoint_side,
+        )
         return {
             "active": False, "complete": False, "start_date": None,
             "position_km": 0, "pct": 0,
             "remaining_km": RHINE_TOTAL_KM, "remaining_m": RHINE_TOTAL_M,
-            "waypoints": [{**wp, "passed": False} for wp in RHINE_WAYPOINTS],
+            "waypoints": empty_waypoints, "marker": empty_marker,
             "last_passed": None, "next_waypoint": RHINE_WAYPOINTS[1],
             "eta": None, "weekly_avg_km": 0, "journey_metres": 0,
         }
@@ -130,6 +262,10 @@ def _get_rhine_data():
         elif next_wp is None: next_wp = wp
         waypoints.append({**wp, "passed": passed})
 
+    waypoints, marker = _layout_side_alternating_route(
+        RHINE_PATH_POINTS, waypoints, pct, side_fn=_rhine_waypoint_side,
+    )
+
     cutoff = date.today() - timedelta(days=28)
     recent_m = db.session.query(func.sum(Workout.distance_meters)).filter(
         Workout.workout_date >= cutoff, Workout.workout_type == "rower",
@@ -149,6 +285,7 @@ def _get_rhine_data():
         "remaining_km":   round(RHINE_TOTAL_KM - position_km, 1),
         "remaining_m":    remaining_m,
         "waypoints":      waypoints,
+        "marker":         marker,
         "last_passed":    last_passed,
         "next_waypoint":  next_wp,
         "eta":            eta.isoformat() if eta else None,
@@ -184,6 +321,19 @@ HOLLAND_WAYPOINTS = [
     {"km": 550, "name": "Amsterdam (return)",     "emoji": "🌷"},
 ]
 
+# Map coordinates — 700×400 viewBox, index-aligned with HOLLAND_WAYPOINTS.
+HOLLAND_PATH_POINTS = [
+    (360, 120), (400, 85),  (420, 68),  (435, 42),  (320, 42),  (255, 85),
+    (210, 135), (225, 185), (235, 230), (220, 268), (265, 318), (330, 330),
+    (370, 295), (415, 250), (460, 245), (430, 180), (370, 120),
+]
+
+
+def _holland_waypoint_side(i):
+    """Right/left rule the template used inline — kept as-is; only the
+    marker's placement changes (see _layout_side_alternating_route)."""
+    return i not in (0, 4, 5, 6, 7, 8, 9)
+
 
 def _get_holland_data():
     """Compute Holland Tour journey position from journey start date."""
@@ -195,11 +345,15 @@ def _get_holland_data():
     )
 
     if not journey:
+        empty_waypoints, empty_marker = _layout_side_alternating_route(
+            HOLLAND_PATH_POINTS, [{**wp, "passed": False} for wp in HOLLAND_WAYPOINTS], pct=0,
+            side_fn=_holland_waypoint_side,
+        )
         return {
             "active": False, "complete": False, "start_date": None,
             "position_km": 0, "pct": 0,
             "remaining_km": HOLLAND_TOTAL_KM, "remaining_m": HOLLAND_TOTAL_M,
-            "waypoints": [{**wp, "passed": False} for wp in HOLLAND_WAYPOINTS],
+            "waypoints": empty_waypoints, "marker": empty_marker,
             "last_passed": None, "next_waypoint": HOLLAND_WAYPOINTS[1],
             "eta": None, "weekly_avg_km": 0, "journey_metres": 0,
         }
@@ -224,6 +378,10 @@ def _get_holland_data():
         elif next_wp is None: next_wp = wp
         waypoints.append({**wp, "passed": passed})
 
+    waypoints, marker = _layout_side_alternating_route(
+        HOLLAND_PATH_POINTS, waypoints, pct, side_fn=_holland_waypoint_side,
+    )
+
     cutoff = date.today() - timedelta(days=28)
     recent_m = db.session.query(func.sum(Workout.distance_meters)).filter(
         Workout.workout_date >= cutoff, Workout.workout_type == "rower",
@@ -238,7 +396,7 @@ def _get_holland_data():
         "completed_date": journey.completed_date.isoformat() if journey.completed_date else None,
         "journey_metres": journey_m, "position_km": round(position_km, 1),
         "pct": pct, "remaining_km": round(HOLLAND_TOTAL_KM - position_km, 1),
-        "remaining_m": remaining_m, "waypoints": waypoints,
+        "remaining_m": remaining_m, "waypoints": waypoints, "marker": marker,
         "last_passed": last_passed, "next_waypoint": next_wp,
         "eta": eta.isoformat() if eta else None,
         "weekly_avg_km": round(weekly_avg_m / 1000, 1),
@@ -283,6 +441,14 @@ ROUTE66_WAYPOINTS = [
     {"km": 3940, "name": "Santa Monica, CA — End",       "emoji": "🏖️"},
 ]
 
+# Map coordinates — 900×250 viewBox, index-aligned with ROUTE66_WAYPOINTS.
+ROUTE66_PATH_POINTS = [
+    (28,  90),  (68,  94),  (130, 96),  (190, 95),  (265, 108), (318, 118),
+    (364, 122), (402, 138), (440, 158), (476, 172), (518, 178), (555, 172),
+    (578, 162), (598, 168), (622, 175), (646, 168), (664, 160), (690, 158),
+    (706, 148), (724, 142), (748, 136), (774, 118), (800, 105), (870, 92),
+]
+
 
 def _get_route66_data():
     """Compute Route 66 journey position from journey start date."""
@@ -294,11 +460,14 @@ def _get_route66_data():
     )
 
     if not journey:
+        empty_waypoints, empty_marker = _layout_horizontal_route(
+            ROUTE66_PATH_POINTS, [{**wp, "passed": False} for wp in ROUTE66_WAYPOINTS], pct=0,
+        )
         return {
             "active": False, "complete": False, "start_date": None,
             "position_km": 0, "pct": 0,
             "remaining_km": ROUTE66_TOTAL_KM, "remaining_m": ROUTE66_TOTAL_M,
-            "waypoints": [{**wp, "passed": False} for wp in ROUTE66_WAYPOINTS],
+            "waypoints": empty_waypoints, "marker": empty_marker,
             "last_passed": None, "next_waypoint": ROUTE66_WAYPOINTS[1],
             "eta": None, "weekly_avg_km": 0, "journey_metres": 0,
         }
@@ -323,6 +492,8 @@ def _get_route66_data():
         elif next_wp is None: next_wp = wp
         waypoints.append({**wp, "passed": passed})
 
+    waypoints, marker = _layout_horizontal_route(ROUTE66_PATH_POINTS, waypoints, pct)
+
     cutoff = date.today() - timedelta(days=28)
     recent_m = db.session.query(func.sum(Workout.distance_meters)).filter(
         Workout.workout_date >= cutoff, Workout.workout_type == "rower",
@@ -342,6 +513,7 @@ def _get_route66_data():
         "remaining_km":   round(ROUTE66_TOTAL_KM - position_km, 1),
         "remaining_m":    remaining_m,
         "waypoints":      waypoints,
+        "marker":         marker,
         "last_passed":    last_passed,
         "next_waypoint":  next_wp,
         "eta":            eta.isoformat() if eta else None,
@@ -381,6 +553,14 @@ TRANSCAN_WAYPOINTS = [
     {"km": 7821, "name": "St. John's, NL — Journey's End",  "emoji": "🏁"},
 ]
 
+# Map coordinates — 900×220 viewBox, index-aligned with TRANSCAN_WAYPOINTS.
+TRANSCAN_PATH_POINTS = [
+    (18,  165), (27,  155), (38,  148), (62,  130), (98,  108), (116, 118),
+    (162, 128), (198, 130), (244, 130), (270, 128), (348, 125), (413, 120),
+    (457, 118), (508, 115), (533, 112), (573, 108), (638, 112), (662, 115),
+    (693, 118), (720, 116), (755, 122), (790, 128), (818, 132), (876, 148),
+]
+
 
 def _get_transcan_data():
     """Compute Trans-Canada journey position from journey start date."""
@@ -392,11 +572,14 @@ def _get_transcan_data():
     )
 
     if not journey:
+        empty_waypoints, empty_marker = _layout_horizontal_route(
+            TRANSCAN_PATH_POINTS, [{**wp, "passed": False} for wp in TRANSCAN_WAYPOINTS], pct=0,
+        )
         return {
             "active": False, "complete": False, "start_date": None,
             "position_km": 0, "pct": 0,
             "remaining_km": TRANSCAN_TOTAL_KM, "remaining_m": TRANSCAN_TOTAL_M,
-            "waypoints": [{**wp, "passed": False} for wp in TRANSCAN_WAYPOINTS],
+            "waypoints": empty_waypoints, "marker": empty_marker,
             "last_passed": None, "next_waypoint": TRANSCAN_WAYPOINTS[1],
             "eta": None, "weekly_avg_km": 0, "journey_metres": 0,
         }
@@ -421,6 +604,8 @@ def _get_transcan_data():
         elif next_wp is None: next_wp = wp
         waypoints.append({**wp, "passed": passed})
 
+    waypoints, marker = _layout_horizontal_route(TRANSCAN_PATH_POINTS, waypoints, pct)
+
     cutoff = date.today() - timedelta(days=28)
     recent_m = db.session.query(func.sum(Workout.distance_meters)).filter(
         Workout.workout_date >= cutoff, Workout.workout_type == "rower",
@@ -435,7 +620,7 @@ def _get_transcan_data():
         "completed_date": journey.completed_date.isoformat() if journey.completed_date else None,
         "journey_metres": journey_m, "position_km": round(position_km, 1),
         "pct": pct, "remaining_km": round(TRANSCAN_TOTAL_KM - position_km, 1),
-        "remaining_m": remaining_m, "waypoints": waypoints,
+        "remaining_m": remaining_m, "waypoints": waypoints, "marker": marker,
         "last_passed": last_passed, "next_waypoint": next_wp,
         "eta": eta.isoformat() if eta else None,
         "weekly_avg_km": round(weekly_avg_m / 1000, 1),

@@ -51,32 +51,7 @@
 {# Completed map #}
 <div class="card mb-4">
   <div class="card-body">
-    {% set pts = [
-      (28,  90),
-      (68,  94),
-      (130, 96),
-      (190, 95),
-      (265, 108),
-      (318, 118),
-      (364, 122),
-      (402, 138),
-      (440, 158),
-      (476, 172),
-      (518, 178),
-      (555, 172),
-      (578, 162),
-      (598, 168),
-      (622, 175),
-      (646, 168),
-      (664, 160),
-      (690, 158),
-      (706, 148),
-      (724, 142),
-      (748, 136),
-      (774, 118),
-      (800, 105),
-      (870, 92)
-    ] %}
+   <div class="map-scroll-wrap">
     <svg class="rhine-map" viewBox="0 -10 900 260" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="r66Grad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -175,24 +150,22 @@
         fill="none" stroke="url(#r66Grad)" stroke-width="5"
         stroke-linecap="round" stroke-linejoin="round"/>
 
-      {% set above = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22] %}
       {% for wp in route66.waypoints %}
-        {% set pt = pts[loop.index0] %}
-        {% set is_above = loop.index0 in above %}
+        {% set is_above = wp.label_above %}
         <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="true">
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="12" fill="transparent"/>
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}"
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="12" fill="transparent"/>
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}"
             r="{% if loop.index0 == 0 or loop.index0 == 23 %}7{% else %}5{% endif %}"
             fill="var(--color-teal,#00829b)"
             stroke="var(--color-surface,#1e2130)" stroke-width="2" filter="url(#glow)"/>
-          <line x1="{{ pt[0] }}" y1="{{ pt[1] }}"
-                x2="{{ pt[0] }}" y2="{% if is_above %}{{ pt[1] - 8 }}{% else %}{{ pt[1] + 8 }}{% endif %}"
+          <line x1="{{ wp.x }}" y1="{{ wp.y }}"
+                x2="{{ wp.x }}" y2="{% if is_above %}{{ wp.y - (8 + wp.label_rank * 24) }}{% else %}{{ wp.y + (8 + wp.label_rank * 24) }}{% endif %}"
             stroke="var(--color-teal,#00829b)" stroke-width="0.8" stroke-opacity="0.6"/>
-          <text x="{{ pt[0] }}"
-                y="{% if is_above %}{{ pt[1] - 12 }}{% else %}{{ pt[1] + 18 }}{% endif %}"
+          <text x="{{ wp.x }}"
+                y="{% if is_above %}{{ wp.y - (12 + wp.label_rank * 24) }}{% else %}{{ wp.y + (18 + wp.label_rank * 24) }}{% endif %}"
                 text-anchor="middle" class="wp-label wp-passed" font-size="8">{{ wp.emoji }}</text>
-          <text x="{{ pt[0] }}"
-                y="{% if is_above %}{{ pt[1] - 22 }}{% else %}{{ pt[1] + 28 }}{% endif %}"
+          <text x="{{ wp.x }}"
+                y="{% if is_above %}{{ wp.y - (22 + wp.label_rank * 24) }}{% else %}{{ wp.y + (28 + wp.label_rank * 24) }}{% endif %}"
                 text-anchor="middle" class="wp-label wp-passed" font-size="7">
             {{ wp.name | replace(' — Start', '') | replace(' — End', '') | replace(' — Gateway Arch', '') | replace(' — Oil Capital', '') | replace(' — Big Texan', '') | replace(' — Grand Canyon', '') | replace(' — Gold Rush Town', '') | truncate(16, True, '') }}
           </text>
@@ -205,6 +178,7 @@
       <text x="18" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4" font-style="italic" font-family="inherit">🌊 Lake Michigan</text>
       <text x="882" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4" font-style="italic" font-family="inherit" text-anchor="end">Pacific 🌊</text>
     </svg>
+   </div>
   </div>
 </div>
 
@@ -270,33 +244,12 @@
         - Long SW diagonal through NM highlands
         - Jagged through AZ (Flagstaff plateau, descent to Mojave)
         - Final push west to the Pacific
+
+      Map coordinates and label placement (side + fan-out rank) are
+      computed in blueprints/gamification.py — see _layout_horizontal_route.
     #}
-    {% set pts = [
-      (28,  90),
-      (68,  94),
-      (130, 96),
-      (190, 95),
-      (265, 108),
-      (318, 118),
-      (364, 122),
-      (402, 138),
-      (440, 158),
-      (476, 172),
-      (518, 178),
-      (555, 172),
-      (578, 162),
-      (598, 168),
-      (622, 175),
-      (646, 168),
-      (664, 160),
-      (690, 158),
-      (706, 148),
-      (724, 142),
-      (748, 136),
-      (774, 118),
-      (800, 105),
-      (870, 92)
-    ] %}
+    {% from "gamification/_position_marker.html" import position_marker_above %}
+    <div class="map-scroll-wrap">
     <svg class="rhine-map" viewBox="0 -10 900 260" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="r66Grad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -429,28 +382,26 @@
         stroke-linecap="round" stroke-linejoin="round"
         stroke-dasharray="{{ route66.pct * 8.8 }}, 880"/>
 
-      {# Waypoint dots and labels #}
-      {% set above = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22] %}
+      {# Waypoint dots and labels — side + fan-out rank precomputed in Python #}
       {% for wp in route66.waypoints %}
-        {% set pt = pts[loop.index0] %}
         {% set passed = wp.passed %}
-        {% set is_above = loop.index0 in above %}
+        {% set is_above = wp.label_above %}
         <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="{{ 'true' if passed else 'false' }}">
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="12" fill="transparent"/>
-          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}"
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="12" fill="transparent"/>
+          <circle cx="{{ wp.x }}" cy="{{ wp.y }}"
             r="{% if loop.index0 == 0 or loop.index0 == 23 %}7{% else %}5{% endif %}"
             fill="{% if passed %}#e67e22{% else %}var(--color-border,#2e3350){% endif %}"
             stroke="var(--color-surface,#1e2130)" stroke-width="2"
             {% if passed %}filter="url(#glow)"{% endif %}/>
-          <line x1="{{ pt[0] }}" y1="{{ pt[1] }}"
-                x2="{{ pt[0] }}" y2="{% if is_above %}{{ pt[1] - 8 }}{% else %}{{ pt[1] + 8 }}{% endif %}"
+          <line x1="{{ wp.x }}" y1="{{ wp.y }}"
+                x2="{{ wp.x }}" y2="{% if is_above %}{{ wp.y - (8 + wp.label_rank * 24) }}{% else %}{{ wp.y + (8 + wp.label_rank * 24) }}{% endif %}"
             stroke="{% if passed %}#e67e22{% else %}var(--color-border,#2e3350){% endif %}"
             stroke-width="0.8" stroke-opacity="{% if passed %}0.7{% else %}0.3{% endif %}"/>
-          <text x="{{ pt[0] }}"
-                y="{% if is_above %}{{ pt[1] - 12 }}{% else %}{{ pt[1] + 18 }}{% endif %}"
+          <text x="{{ wp.x }}"
+                y="{% if is_above %}{{ wp.y - (12 + wp.label_rank * 24) }}{% else %}{{ wp.y + (18 + wp.label_rank * 24) }}{% endif %}"
                 text-anchor="middle" class="wp-label {% if passed %}wp-passed{% endif %}" font-size="8">{{ wp.emoji }}</text>
-          <text x="{{ pt[0] }}"
-                y="{% if is_above %}{{ pt[1] - 22 }}{% else %}{{ pt[1] + 28 }}{% endif %}"
+          <text x="{{ wp.x }}"
+                y="{% if is_above %}{{ wp.y - (22 + wp.label_rank * 24) }}{% else %}{{ wp.y + (28 + wp.label_rank * 24) }}{% endif %}"
                 text-anchor="middle" class="wp-label {% if passed %}wp-passed{% endif %}" font-size="7">
             {{ wp.name | replace(' — Start', '') | replace(' — End', '') | replace(' — Gateway Arch', '') | replace(' — Oil Capital', '') | replace(' — Big Texan', '') | replace(' — Grand Canyon', '') | replace(' — Gold Rush Town', '') | truncate(16, True, '') }}
           </text>
@@ -458,21 +409,7 @@
       {% endfor %}
 
       {# Current position marker #}
-      {% set pos_pct = route66.pct / 100 %}
-      {% set n = pts | length %}
-      {% set idx_f = pos_pct * (n - 1) %}
-      {% set idx_i = idx_f | int %}
-      {% set idx_j = [idx_i + 1, n - 1] | min %}
-      {% set frac = idx_f - idx_i %}
-      {% set px = pts[idx_i][0] + frac * (pts[idx_j][0] - pts[idx_i][0]) %}
-      {% set py = pts[idx_i][1] + frac * (pts[idx_j][1] - pts[idx_i][1]) %}
-      <circle cx="{{ px | round }}" cy="{{ py | round }}" r="10"
-        fill="var(--color-accent,#f4c542)" stroke="var(--color-surface,#1e2130)" stroke-width="3"
-        filter="url(#glow)">
-        <animate attributeName="r" values="10;13;10" dur="2s" repeatCount="indefinite"/>
-      </circle>
-      <text x="{{ px | round }}" y="{{ (py - 16) | round }}"
-        class="position-label" text-anchor="middle" font-size="9">You are here</text>
+      {{ position_marker_above(route66.marker, r=10) }}
 
       {# Historic US 66 shield badge #}
       <g transform="translate(440, -8)">
@@ -483,13 +420,15 @@
       </g>
 
       {# Labels #}
-      <text x="18" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4"
+      <text x="18" y="-4" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4"
         font-style="italic" font-family="inherit">🌊 Lake Michigan</text>
       <text x="882" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4"
         font-style="italic" font-family="inherit" text-anchor="end">Pacific 🌊</text>
 
-      {# Scale bar #}
-      <g transform="translate(20, 195)">
+      {# Scale bar — top margin, not bottom-left, since fanned-out labels
+         for the Chicago-area cluster (Joliet/Bloomington/Springfield) can
+         reach down that far as the journey progresses. #}
+      <g transform="translate(20, -4)">
         <line x1="0" y1="0" x2="56" y2="0" stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
         <line x1="0" y1="-3" x2="0" y2="3"   stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
         <line x1="56" y1="-3" x2="56" y2="3" stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
@@ -497,6 +436,7 @@
           fill="var(--color-teal,#00829b)" fill-opacity="0.5" font-family="inherit">~250 km</text>
       </g>
     </svg>
+    </div>
   </div>
 </div>
 

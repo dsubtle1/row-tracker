@@ -1524,8 +1524,17 @@ code {
 .rhine-map {
   width: 100%;
   max-width: 700px;
+  min-width: 600px;
   display: block;
   margin: 0 auto;
+}
+/* Waypoint labels are sized in SVG user units, so they scale down with the
+   whole map — below 600px wide they become illegible. Rather than let the
+   map keep shrinking to fit a phone screen, hold it at 600px and let the
+   card scroll horizontally instead (same pattern as .wd-splits-wrap). */
+.map-scroll-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .wp-label {
   font-size: 11px;
