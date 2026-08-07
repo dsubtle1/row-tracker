@@ -221,6 +221,7 @@ row-tracker/
 
 - [ ] Force-curve / drive-recovery-time visualisation per stroke (basic pace & stroke-rate-over-time chart already shipped)
 - [ ] Real map overlays for virtual journeys (Leaflet.js + OpenStreetMap)
+- [ ] Publish pre-built images to a registry (e.g. GHCR) via GitHub Actions on each version tag, so `docker-compose.yml` can pull instead of building from source — likely multi-arch (amd64 + arm64) for Raspberry Pi/NAS setups
 
 ---
 
