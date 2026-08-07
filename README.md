@@ -109,7 +109,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 
 ### Prerequisites
 
-- Docker and Docker Compose
+- Docker and Docker Compose — on Mac or Windows, the easiest way to get both is [Docker Desktop](https://www.docker.com/products/docker-desktop/), which bundles Compose automatically. On Windows, Docker Desktop requires WSL2, which its installer will prompt you to enable if it isn't already. On Linux, install [Docker Engine](https://docs.docker.com/engine/install/) directly (Compose is included as the `docker compose` plugin in current versions).
 - A Concept2 Logbook account with workout history
 - A Concept2 API bearer token (request from [log.concept2.com](https://log.concept2.com))
 - A Gmail account with an app password (for the feedback email feature)
