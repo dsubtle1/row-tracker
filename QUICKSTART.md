@@ -75,7 +75,7 @@ Click **View all →** under History to open the WOD calendar — a month-by-mon
 
 ---
 
-## Step 6 — Start a Journey
+## Step 6 — Start a Virtual Journey
 
 Click **Journeys** in the navigation bar.
 

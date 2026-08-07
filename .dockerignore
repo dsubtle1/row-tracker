@@ -1,0 +1,40 @@
+# Secrets and local-only files — never bake these into the image.
+# The app reads all config via os.environ, populated by docker-compose's
+# env_file directive at container start; it never reads a file from disk,
+# so excluding .env here doesn't change runtime behavior at all.
+.env
+.env.*
+!.env.example
+
+# Git metadata — large, irrelevant to the running app, and would otherwise
+# ship the full commit history inside every built image.
+.git/
+.gitignore
+.gitattributes
+
+# Runtime data — volume-mounted at /app/data and /app/csv-data; baking in
+# whatever happens to be on the build host's disk at build time would be
+# both useless (shadowed by the volume mount) and a data leak.
+data/
+csv-data/
+
+# Python cache / virtual envs
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+
+# Docs — only needed for GitHub's README rendering, not by the running app
+docs/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor/tooling
+.worktrees/
+.superpowers/
