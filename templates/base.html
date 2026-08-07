@@ -126,6 +126,10 @@
     {% block content %}{% endblock %}
   </main>
 
+  <footer class="site-footer">
+    Row Tracker v{{ app_version }}
+  </footer>
+
   {% include 'feedback/modal.html' %}
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
