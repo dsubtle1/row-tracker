@@ -4,6 +4,8 @@ A self-hosted personal rowing tracker for Concept2 RowErg athletes. Syncs automa
 
 Built with Flask, SQLite, and Docker. Runs on a home server at a single port with no external dependencies.
 
+> **Your server, your credentials, your data.** Row Tracker is 100% self-hosted — there is no Row Tracker backend and nothing runs on infrastructure anyone else controls. You run the container yourself and supply your own Concept2 API credentials, so it talks directly to *your* Concept2 Logbook account, not through any server of ours. All data (workouts, PBs, badges, journeys) is stored in a SQLite file on your own machine, under your own control. The optional AI coaching feature is the one exception worth calling out explicitly: if you enable it, workout context is sent to Anthropic's API using an API key you provide — see [AI-Assisted Coaching](#ai-assisted-coaching-optional) below.
+
 ---
 
 ## Screenshots
@@ -158,6 +160,17 @@ Click **Sync Workouts** on the dashboard to pull in your full workout history fr
 
 ---
 
+## AI-Assisted Coaching (Optional)
+
+Everything in Row Tracker works fully offline with `USE_AI_WOD=false` (the default) — the WOD engine is entirely rule-based and never makes an external call. If you opt in by setting `USE_AI_WOD=true` and supplying your own `ANTHROPIC_API_KEY`:
+
+- Row Tracker sends a small amount of workout context (workout type, target pace, recent training load, and any notes you typed into the Random WOD Generator) directly to the Anthropic API, using the key you provided.
+- Anthropic's response — just the coaching text — is used to replace the warm-up/cool-down/coaching notes for that WOD. No other data (your name, account, history, or PBs beyond what's needed for that one prompt) is sent.
+- This is the only feature in Row Tracker that talks to a third party. Everything else — sync, PBs, badges, journeys, charts — is between your server and the Concept2 API only.
+- Leave `ANTHROPIC_API_KEY` blank (the default) and this feature is completely inert.
+
+---
+
 ## Project Structure
 
 ```
@@ -191,14 +204,6 @@ row-tracker/
 
 - [ ] Force-curve / drive-recovery-time visualisation per stroke (basic pace & stroke-rate-over-time chart already shipped)
 - [ ] Real map overlays for virtual journeys (Leaflet.js + OpenStreetMap)
-
----
-
-## Support
-
-If Row Tracker is useful to you, a sponsorship is always appreciated.
-
-💙 [GitHub Sponsors](https://github.com/sponsors/dsubtle1)
 
 ---
 
