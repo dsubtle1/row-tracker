@@ -9,11 +9,43 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.3] — 2026-08-07
+
+Closes out the pre-public-release audit started in 0.9.2.
+
+### Security
+- **Rewrote git history to remove a leaked Gmail App Password** that had been present in
+  `.env.example` from 2026-06-14 to 2026-07-23 (the value itself was already revoked before
+  this fix). Every commit SHA from that point forward changed as a result — this repo's history
+  was force-pushed once as part of this fix. No other secrets were found anywhere in history.
+
+### Added
+- `CONTRIBUTING.md` — how to report bugs/features, the fork→branch→PR flow, dev setup, and the
+  doc-sync convention this codebase follows. Linked from the README.
+- GitHub topics for discoverability: `self-hosted`, `concept2`, `rowing`, `ergometer`, `flask`,
+  `docker`, `python`, `fitness-tracker`, `homelab`.
+
+### Fixed
+- README claimed AI coaching was "the only feature that talks to a third party" — inaccurate,
+  since the Feedback button also emails the developer directly (recipient is hardcoded, not
+  `.env`-configurable). Added a dedicated Feedback section spelling out exactly what it does
+  and doesn't send.
+- Removed dead code in `c2_api.py`: `_persist_refresh_token()` had no callers (Concept2 issues a
+  non-expiring bearer token, so nothing ever rotates it) and wouldn't have worked reliably even
+  if called — it wrote to `.env` inside the container, which isn't a mounted file and is now
+  correctly excluded from the image entirely. Also fixed the module docstring, which still
+  described an OAuth token-exchange flow the code never actually implements.
+
+### Changed
+- Untracked `designidea.webp` (unreferenced design-reference image) and two internal
+  `docs/superpowers/` AI-agent planning docs — kept locally, gitignored, consistent with the
+  existing `row-tracker-spec.md` / `docs/redesign-spec.md` convention.
+
 ## [0.9.2] — 2026-08-07
 
-Fixes from a pre-public-release audit. See also the still-open items from that audit
-(a leaked credential in git history, a couple of untracked-file cleanup questions) —
-those required user decisions and aren't closed out by this release alone.
+Fixes from a pre-public-release audit. The remaining items from that audit (a leaked
+credential in git history, a couple of untracked-file cleanup questions) required user
+decisions and are closed out in 0.9.3 above.
 
 ### Fixed
 - **`.env` was being baked directly into the built Docker image** — no `.dockerignore` existed,

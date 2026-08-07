@@ -1,12 +1,11 @@
 """
 Concept2 Logbook API Client — Phase 1C
 ========================================
-OAuth 2.0 with refresh token. The refresh token is long-lived and stored
-in .env as C2_REFRESH_TOKEN. On each sync we exchange it for a short-lived
-access token, use it, then store the new refresh token back to .env.
+Concept2 issues a non-expiring bearer token, stored in .env as
+C2_REFRESH_TOKEN — used directly as the Authorization header on every
+request, no OAuth token exchange or rotation involved.
 
 Endpoints used:
-  POST /oauth/access_token             — token refresh
   GET  /api/users/me/results           — paginated workout list (read-only)
   GET  /api/users/me/results/{id}/strokes — per-stroke detail for one workout,
                                              fetched on demand (see get_stroke_data)
@@ -15,8 +14,6 @@ Scopes: user:read, results:read
 """
 
 import logging
-import os
-import re
 from datetime import datetime, date
 
 import requests
@@ -60,27 +57,6 @@ class C2ApiClient:
         self.access_token = self.refresh_token
         logger.info("Using pre-issued C2 bearer token directly.")
         return True
-
-    def _persist_refresh_token(self, new_token: str):
-        """Write updated refresh token back to .env file."""
-        env_path = os.path.join(os.path.dirname(__file__), ".env")
-        if not os.path.exists(env_path):
-            logger.warning(".env file not found — cannot persist new refresh token.")
-            return
-        try:
-            with open(env_path, "r") as f:
-                content = f.read()
-            content = re.sub(
-                r"^C2_REFRESH_TOKEN=.*$",
-                f"C2_REFRESH_TOKEN={new_token}",
-                content,
-                flags=re.MULTILINE,
-            )
-            with open(env_path, "w") as f:
-                f.write(content)
-            logger.info("Refresh token persisted to .env.")
-        except Exception as e:
-            logger.error(f"Failed to persist refresh token: {e}")
 
     def _get_headers(self) -> dict:
         return {"Authorization": f"Bearer {self.access_token}"}
