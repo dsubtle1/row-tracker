@@ -71,6 +71,9 @@ It lets you generate a one-off workout by specifying intensity (light / medium /
 **What does the WOD History calendar show?**
 Click View all under History on the WOD page to open a month-by-month calendar of every day a WOD was generated. Days are colour-coded for pending vs. completed, and clicking any day opens its workout title, target pace, zone, and status. Use Prev/Next to browse other months, including previous years.
 
+**Can Claude write my coaching notes?**
+Optionally. Set `USE_AI_WOD=true` and add an `ANTHROPIC_API_KEY` in your `.env` and Claude Haiku will write the warm-up, cool-down, and coaching notes for each WOD, tailored to your recent training load, effort request, or any notes you type into the Random WOD Generator. The workout structure itself (intervals, pace targets) is always rule-based and unaffected. If the API key isn't set, or the request fails for any reason, Row Tracker silently falls back to the built-in static coaching text — this feature is off by default and never blocks WOD generation.
+
 ---
 
 ### Achievements & Badges
@@ -126,9 +129,8 @@ Click the 💬 Feedback button in the navigation bar on any page. Fill in the ca
 
 | # | Area | Issue | Status |
 |---|---|---|---|
-| 1 | AI-assisted WOD | The AI coaching mode for the WOD generator has been deferred and is not available in this alpha | Deferred |
-| 2 | Multi-user | Row Tracker is single-user only in this release | Out of scope for alpha |
-| 3 | Social / sharing | There are no sharing features — the app is for personal use only | Out of scope for alpha |
+| 1 | Multi-user | Row Tracker is single-user only in this release | Out of scope for alpha |
+| 2 | Social / sharing | There are no sharing features — the app is for personal use only | Out of scope for alpha |
 
 ---
 

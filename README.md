@@ -57,7 +57,8 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Rule-based periodization engine — reads last 28 days to set training phase
 - Target pace calculated from your 2k PB with zone offsets
 - Warm-up, main set, cool-down, and coaching notes generated daily
-- Random WOD generator — choose intensity, effort level, and workout type
+- Optional AI-assisted coaching narrative (`USE_AI_WOD=true` + `ANTHROPIC_API_KEY`) — Claude Haiku writes the warm-up/cool-down/coaching text for each WOD, tailored to your recent training load; the structured workout itself stays rule-based, and it falls back to the static text automatically if the API is unavailable
+- Random WOD generator — choose intensity, effort level, and workout type; your free-text notes are passed to the AI coach when enabled
 - 27 distinct workout templates
 - WOD history calendar — browse past months day by day, colour-coded for pending vs. completed, click any day for the full workout detail
 
@@ -136,7 +137,10 @@ C2_REFRESH_TOKEN=your-c2-bearer-token
 MAIL_USERNAME=your-gmail@gmail.com
 MAIL_PASSWORD=your-gmail-app-password
 USE_AI_WOD=false
+ANTHROPIC_API_KEY=
 ```
+
+`ANTHROPIC_API_KEY` is only needed if you set `USE_AI_WOD=true` — get one at [console.anthropic.com](https://console.anthropic.com/).
 
 **3. Build and run**
 
@@ -164,6 +168,7 @@ row-tracker/
 ├── pb_engine.py            # Personal best calculation
 ├── badge_engine.py         # Badge evaluation
 ├── wod_engine.py           # WOD generation
+├── ai_coach.py             # Optional AI coaching narrative for WODs (USE_AI_WOD)
 ├── scheduler.py            # APScheduler jobs: nightly sync, PB recalc, badges, backup
 ├── backup.py               # Nightly SQLite backup with retention pruning
 ├── notify.py               # Email notifications: badges, milestones, journey completions
@@ -186,7 +191,6 @@ row-tracker/
 
 - [ ] Force-curve / drive-recovery-time visualisation per stroke (basic pace & stroke-rate-over-time chart already shipped)
 - [ ] Real map overlays for virtual journeys (Leaflet.js + OpenStreetMap)
-- [ ] AI-assisted WOD generation (Anthropic API — feature-flagged)
 
 ---
 

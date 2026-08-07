@@ -71,6 +71,7 @@ def create_app():
 
     # Feature flags (read from .env via Docker)
     app.config["USE_AI_WOD"] = os.environ.get("USE_AI_WOD", "false").lower() == "true"
+    app.config["ANTHROPIC_API_KEY"] = os.environ.get("ANTHROPIC_API_KEY", "")
 
     # C2 API credentials (populated once API key is approved)
     app.config["C2_CLIENT_ID"]     = os.environ.get("C2_CLIENT_ID", "")

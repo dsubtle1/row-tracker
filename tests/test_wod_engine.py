@@ -8,6 +8,7 @@ smoke test only — the interesting logic lives in the helpers.
 """
 
 from datetime import date, timedelta
+from unittest.mock import MagicMock
 
 from models import db, PersonalBest, WodHistory
 from wod_engine import (
@@ -21,6 +22,7 @@ from wod_engine import (
     _current_cawr,
     _choose_session_type,
     generate_wod,
+    generate_random_wod,
     build_month_calendar,
     get_wod_for_date,
 )
@@ -154,6 +156,68 @@ def test_generate_wod_produces_a_complete_spec(app_ctx):
     assert spec.intervals
     assert spec.target_pace_seconds > 0
     assert spec.target_pace_str == _fmt_pace(spec.target_pace_seconds)
+
+
+# ---------------------------------------------------------------------------
+# AI-assisted coaching narrative — off by default, best-effort when enabled
+# ---------------------------------------------------------------------------
+
+def test_generate_wod_uses_static_text_when_ai_disabled(app_ctx):
+    # app_ctx has no USE_AI_WOD/ANTHROPIC_API_KEY config at all — same as
+    # a fresh deploy with the feature flag left off.
+    spec = generate_wod(force_type="steady_state")
+    assert "UT2 pace" in spec.warm_up
+
+
+def test_generate_wod_uses_ai_narrative_when_available(app_ctx, monkeypatch):
+    app_ctx.config["USE_AI_WOD"] = True
+    app_ctx.config["ANTHROPIC_API_KEY"] = "sk-test-key"
+
+    fake_text_block = MagicMock(type="text", text="AI warm up.\n---\nAI cool down.\n---\nAI coaching.")
+    fake_response = MagicMock(content=[fake_text_block])
+    fake_client = MagicMock()
+    fake_client.messages.create.return_value = fake_response
+
+    import anthropic
+    monkeypatch.setattr(anthropic, "Anthropic", MagicMock(return_value=fake_client))
+
+    spec = generate_wod(force_type="steady_state")
+    assert spec.warm_up == "AI warm up."
+    assert spec.cool_down == "AI cool down."
+    assert spec.coaching_notes == "AI coaching."
+
+
+def test_generate_wod_falls_back_to_static_text_on_ai_failure(app_ctx, monkeypatch):
+    app_ctx.config["USE_AI_WOD"] = True
+    app_ctx.config["ANTHROPIC_API_KEY"] = "sk-test-key"
+
+    import anthropic
+    monkeypatch.setattr(anthropic, "Anthropic", MagicMock(side_effect=RuntimeError("boom")))
+
+    spec = generate_wod(force_type="steady_state")
+    assert "UT2 pace" in spec.warm_up
+
+
+def test_generate_random_wod_uses_ai_narrative_when_available(app_ctx, monkeypatch):
+    app_ctx.config["USE_AI_WOD"] = True
+    app_ctx.config["ANTHROPIC_API_KEY"] = "sk-test-key"
+
+    fake_text_block = MagicMock(type="text", text="AI warm up.\n---\nAI cool down.\n---\nAI coaching.")
+    fake_response = MagicMock(content=[fake_text_block])
+    fake_client = MagicMock()
+    fake_client.messages.create.return_value = fake_response
+
+    import anthropic
+    monkeypatch.setattr(anthropic, "Anthropic", MagicMock(return_value=fake_client))
+
+    spec = generate_random_wod(
+        intensity="medium", effort="medium", wod_type="steady_state", notes="tired legs today"
+    )
+    assert spec.coaching_notes == "AI coaching."
+
+    # the athlete's free-text note reached the prompt context
+    _, kwargs = fake_client.messages.create.call_args
+    assert "tired legs today" in kwargs["messages"][0]["content"]
 
 
 # ---------------------------------------------------------------------------

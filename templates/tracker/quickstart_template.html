@@ -111,6 +111,9 @@
           <li>Use the <strong>Random WOD Generator</strong> to build your own by choosing intensity, effort level, and type</li>
           <li>Click <strong>View all →</strong> under History to browse the WOD calendar — a month-by-month grid colour-coded for pending vs. completed, click any day for its full workout detail</li>
         </ul>
+        <div class="qs-tip-box">
+          💡 Want Claude to write your warm-up, cool-down, and coaching notes instead of the built-in text? Set <code>USE_AI_WOD=true</code> and add an <code>ANTHROPIC_API_KEY</code> in your <code>.env</code>. The workout structure stays rule-based either way — this only changes the coaching text, and quietly falls back to the static version if it's off or unavailable.
+        </div>
         <a href="{{ url_for('wod.wod') }}" class="qs-action-link">Go to WOD →</a>
       </div>
     </div>

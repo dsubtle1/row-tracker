@@ -71,6 +71,8 @@ If today's WOD doesn't suit you, you can:
 
 Click **View all →** under History to open the WOD calendar — a month-by-month grid of every past WOD, colour-coded for pending vs. completed. Click any day to see its workout detail, or use Prev/Next to browse other months.
 
+> Want Claude to write your warm-up, cool-down, and coaching notes instead of the built-in text? Set `USE_AI_WOD=true` and add an `ANTHROPIC_API_KEY` in your `.env`. The workout structure stays rule-based either way — this only changes the coaching text, and quietly falls back to the static version if it's off or unavailable.
+
 ---
 
 ## Step 6 — Start a Journey

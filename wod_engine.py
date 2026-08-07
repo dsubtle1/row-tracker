@@ -13,6 +13,7 @@ No Claude API key required. AI-assisted mode is Build 2B (feature-flagged).
 from __future__ import annotations
 
 import calendar
+import logging
 import random
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -21,6 +22,8 @@ from typing import Optional
 from sqlalchemy import func
 
 from models import db, PersonalBest, Workout, WodHistory
+
+logger = logging.getLogger(__name__)
 
 
 # ── Zone offsets (seconds / 500m above 2k pace) ──────────────────────────
@@ -529,6 +532,35 @@ def _pick_wod_key(session_type: str) -> str:
     return random.choice(options)
 
 
+# ── AI-assisted coaching narrative (optional, feature-flagged) ───────────
+
+def _apply_ai_coaching(spec: WodSpec, **extra_context) -> None:
+    """
+    Best-effort: if USE_AI_WOD is on and configured, replace spec's
+    warm_up/cool_down/coaching_notes in place with an AI-generated
+    narrative. Leaves spec untouched on any failure — the rule-based
+    text set by the caller is always the fallback.
+    """
+    try:
+        from ai_coach import generate_coaching_narrative
+        result = generate_coaching_narrative({
+            "wod_type":           spec.wod_type,
+            "title":              spec.title,
+            "pace_zone":          spec.pace_zone,
+            "target_pace_str":    spec.target_pace_str,
+            "total_work_meters":  spec.total_work_meters,
+            **extra_context,
+        })
+    except Exception as e:
+        logger.error(f"AI coaching narrative unavailable: {e}")
+        return
+
+    if result:
+        spec.warm_up        = result["warm_up"]
+        spec.cool_down      = result["cool_down"]
+        spec.coaching_notes = result["coaching_notes"]
+
+
 # ── Main generator ────────────────────────────────────────────────────────
 
 def generate_wod(force_type: Optional[str] = None) -> WodSpec:
@@ -554,7 +586,7 @@ def generate_wod(force_type: Optional[str] = None) -> WodSpec:
     target_ps = zones[zone]
     target_str = _fmt_pace(target_ps)
 
-    return WodSpec(
+    spec = WodSpec(
         wod_type            = defn["wod_type"],
         title               = defn["title"],
         structure_key       = wod_key,
@@ -574,6 +606,16 @@ def generate_wod(force_type: Optional[str] = None) -> WodSpec:
         total_work_meters   = total_meters,
         total_work_seconds  = total_seconds,
     )
+
+    last_test = _last_test_piece_date()
+    _apply_ai_coaching(
+        spec,
+        cawr=cawr,
+        days_since_last_test=(date.today() - last_test).days if last_test else None,
+        recent_session_types=_recent_wod_types(days=7),
+    )
+
+    return spec
 
 
 def save_wod(spec: WodSpec) -> WodHistory:
@@ -995,7 +1037,7 @@ def generate_random_wod(
         "threshold":    "threshold",
     }
 
-    return WodSpec(
+    spec = WodSpec(
         wod_type            = wod_type_map.get(wod_type, "steady_state"),
         title               = template["title"],
         structure_key       = f"random_{intensity}_{wod_type}",
@@ -1009,3 +1051,7 @@ def generate_random_wod(
         total_work_meters   = total_meters,
         total_work_seconds  = total_seconds,
     )
+
+    _apply_ai_coaching(spec, intensity=intensity, effort=effort, user_notes=notes)
+
+    return spec
