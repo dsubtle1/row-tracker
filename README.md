@@ -196,9 +196,9 @@ row-tracker/
 
 ## Support
 
-If Row Tracker is useful to you, a coffee is always appreciated.
+If Row Tracker is useful to you, a sponsorship is always appreciated.
 
-☕ [Buy me a coffee](https://buymeacoffee.com/dsubtle1)
+💙 [GitHub Sponsors](https://github.com/sponsors/dsubtle1)
 
 ---
 
