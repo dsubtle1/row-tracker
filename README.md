@@ -119,7 +119,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 **1. Clone the repo**
 
 ```bash
-git clone https://github.com/yourusername/row-tracker.git
+git clone https://github.com/dsubtle1/row-tracker.git
 cd row-tracker
 ```
 
@@ -211,6 +211,8 @@ row-tracker/
 ├── static/                 # CSS, JS, PWA manifest and icons
 ├── data/                   # SQLite database + nightly backups (Docker volume)
 ├── .env.example            # Environment variable template
+├── VERSION                 # Current SemVer, read by app.py at startup
+├── CHANGELOG.md            # Release history
 ├── docker-compose.yml
 └── Dockerfile
 ```

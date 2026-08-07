@@ -9,6 +9,31 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.2] — 2026-08-07
+
+Fixes from a pre-public-release audit. See also the still-open items from that audit
+(a leaked credential in git history, a couple of untracked-file cleanup questions) —
+those required user decisions and aren't closed out by this release alone.
+
+### Fixed
+- **`.env` was being baked directly into the built Docker image** — no `.dockerignore` existed,
+  so `COPY . .` copied the real, secret-filled `.env` file (and the entire `.git` history) into
+  every image layer. The app never actually reads that in-image copy (all config comes from
+  `os.environ`, populated by Compose's `env_file` at container start), so excluding it is purely
+  a fix, not a behavior change. Added `.dockerignore` excluding `.env`, `.git/`, `data/`,
+  `csv-data/`, caches, and other build-irrelevant paths.
+- README's clone command still had the placeholder `yourusername` instead of the real
+  `dsubtle1` — first-time visitors couldn't copy-paste it correctly.
+- `LICENSE.md` and the README's embedded license text had mismatched copyright-name casing
+  (`dSubtle1` vs `dsubtle1`).
+
+### Changed
+- Removed `python-dotenv` from `requirements.txt` — never actually imported anywhere; the app
+  reads config exclusively via `os.environ`.
+- Minor doc-sync polish: added `VERSION`/`CHANGELOG.md` to the README's Project Structure tree,
+  normalized a wording mismatch between `QUICKSTART.md` and its in-app twin ("Start a Journey" →
+  "Start a Virtual Journey").
+
 ## [0.9.1] — 2026-08-07
 
 ### Changed
