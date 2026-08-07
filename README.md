@@ -144,6 +144,23 @@ ANTHROPIC_API_KEY=
 
 `ANTHROPIC_API_KEY` is only needed if you set `USE_AI_WOD=true` — get one at [console.anthropic.com](https://console.anthropic.com/).
 
+The repo already includes a `docker-compose.yml` — nothing to write yourself, shown here so you can see what it does before running it (or copy the service block into an existing compose stack):
+
+```yaml
+services:
+  row-tracker:
+    build: .
+    container_name: row-tracker
+    ports:
+      - "7376:7376"
+    volumes:
+      - ./data:/app/data
+      - ./csv-data:/app/csv-data:ro
+    env_file:
+      - .env
+    restart: unless-stopped
+```
+
 **3. Build and run**
 
 ```bash
