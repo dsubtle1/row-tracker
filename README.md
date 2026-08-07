@@ -227,6 +227,12 @@ row-tracker/
 
 ---
 
+## Contributing
+
+Bug reports, small fixes, and doc corrections are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for how to get set up and what's most useful.
+
+---
+
 ## License
 
 MIT License — free to use, modify, and distribute with attribution.
