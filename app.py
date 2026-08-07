@@ -29,9 +29,16 @@ def create_app():
     app = Flask(__name__)
 
     # ------------------------------------------------------------------ config
-    app.config["SQLALCHEMY_DATABASE_URI"] = (
-        f"sqlite:///{os.path.join(app.root_path, 'data', 'row_tracker.db')}"
-    )
+    # TESTING must be set before mail.init_app() below — Flask-Mail defaults
+    # MAIL_SUPPRESS_SEND to app.testing, which is how the test suite hits
+    # /feedback/submit without opening a real SMTP connection.
+    app.config["TESTING"] = os.environ.get("TESTING", "").lower() == "true"
+
+    # DATABASE_PATH lets the test suite point this at a throwaway file
+    # instead of the real database — unset in Docker/production, so the
+    # default path there is unchanged.
+    db_path = os.environ.get("DATABASE_PATH") or os.path.join(app.root_path, "data", "row_tracker.db")
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # SECRET_KEY signs session cookies and (as of CSRFProtect, below) CSRF
@@ -108,8 +115,12 @@ def create_app():
         return response
 
     # ---------------------------------------------------------------- scheduler
-    from scheduler import init_scheduler
-    init_scheduler(app)
+    # Skipped under TESTING — a real BackgroundScheduler thread has no
+    # business running against a throwaway test database, and every test
+    # that builds its own app via the factory would otherwise leak one.
+    if not app.testing:
+        from scheduler import init_scheduler
+        init_scheduler(app)
 
     return app
 

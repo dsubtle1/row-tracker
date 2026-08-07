@@ -192,7 +192,7 @@ def _check_iron_month():
         WodHistory.generated_date.asc(), WodHistory.id.asc()
     ).all()
     if not rows:
-        return (False, None)
+        return (False, None, None)
 
     latest_by_day = {}
     for row in rows:
