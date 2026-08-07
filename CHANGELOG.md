@@ -1,0 +1,103 @@
+# Changelog
+
+All notable changes to Row Tracker are documented here.
+
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning follows
+[Semantic Versioning](https://semver.org/) — while the major version is `0`, minor bumps may
+include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 project.
+
+History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
+these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
+
+## [0.9.0] — 2026-08-07
+
+### Added
+- AI-assisted WOD coaching narrative — optional Claude Haiku-generated warm-up/cool-down/coaching
+  notes, feature-flagged via `USE_AI_WOD` + `ANTHROPIC_API_KEY`; falls back to the static rule-based
+  text automatically if disabled or unavailable
+- Versioning: `VERSION` file, this changelog, and the version now shown in the site footer and FAQ page
+- Explicit self-hosting/privacy statement in the README — no Row Tracker backend, your own Concept2
+  and Anthropic credentials, your own data
+
+### Changed
+- Removed the Support/sponsorship section from the README for now
+
+## [0.8.0] — 2026-08-07
+
+### Added
+- Email notifications for newly earned badges, lifetime-metres milestones, and virtual journey completions
+  (`NOTIFY_EMAIL`, defaults to `MAIL_USERNAME`)
+
+### Changed
+- Refreshed README screenshots and fixed stale documentation
+
+## [0.7.0] — 2026-08-06
+
+### Added
+- PWA install support — manifest, app icons, service worker for offline-capable static asset caching
+- Nightly automated SQLite database backups (30-day retention) via APScheduler
+- Data export — workout history and personal bests as CSV or JSON
+- Route test coverage across all four blueprints
+- Distinct icon + progress bar per badge
+- Clickable journey waypoints with a details popup and Wikipedia photo banner
+
+### Fixed
+- Badge `earned_date` defaulting to today instead of the actual earned date
+- Journey map label overlap and mobile scaling
+- Grainy waypoint banner images (now uses the original file, not a rescaled thumbnail)
+- Dependency bump to close known CVEs
+
+### Changed
+- Vendored Chart.js locally instead of loading from a CDN
+
+## [0.6.0] — 2026-08-05
+
+### Added
+- WOD History rewritten as a month-by-month calendar (`/wod/history`, `/api/wod/day`)
+- Journey Map teaser card on the dashboard
+
+## [0.5.0] — 2026-08-04
+
+### Added
+- Dashboard redesign (Phase R2) — circular lifetime-metres gauge, pace/volume sparklines,
+  "Your Progress" journey checklist
+
+### Fixed
+- Badges never being earnable — `seed_badges()` was never actually called on startup
+
+## [0.4.0] — 2026-08-04
+
+### Added
+- Full pytest suite for engine modules (PBs, badges, WOD generation)
+- Real planned-session tracking for the Iron Month badge
+- Per-stroke pace/stroke-rate visualization on the workout detail page
+- UI-driven CSV import for pre-API-access seasons
+- CSRF protection on every state-changing route
+
+### Fixed
+- Personal best delta (improvement-vs-previous) tracking bug
+
+### Changed
+- Redesign polish (Phase R1) — light mode and teal accent consistency
+- `SECRET_KEY` fallback behavior
+
+## [0.3.0] — 2026-06-28 to 2026-07-23
+
+### Changed
+- README screenshots, license, and formatting refresh
+
+### Security
+- Replaced a leaked Gmail app password in `.env.example` with a placeholder
+
+## [0.2.0] — 2026-06-17 to 2026-06-18
+
+### Added
+- Mobile-responsive layout
+- Heart rate data on workout detail (min/avg/max, zone classification)
+- Chart improvements
+
+## [0.1.0] — 2026-06-14
+
+### Added
+- Initial release: dashboard, Concept2 Logbook sync, personal bests, in-app feedback form,
+  FAQ and Quick Start guide

@@ -25,10 +25,22 @@ mail = Mail()
 csrf = CSRFProtect()
 
 
+def _read_version(app) -> str:
+    """Read the app's SemVer string from the VERSION file at repo root."""
+    try:
+        with open(os.path.join(app.root_path, "VERSION")) as f:
+            return f.read().strip()
+    except OSError:
+        return "0.0.0-dev"
+
+
 def create_app():
     app = Flask(__name__)
 
     # ------------------------------------------------------------------ config
+    app.config["VERSION"] = _read_version(app)
+    app.jinja_env.globals["app_version"] = app.config["VERSION"]
+
     # TESTING must be set before mail.init_app() below — Flask-Mail defaults
     # MAIL_SUPPRESS_SEND to app.testing, which is how the test suite hits
     # /feedback/submit without opening a real SMTP connection.

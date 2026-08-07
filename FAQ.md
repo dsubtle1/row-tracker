@@ -1,6 +1,6 @@
 # Row Tracker — FAQ & Known Issues
 
-*Alpha release · June 2026*
+*Alpha release · v0.9.0*
 
 ---
 

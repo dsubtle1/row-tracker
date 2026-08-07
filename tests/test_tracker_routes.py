@@ -34,6 +34,18 @@ def test_faq_and_quickstart_pages(client):
     assert client.get("/quickstart").status_code == 200
 
 
+def test_app_version_is_read_and_rendered(full_app, client):
+    # VERSION file exists and parses as dotted digits, e.g. "0.9.0"
+    assert full_app.config["VERSION"] != "0.0.0-dev"
+    parts = full_app.config["VERSION"].split(".")
+    assert len(parts) == 3
+    assert all(p.isdigit() for p in parts)
+
+    # rendered into the site-wide footer via the app_version Jinja global
+    resp = client.get("/")
+    assert f"Row Tracker v{full_app.config['VERSION']}".encode() in resp.data
+
+
 def test_auth_callback(client):
     resp = client.get("/auth/callback")
     assert resp.status_code == 200
