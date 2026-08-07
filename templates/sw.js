@@ -4,9 +4,15 @@
  * and the app is installable. Everything else (pages, /api/*) goes straight
  * to the network, uncached — this app's data changes daily (nightly sync,
  * badges, WOD) and a stale cached dashboard would be actively misleading.
+ *
+ * CACHE_NAME is tied to the app version (see VERSION / app_version Jinja
+ * global) so every release invalidates the old static-asset cache instead
+ * of silently serving stale CSS/JS to browsers that already installed the
+ * PWA — this file itself is served with Cache-Control: no-cache, so the
+ * browser always re-checks it and picks up the new cache name promptly.
  */
 
-const CACHE_NAME = "row-tracker-static-v1";
+const CACHE_NAME = "row-tracker-static-v{{ app_version }}";
 
 const STATIC_ASSETS = [
   "/static/css/main.css",

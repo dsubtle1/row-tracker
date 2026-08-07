@@ -6,7 +6,7 @@ Single container, single port (7376), three Blueprint modules.
 import os
 import secrets
 import logging
-from flask import Flask, send_from_directory
+from flask import Flask, Response, render_template
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
 from models import db
@@ -125,9 +125,14 @@ def create_app():
     # covers the whole app — a service worker can only control pages under
     # the path it's served from unless the server opts in via a response
     # header, which send_from_directory doesn't set.
+    #
+    # Rendered from a Jinja template (not send_from_directory) so CACHE_NAME
+    # inside it can embed app_version — every release then invalidates the
+    # old static-asset cache automatically instead of browsers that already
+    # installed the PWA silently keeping stale CSS/JS forever.
     @app.route("/sw.js")
     def service_worker():
-        response = send_from_directory(os.path.join(app.static_folder, "js"), "sw.js")
+        response = Response(render_template("sw.js"), mimetype="application/javascript")
         response.headers["Service-Worker-Allowed"] = "/"
         response.headers["Cache-Control"] = "no-cache"
         return response
