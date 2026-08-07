@@ -30,6 +30,9 @@ venv/
 # Docs — only needed for GitHub's README rendering, not by the running app
 docs/
 
+# Local design references — not part of the app
+designidea.webp
+
 # OS cruft
 .DS_Store
 Thumbs.db
