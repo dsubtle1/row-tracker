@@ -17,6 +17,9 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 ### Virtual Journeys
 ![Virtual Journeys](docs/screenshots/Virtual_Journeys.jpeg)
 
+### Charts
+![Charts](docs/screenshots/Charts.jpeg)
+
 ### Quick Start Guide
 ![Quick Start](docs/screenshots/Quick_Start.jpeg)
 
@@ -160,14 +163,16 @@ row-tracker/
 ├── pb_engine.py            # Personal best calculation
 ├── badge_engine.py         # Badge evaluation
 ├── wod_engine.py           # WOD generation
+├── scheduler.py            # APScheduler jobs: nightly sync, PB recalc, badges, backup
+├── backup.py               # Nightly SQLite backup with retention pruning
 ├── blueprints/
 │   ├── tracker.py          # Core routes and HR zone filters
 │   ├── wod.py              # Workout of the Day routes
 │   ├── gamification.py     # Badges, challenges, journeys
 │   └── feedback.py         # Feedback form
 ├── templates/              # Jinja2 HTML templates
-├── static/                 # CSS and JS
-├── data/                   # SQLite database (Docker volume)
+├── static/                 # CSS, JS, PWA manifest and icons
+├── data/                   # SQLite database + nightly backups (Docker volume)
 ├── .env.example            # Environment variable template
 ├── docker-compose.yml
 └── Dockerfile
@@ -178,7 +183,6 @@ row-tracker/
 ## Roadmap
 
 - [ ] Force-curve / drive-recovery-time visualisation per stroke (basic pace & stroke-rate-over-time chart already shipped)
-- [ ] Chart axis-label and colour-consistency polish (hover/tooltip behaviour already fixed)
 - [ ] Real map overlays for virtual journeys (Leaflet.js + OpenStreetMap)
 - [ ] Push/email notifications for badges and milestones
 - [ ] AI-assisted WOD generation (Anthropic API — feature-flagged)

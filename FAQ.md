@@ -123,13 +123,12 @@ Click the 💬 Feedback button in the navigation bar on any page. Fill in the ca
 
 | # | Area | Issue | Status |
 |---|---|---|---|
-| 1 | Charts | Hover/tooltip behaviour is fixed; axis labels and colour consistency still need polish | In progress |
-| 2 | AI-assisted WOD | The AI coaching mode for the WOD generator has been deferred and is not available in this alpha | Deferred |
-| 3 | Notifications | There are no push or email notifications for badges, milestones, or journey completions | Planned |
-| 4 | Multi-user | Row Tracker is single-user only in this release | Out of scope for alpha |
-| 5 | Social / sharing | There are no sharing features — the app is for personal use only | Out of scope for alpha |
+| 1 | AI-assisted WOD | The AI coaching mode for the WOD generator has been deferred and is not available in this alpha | Deferred |
+| 2 | Notifications | There are no push or email notifications for badges, milestones, or journey completions | Planned |
+| 3 | Multi-user | Row Tracker is single-user only in this release | Out of scope for alpha |
+| 4 | Social / sharing | There are no sharing features — the app is for personal use only | Out of scope for alpha |
 
 ---
 
-*Last updated: August 6, 2026*
+*Last updated: August 7, 2026*
 *To report an issue not listed here, use the 💬 Feedback button in the app.*
