@@ -28,12 +28,18 @@ def nightly_sync():
         return
 
     with app.app_context():
+        from notify import lifetime_meters, check_and_notify_milestone
+        from blueprints.gamification import check_journey_completions
+
+        before_m = lifetime_meters()
         result = client.sync_workouts()
         logger.info(f"Nightly sync result: {result}")
 
         if result.get("inserted", 0) > 0:
             recalculate_pbs()
             evaluate_badges()
+            check_and_notify_milestone(before_m, lifetime_meters())
+            check_journey_completions()
 
 
 def recalculate_pbs():
@@ -49,10 +55,12 @@ def recalculate_pbs():
 def evaluate_badges():
     """Badge evaluation after sync."""
     from badge_engine import evaluate_badges as _evaluate
+    from notify import notify_badges
     try:
         newly_awarded = _evaluate()
         if newly_awarded:
             logger.info(f"Badges awarded this sync: {newly_awarded}")
+            notify_badges(newly_awarded)
         else:
             logger.info("Badge evaluation complete — no new badges.")
     except Exception as e:

@@ -181,6 +181,13 @@
           Quarterly targets that reset on January 1, April 1, July 1, and October 1. They include a distance target, a PB season checklist, a consistency challenge, and a monthly volume goal.
         </div>
       </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Will I get notified when I earn a badge, hit a milestone, or finish a journey?</summary>
+        <div class="faq-answer">
+          Yes — Row Tracker emails you automatically after every sync that earns a new badge, crosses a lifetime-metres milestone (100k, 250k, 500k, 1M, and so on), or completes a virtual journey. It reuses the same Flask-Mail setup as the feedback form, but sends to <code>NOTIFY_EMAIL</code> in your <code>.env</code> (defaults to <code>MAIL_USERNAME</code> — your own inbox — if left blank) rather than the feedback address.
+        </div>
+      </details>
     </div>
 
     <div class="faq-group">
@@ -246,14 +253,6 @@
     <h2 class="faq-section-title">Known Issues</h2>
 
     <div class="issues-list">
-
-      <div class="issue-card issue-planned">
-        <div class="issue-header">
-          <span class="issue-badge planned">Planned</span>
-          <span class="issue-area">Notifications</span>
-        </div>
-        <p class="issue-desc">There are no push or email notifications for badges, milestones, or journey completions.</p>
-      </div>
 
       <div class="issue-card issue-deferred">
         <div class="issue-header">

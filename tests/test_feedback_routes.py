@@ -8,23 +8,6 @@ still fires its email_dispatched signal even when suppressed, which lets
 these tests inspect the composed message instead of only the JSON response.
 """
 
-import pytest
-from flask_mail import email_dispatched
-
-
-@pytest.fixture()
-def sent_messages(full_app_ctx):
-    """Capture Message objects Flask-Mail would have sent, via its signal."""
-    captured = []
-
-    def _record(sender, message, **extra):
-        captured.append(message)
-
-    email_dispatched.connect(_record, full_app_ctx)
-    yield captured
-    email_dispatched.disconnect(_record, full_app_ctx)
-
-
 def test_submit_with_message_succeeds(client, sent_messages):
     resp = client.post("/feedback/submit", data={
         "category": "Bug",

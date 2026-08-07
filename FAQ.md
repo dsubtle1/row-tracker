@@ -87,6 +87,9 @@ Badges with a single clear numeric target (lifetime metres, best single-session 
 **What are Season Challenges?**
 Quarterly targets that reset on January 1, April 1, July 1, and October 1. They include a distance target, a PB season checklist, a consistency challenge, and a monthly volume goal.
 
+**Will I get notified when I earn a badge, hit a milestone, or finish a journey?**
+Yes — Row Tracker emails you automatically after every sync that earns a new badge, crosses a lifetime-metres milestone (100k, 250k, 500k, 1M, and so on), or completes a virtual journey. It reuses the same Flask-Mail setup as the feedback form, but sends to `NOTIFY_EMAIL` in your `.env` (defaults to `MAIL_USERNAME` — your own inbox — if left blank) rather than the feedback address.
+
 ---
 
 ### Virtual Journeys
@@ -124,9 +127,8 @@ Click the 💬 Feedback button in the navigation bar on any page. Fill in the ca
 | # | Area | Issue | Status |
 |---|---|---|---|
 | 1 | AI-assisted WOD | The AI coaching mode for the WOD generator has been deferred and is not available in this alpha | Deferred |
-| 2 | Notifications | There are no push or email notifications for badges, milestones, or journey completions | Planned |
-| 3 | Multi-user | Row Tracker is single-user only in this release | Out of scope for alpha |
-| 4 | Social / sharing | There are no sharing features — the app is for personal use only | Out of scope for alpha |
+| 2 | Multi-user | Row Tracker is single-user only in this release | Out of scope for alpha |
+| 3 | Social / sharing | There are no sharing features — the app is for personal use only | Out of scope for alpha |
 
 ---
 

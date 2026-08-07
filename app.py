@@ -64,6 +64,11 @@ def create_app():
     app.config["MAIL_PASSWORD"]       = os.environ.get("MAIL_PASSWORD", "")
     app.config["MAIL_DEFAULT_SENDER"] = os.environ.get("MAIL_USERNAME", "")
 
+    # Where badge/milestone/journey-completion notifications get sent —
+    # defaults to MAIL_USERNAME (the athlete's own inbox) rather than the
+    # feedback form's rowtracker@pm.me, which is for incoming support mail.
+    app.config["NOTIFY_EMAIL"] = os.environ.get("NOTIFY_EMAIL") or os.environ.get("MAIL_USERNAME", "")
+
     # Feature flags (read from .env via Docker)
     app.config["USE_AI_WOD"] = os.environ.get("USE_AI_WOD", "false").lower() == "true"
 

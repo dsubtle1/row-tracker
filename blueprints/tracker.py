@@ -467,7 +467,11 @@ def sync():
             "message": "C2 API credentials not configured. Add C2_CLIENT_ID, C2_CLIENT_SECRET, and C2_REFRESH_TOKEN to .env.",
         }), 400
 
+    from notify import lifetime_meters, check_and_notify_milestone, notify_badges
+    from blueprints.gamification import check_journey_completions
+
     # Run sync
+    before_m = lifetime_meters()
     result = client.sync_workouts()
 
     # Post-sync jobs only if new data arrived
@@ -480,9 +484,16 @@ def sync():
             logging.getLogger(__name__).error(f"PB recalc failed: {e}")
         try:
             newly_awarded = evaluate_badges()
+            notify_badges(newly_awarded)
         except Exception as e:
             import logging
             logging.getLogger(__name__).error(f"Badge eval failed: {e}")
+        try:
+            check_and_notify_milestone(before_m, lifetime_meters())
+            check_journey_completions()
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Milestone/journey notification check failed: {e}")
 
     return jsonify({
         "status":         "ok" if not result.get("errors") else "partial",
@@ -505,9 +516,11 @@ def import_csv_view():
     """
     import io
     from import_csv import import_rows
+    from notify import lifetime_meters
 
     results = None
     if request.method == "POST":
+        before_m = lifetime_meters()
         uploads = [f for f in request.files.getlist("csv_files") if f and f.filename]
         results = []
         total_inserted = 0
@@ -532,8 +545,13 @@ def import_csv_view():
         if total_inserted > 0:
             from pb_engine import recalculate_all_pbs
             from badge_engine import evaluate_badges
+            from notify import check_and_notify_milestone, notify_badges
+            from blueprints.gamification import check_journey_completions
+
             recalculate_all_pbs()
-            evaluate_badges()
+            notify_badges(evaluate_badges())
+            check_and_notify_milestone(before_m, lifetime_meters())
+            check_journey_completions()
 
     return render_template("tracker/import.html", results=results)
 

@@ -740,6 +740,39 @@ def _get_challenges():
 
 
 # ---------------------------------------------------------------------------
+# Journey completion notifications
+# ---------------------------------------------------------------------------
+
+def check_journey_completions():
+    """
+    Check every active journey for completion, emailing for any that just
+    finished. Each _get_X_data() getter already flips journey.completed to
+    True and commits as a side effect when the distance threshold is
+    crossed — this reuses that single source of truth rather than
+    re-deriving the same math, and relies on SQLAlchemy's identity map
+    (same session, same PK) for `journey.completed` to reflect the getter's
+    mutation on the same Python object. Call after a sync that inserted new
+    workouts; safe to call anytime otherwise (already-completed journeys
+    are skipped by the `completed=False` filter).
+    """
+    from notify import notify_journey_complete
+
+    getters = [
+        ("rhine",    _get_rhine_data),
+        ("holland",  _get_holland_data),
+        ("transcan", _get_transcan_data),
+        ("route66",  _get_route66_data),
+    ]
+    for route_key, getter in getters:
+        journey = Journey.query.filter_by(route_key=route_key, completed=False).order_by(Journey.id.desc()).first()
+        if not journey:
+            continue
+        getter()
+        if journey.completed:
+            notify_journey_complete(route_key, journey)
+
+
+# ---------------------------------------------------------------------------
 # Routes — Phase 3A (unchanged)
 # ---------------------------------------------------------------------------
 
@@ -938,6 +971,9 @@ def api_challenges():
 def check_badges():
     try:
         newly_awarded = evaluate_badges()
+        if newly_awarded:
+            from notify import notify_badges
+            notify_badges(newly_awarded)
         return jsonify({
             "status":        "ok",
             "newly_awarded": newly_awarded,

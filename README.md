@@ -66,6 +66,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Season challenges — quarterly distance, PB attempts, consistency, monthly volume
 - You vs. Past You — compare this month against last month, 3 months ago, and 12 months ago
 - Stale PB nudges on the Achievements hub
+- Email notifications when you earn a badge, cross a lifetime-metres milestone, or complete a virtual journey
 
 **Virtual Journeys**
 - Row the world's great routes — metres rowed move you along the route in real time
@@ -165,6 +166,7 @@ row-tracker/
 ├── wod_engine.py           # WOD generation
 ├── scheduler.py            # APScheduler jobs: nightly sync, PB recalc, badges, backup
 ├── backup.py               # Nightly SQLite backup with retention pruning
+├── notify.py               # Email notifications: badges, milestones, journey completions
 ├── blueprints/
 │   ├── tracker.py          # Core routes and HR zone filters
 │   ├── wod.py              # Workout of the Day routes
@@ -184,7 +186,6 @@ row-tracker/
 
 - [ ] Force-curve / drive-recovery-time visualisation per stroke (basic pace & stroke-rate-over-time chart already shipped)
 - [ ] Real map overlays for virtual journeys (Leaflet.js + OpenStreetMap)
-- [ ] Push/email notifications for badges and milestones
 - [ ] AI-assisted WOD generation (Anthropic API — feature-flagged)
 
 ---

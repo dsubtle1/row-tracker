@@ -15,6 +15,7 @@ from datetime import date, timedelta
 
 import pytest
 from flask import Flask
+from flask_mail import email_dispatched
 from sqlalchemy.pool import StaticPool
 
 from models import db, Workout
@@ -167,3 +168,21 @@ def full_make_workout(full_app_ctx):
         return w
 
     yield _make
+
+
+@pytest.fixture()
+def sent_messages(full_app_ctx):
+    """
+    Capture Message objects Flask-Mail would have sent, via its
+    email_dispatched signal — fires even when MAIL_SUPPRESS_SEND is on
+    (see full_app's TESTING note above), so this inspects the actually
+    composed email without opening an SMTP connection.
+    """
+    captured = []
+
+    def _record(sender, message, **extra):
+        captured.append(message)
+
+    email_dispatched.connect(_record, full_app_ctx)
+    yield captured
+    email_dispatched.disconnect(_record, full_app_ctx)

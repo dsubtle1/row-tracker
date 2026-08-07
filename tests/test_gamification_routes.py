@@ -38,6 +38,25 @@ def test_api_badges_check(client):
     assert isinstance(data["newly_awarded"], list)
 
 
+def test_api_badges_check_emails_newly_awarded(client, full_make_workout, sent_messages):
+    """A workout crossing the 2k-legend threshold should both award the
+    badge and send exactly one notification email for it."""
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+
+    resp = client.post("/gamification/api/badges/check")
+    data = resp.get_json()
+    assert "2k_legend" in data["newly_awarded"]
+
+    assert len(sent_messages) == 1
+    assert "badge" in sent_messages[0].subject.lower()
+
+
+def test_api_badges_check_no_email_when_nothing_new(client, sent_messages):
+    resp = client.post("/gamification/api/badges/check")
+    assert resp.get_json()["newly_awarded"] == []
+    assert sent_messages == []
+
+
 def test_api_badges_list(client):
     resp = client.get("/gamification/api/badges")
     assert resp.status_code == 200

@@ -96,6 +96,8 @@ Click **Achievements** in the navigation bar to see:
 - **Season Challenges** — quarterly targets including distance goals, PB attempts, and consistency streaks
 - **You vs. Past You** — a side-by-side comparison of your training across this month, last month, 3 months ago, and 12 months ago
 
+> You'll also get an email whenever you earn a badge, cross a lifetime-metres milestone, or finish a virtual journey — sent to `NOTIFY_EMAIL` in your `.env` (defaults to your own `MAIL_USERNAME` inbox if left blank).
+
 ---
 
 ## A Few Tips
@@ -116,4 +118,4 @@ For a list of known issues and common questions, click **FAQ** in the navigation
 
 ---
 
-*Last updated: August 6, 2026*
+*Last updated: August 7, 2026*
