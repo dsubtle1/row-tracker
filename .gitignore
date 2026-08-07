@@ -33,6 +33,10 @@ csv-data/
 # Project spec files
 row-tracker-spec.md
 docs/redesign-spec.md
+docs/superpowers/
+
+# Local design references
+designidea.webp
 
 # Local git worktrees
 .worktrees/
