@@ -4,7 +4,7 @@ A self-hosted personal rowing tracker for Concept2 RowErg athletes. Syncs automa
 
 Built with Flask, SQLite, and Docker. Runs on a home server at a single port with no external dependencies.
 
-> **Your server, your credentials, your data.** Row Tracker is 100% self-hosted — there is no Row Tracker backend and nothing runs on infrastructure anyone else controls. You run the container yourself and supply your own Concept2 API credentials, so it talks directly to *your* Concept2 Logbook account, not through any server of ours. All data (workouts, PBs, badges, journeys) is stored in a SQLite file on your own machine, under your own control. The optional AI coaching feature is the one exception worth calling out explicitly: if you enable it, workout context is sent to Anthropic's API using an API key you provide — see [AI-Assisted Coaching](#ai-assisted-coaching-optional) below.
+> **Your server, your credentials, your data.** Row Tracker is 100% self-hosted — there is no Row Tracker backend and nothing runs on infrastructure anyone else controls. You run the container yourself and supply your own Concept2 API credentials, so it talks directly to *your* Concept2 Logbook account, not through any server of ours. All data (workouts, PBs, badges, journeys) is stored in a SQLite file on your own machine, under your own control. Two features are the exceptions worth calling out explicitly: the optional AI coaching feature (workout context sent to Anthropic's API using an API key you provide — see [AI-Assisted Coaching](#ai-assisted-coaching-optional) below), and the in-app **💬 Feedback** button, which emails the developer directly using your own SMTP credentials — see [below](#feedback) for what that does and doesn't send.
 
 ---
 
@@ -183,8 +183,19 @@ Everything in Row Tracker works fully offline with `USE_AI_WOD=false` (the defau
 
 - Row Tracker sends a small amount of workout context (workout type, target pace, recent training load, and any notes you typed into the Random WOD Generator) directly to the Anthropic API, using the key you provided.
 - Anthropic's response — just the coaching text — is used to replace the warm-up/cool-down/coaching notes for that WOD. No other data (your name, account, history, or PBs beyond what's needed for that one prompt) is sent.
-- This is the only feature in Row Tracker that talks to a third party. Everything else — sync, PBs, badges, journeys, charts — is between your server and the Concept2 API only.
 - Leave `ANTHROPIC_API_KEY` blank (the default) and this feature is completely inert.
+
+Everything else — sync, PBs, badges, journeys, charts — is between your server and the Concept2 API only, with one other exception below.
+
+---
+
+## Feedback
+
+Every deployment's **💬 Feedback** button sends to the developer's inbox, not your own — the recipient is fixed in the code, not something your `.env` controls. It sends using *your* configured Gmail credentials (`MAIL_USERNAME`/`MAIL_PASSWORD`), but the destination is always the same regardless of who's running the instance. It sends: the category you picked, an optional name you type in (defaults to "Anonymous"), your message, and which page you were on. Nothing else — no account data, no workout history, no PBs.
+
+This is separate from badge/milestone/journey-completion emails, which use `NOTIFY_EMAIL` and go to *your own* inbox (see the Features list above) — those never leave your server's control.
+
+If you'd rather not send anything to a third party at all, don't fill in Gmail credentials — the Feedback button will just fail with an on-screen error instead of silently doing nothing, so this is a deliberate opt-out (no `.env` flag currently gates it separately from AI coaching's `USE_AI_WOD`).
 
 ---
 
