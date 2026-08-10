@@ -9,6 +9,26 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.6] — 2026-08-10
+
+### Added
+- **Milestones section on the Insights page** — all-time-highlight cards rendered as a
+  big-number treatment: years rowing (with session count), biggest single day, total
+  hours on the erg, and longest unbroken streak. These are facts rather than patterns,
+  so they carry no confidence tag and appear once there's a real history behind them.
+- **Year-over-year volume insight** — compares meters logged Jan 1 → today against the
+  identical span of last year, so progress (or a lull) shows up as it happens.
+
+### Changed
+- **Pace-trend insight now measures steady pieces only** (20 min+). Trending pace across
+  all workout types was confounded by changes in workout mix — more sprints or more easy
+  volume could masquerade as a pace change. Restricting to steady work makes the trend
+  mean what it says.
+- Tuned insight surfacing against real data: day-of-week, rest-gap, and seasonal pace
+  effects were left gated (the underlying signal is genuinely flat at the median, so
+  loosening thresholds would have manufactured noise) while the new milestone and
+  year-over-year rules add substance that the data actually supports.
+
 ## [0.9.5] — 2026-08-10
 
 ### Added
