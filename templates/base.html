@@ -52,6 +52,10 @@
          class="nav-link {% if request.endpoint and request.endpoint.startswith('gamification') and request.endpoint not in ['gamification.journeys', 'gamification.route', 'gamification.route_holland', 'gamification.route_transcan'] %}active{% endif %}">
         Achievements
       </a>
+      <a href="{{ url_for('tracker.insights') }}"
+         class="nav-link {% if request.endpoint == 'tracker.insights' %}active{% endif %}">
+        Insights
+      </a>
       <a href="{{ url_for('tracker.faq') }}"
          class="nav-link {% if request.endpoint == 'tracker.faq' %}active{% endif %}">
         FAQ

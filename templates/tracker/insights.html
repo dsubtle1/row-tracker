@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Insights — Row Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+  .insights-page{--cool:#38bdf8;}
+  [data-theme="light"] .insights-page{--cool:#0ea5e9;}
+
+  .insights-page .eyebrow{
+    text-transform:uppercase; letter-spacing:.14em; font-size:.72rem;
+    font-weight:700; color:var(--color-accent-2);
+  }
+  .insights-page h1{
+    font-size:clamp(1.8rem,4vw,2.4rem); margin:.15em 0 .12em;
+    letter-spacing:-.02em; text-wrap:balance;
+  }
+  .insights-page .sub{color:var(--color-text-muted); max-width:62ch; margin:0;}
+
+  /* AI coach's read — only shown when USE_AI_INSIGHTS produced one */
+  .coachread{
+    margin:26px 0 6px; padding:20px 22px; border-radius:var(--radius);
+    background:linear-gradient(135deg,
+      color-mix(in srgb,var(--color-accent) 12%,transparent),
+      color-mix(in srgb,var(--cool) 9%,transparent));
+    border:1px solid color-mix(in srgb,var(--color-accent) 32%,transparent);
+  }
+  .coachread .tag{
+    display:inline-flex; align-items:center; gap:8px; font-size:.68rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.08em; color:var(--color-accent-2); margin-bottom:9px;
+  }
+  .coachread .tag .badge{
+    font-family:var(--font-mono); font-size:.6rem; padding:2px 7px; border-radius:999px;
+    text-transform:none; letter-spacing:.02em; color:var(--color-text-muted);
+    border:1px solid color-mix(in srgb,var(--color-accent) 40%,transparent);
+  }
+  .coachread p{margin:0; font-size:1.02rem; line-height:1.62; color:var(--color-text); max-width:68ch;}
+  .coachread p + p{margin-top:.7em;}
+
+  .insights-strip{
+    display:flex; flex-wrap:wrap; gap:26px; margin:24px 0 8px;
+    padding:16px 20px; background:var(--color-surface); border:1px solid var(--color-border);
+    border-radius:var(--radius); box-shadow:var(--card-shadow);
+  }
+  .insights-strip .n{font-size:1.4rem; font-weight:700; font-family:var(--font-mono);
+    font-variant-numeric:tabular-nums; color:var(--color-text);}
+  .insights-strip .l{font-size:.72rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--color-text-muted);}
+
+  .insights-section-title{display:flex; align-items:baseline; gap:12px; margin:38px 0 14px;}
+  .insights-section-title h2{font-size:1.05rem; margin:0;}
+  .insights-section-title .rule{flex:1; height:1px; background:var(--color-border);}
+
+  .insights-grid{display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(310px,1fr));}
+
+  .insight-card{
+    background:var(--color-surface); border:1px solid var(--color-border);
+    border-radius:var(--radius); padding:20px 20px 18px; box-shadow:var(--card-shadow);
+    display:flex; flex-direction:column; gap:12px; overflow:hidden;
+  }
+  .insight-card .top{display:flex; align-items:flex-start; justify-content:space-between; gap:12px;}
+  .insight-card .headline{font-size:1.06rem; font-weight:650; letter-spacing:-.01em;
+    text-wrap:balance; margin:0;}
+  .insight-card .detail{font-size:.9rem; color:var(--color-text-muted); margin:0;}
+
+  .conf-chip{
+    flex:none; font-size:.63rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em;
+    padding:3px 8px; border-radius:999px; white-space:nowrap; border:1px solid transparent;
+  }
+  .conf-chip.strong{color:var(--color-green);
+    border-color:color-mix(in srgb,var(--color-green) 45%,transparent);
+    background:color-mix(in srgb,var(--color-green) 12%,transparent);}
+  .conf-chip.early{color:var(--color-amber);
+    border-color:color-mix(in srgb,var(--color-amber) 45%,transparent);
+    background:color-mix(in srgb,var(--color-amber) 12%,transparent);}
+
+  /* bars */
+  .ins-bars{display:flex; align-items:flex-end; gap:7px; height:76px; margin-top:2px;}
+  .ins-bars .col{flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+    height:100%; justify-content:flex-end;}
+  .ins-bars .bar{width:100%; border-radius:5px 5px 2px 2px; background:var(--color-surface-2);
+    border:1px solid var(--color-border);}
+  .ins-bars .bar.best{background:var(--color-accent); border-color:var(--color-accent);}
+  .ins-bars .cap{font-size:.62rem; color:var(--color-text-muted); font-family:var(--font-mono);}
+
+  /* sparkline */
+  .ins-spark{width:100%; height:56px; display:block;}
+  .ins-spark-foot{display:flex; justify-content:space-between; font-size:.7rem;
+    color:var(--color-text-muted); font-family:var(--font-mono);}
+
+  /* gap scale */
+  .ins-scale{display:flex; gap:6px;}
+  .ins-scale .seg{flex:1; text-align:center; padding:8px 4px; border-radius:var(--radius-sm);
+    background:var(--color-surface-2); border:1px solid var(--color-border); font-family:var(--font-mono);}
+  .ins-scale .seg.peak{background:color-mix(in srgb,var(--color-accent) 20%,transparent);
+    border-color:var(--color-accent);}
+  .ins-scale .seg .v{font-size:.95rem; font-weight:700; color:var(--color-text);}
+  .ins-scale .seg .k{font-size:.6rem; color:var(--color-text-muted); text-transform:uppercase;
+    letter-spacing:.05em;}
+
+  /* pills */
+  .ins-pills{display:flex; flex-wrap:wrap; gap:6px;}
+  .ins-pill{font-size:.72rem; font-family:var(--font-mono); padding:4px 9px; border-radius:999px;
+    background:var(--color-surface-2); border:1px solid var(--color-border); color:var(--color-text-muted);}
+  .ins-pill.hot{color:var(--color-text); border-color:var(--color-accent);
+    background:color-mix(in srgb,var(--color-accent) 14%,transparent);}
+
+  /* recommendation */
+  .ins-rec{
+    display:flex; align-items:center; gap:10px; margin-top:2px; padding:10px 12px;
+    border-radius:var(--radius-sm); font-size:.86rem;
+    background:color-mix(in srgb,var(--color-accent) 9%,transparent);
+    border:1px solid color-mix(in srgb,var(--color-accent) 32%,transparent);
+  }
+  .ins-rec .arrow{color:var(--color-accent-2); font-weight:800; flex:none;}
+  .ins-rec .txt{color:var(--color-text);}
+  .ins-rec-action{
+    margin-left:auto; flex:none; font-size:.78rem; font-weight:650; text-decoration:none;
+    color:var(--color-bg); background:var(--color-accent); border-radius:8px; padding:6px 11px;
+    white-space:nowrap;
+  }
+  .ins-rec-action:hover{background:var(--color-accent-2);}
+
+  /* empty state */
+  .ins-empty{
+    margin-top:28px; padding:28px; text-align:center; border-radius:var(--radius);
+    border:1px dashed var(--color-border); background:var(--color-surface);
+    color:var(--color-text-muted);
+  }
+  .ins-empty h3{color:var(--color-text); margin:0 0 6px;}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set meters = overview.meters or 0 %}
+<div class="insights-page">
+
+  <div class="eyebrow">Insights</div>
+  <h1>What your rowing's quietly telling you</h1>
+  <p class="sub">Patterns pulled from every session you've logged. Nothing shows up here until there's
+    enough of it to trust — so when a card appears, it means something.</p>
+
+  {% if coach_read %}
+  <div class="coachread">
+    <div class="tag">🚣 Your coach's read <span class="badge">AI · optional</span></div>
+    {% for para in coach_read.split("\n\n") %}
+      {% if para.strip() %}<p>{{ para.strip() }}</p>{% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="insights-strip">
+    <div><div class="n">{{ "{:,}".format(overview.sessions) }}</div><div class="l">Sessions analyzed</div></div>
+    <div><div class="n">{% if meters >= 1000000 %}{{ "%.2f"|format(meters / 1000000) }}M{% else %}{{ "{:,}".format(meters) }}{% endif %}</div><div class="l">Meters</div></div>
+    {% if overview.first_date %}
+    <div><div class="n">{{ overview.first_date.strftime("%b '%y") }} – {{ overview.last_date.strftime("%b '%y") }}</div><div class="l">Date range</div></div>
+    {% endif %}
+    <div><div class="n">{{ active_count }}</div><div class="l">Active insights</div></div>
+  </div>
+
+  {% if not groups %}
+  <div class="ins-empty">
+    <h3>Keep rowing — your insights are warming up</h3>
+    <p>Patterns need a solid base of sessions before they're worth trusting. Log a few more rows
+      (and run a sync) and this page will start filling in.</p>
+  </div>
+  {% endif %}
+
+  {% for group in groups %}
+  <div class="insights-section-title"><h2>{{ group.label }}</h2><span class="rule"></span></div>
+  <div class="insights-grid">
+    {% for ins in group.insights %}
+    <div class="insight-card">
+      <div class="top">
+        <p class="headline">{{ ins.headline }}</p>
+        {% if ins.is_strong %}
+          <span class="conf-chip strong">Strong pattern</span>
+        {% else %}
+          <span class="conf-chip early">Early signal</span>
+        {% endif %}
+      </div>
+      <p class="detail">{{ ins.detail }}</p>
+
+      {% if ins.chart %}
+        {% set c = ins.chart %}
+        {% if c.type == "bars" %}
+          <div class="ins-bars">
+            {% for b in c.bars %}
+            <div class="col">
+              <div class="bar {% if b.best %}best{% endif %}" style="height:{{ b.height }}%"></div>
+              <div class="cap">{{ b.label }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        {% elif c.type == "sparkline" %}
+          <svg class="ins-spark" viewBox="0 0 300 56" preserveAspectRatio="none" aria-hidden="true">
+            <polyline fill="none" stroke="{{ 'var(--cool)' if c.accent == 'cool' else 'var(--color-accent)' }}"
+                      stroke-width="2.5" points="{{ c.svg_points }}" />
+            <circle cx="{{ c.end_x }}" cy="{{ c.end_y }}" r="3.5"
+                    fill="{{ 'var(--cool)' if c.accent == 'cool' else 'var(--color-accent)' }}" />
+          </svg>
+          <div class="ins-spark-foot"><span>{{ c.start_label }}</span><span>{{ c.end_label }}</span></div>
+        {% elif c.type == "gap_scale" %}
+          <div class="ins-scale">
+            {% for s in c.segments %}
+            <div class="seg {% if s.peak %}peak{% endif %}">
+              <div class="v">{{ s.key }}</div><div class="k">{{ s.label }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        {% elif c.type == "pills" %}
+          <div class="ins-pills">
+            {% for p in c.pills %}
+            <span class="ins-pill {% if p.hot %}hot{% endif %}">{{ p.label }}{% if p.pct is not none %} · {{ p.pct }}%{% endif %}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endif %}
+
+      {% if ins.recommendation %}
+      <div class="ins-rec">
+        <span class="arrow">→</span>
+        <span class="txt">{{ ins.recommendation }}</span>
+        {% if ins.action %}
+        <a class="ins-rec-action" href="{{ url_for(ins.action.endpoint) }}">{{ ins.action.label }} →</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+</div>
+{% endblock %}

@@ -9,6 +9,21 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.5] — 2026-08-10
+
+### Added
+- **Insights page** — a new nav section that reads your whole history and surfaces
+  patterns in plain language (best day of the week, rest-day effect, pace and volume
+  trends, fastest stroke rate in steady pieces, session-length clusters, consistency,
+  PB clustering). Each insight clears a minimum-sample and significance check before it
+  appears and is tagged **Strong pattern** or **Early signal**; the strongest carry a
+  recommendation, some linking into the WOD generator. Implemented as a deterministic,
+  rule-based engine (`insights_engine.py`) that runs entirely on your server.
+- **Optional AI "coach's read"** (`insights_ai.py`, gated by `USE_AI_INSIGHTS=true` +
+  `ANTHROPIC_API_KEY`, off by default) — a short first-person synthesis at the top of the
+  Insights page. It only rephrases the facts the engine already computed and never
+  invents a number; the cards render identically without it.
+
 ## [0.9.4] — 2026-08-10
 
 ### Fixed
