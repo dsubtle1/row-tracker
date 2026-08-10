@@ -76,6 +76,19 @@ Optionally. Set `USE_AI_WOD=true` and add an `ANTHROPIC_API_KEY` in your `.env` 
 
 ---
 
+### Insights
+
+**What is the Insights page?**
+It reads your whole workout history and surfaces patterns in plain language — things like which day you tend to row fastest, whether a rest day sharpens your next session, how your pace is trending, and which stroke rate your steady pieces fly at. Each pattern shows as a card, some with a suggested next step.
+
+**Why don't I see many insights yet?**
+Every insight has to clear a minimum-sample and significance check before it appears — a pattern won't show up on three data points. Cards are tagged **Strong pattern** or **Early signal** so you can tell how much weight to give each one. As you log more sessions, more cards unlock.
+
+**Are the insights AI-generated?**
+No — the cards are computed entirely on your own server by a rule-based engine, and work fully offline. There's an *optional* extra: set `USE_AI_INSIGHTS=true` with an `ANTHROPIC_API_KEY` and Claude Haiku adds a short first-person "coach's read" at the top that ties the cards together. It only ever rephrases the numbers the engine already computed — it never invents a figure — and everything works the same without it.
+
+---
+
 ### Achievements & Badges
 
 **How do I earn badges?**

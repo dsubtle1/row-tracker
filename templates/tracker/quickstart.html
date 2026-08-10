@@ -20,6 +20,7 @@
     <a href="#step-5" class="qs-nav-link">5 — Workout of the Day</a>
     <a href="#step-6" class="qs-nav-link">6 — Virtual Journeys</a>
     <a href="#step-7" class="qs-nav-link">7 — Achievements</a>
+    <a href="#step-8" class="qs-nav-link">8 — Insights</a>
     <div class="qs-nav-divider"></div>
     <a href="#tips" class="qs-nav-link">Tips</a>
     <a href="#feedback" class="qs-nav-link">Feedback</a>
@@ -152,6 +153,21 @@
           💡 You'll also get an email whenever you earn a badge, cross a lifetime-metres milestone, or finish a virtual journey — sent to <code>NOTIFY_EMAIL</code> in your <code>.env</code> (defaults to your own <code>MAIL_USERNAME</code> inbox if left blank).
         </div>
         <a href="{{ url_for('gamification.hub') }}" class="qs-action-link">Go to Achievements →</a>
+      </div>
+    </div>
+
+    <div class="qs-step" id="step-8">
+      <div class="qs-step-header">
+        <span class="qs-step-number">8</span>
+        <h2 class="qs-step-title">See Your Insights</h2>
+      </div>
+      <div class="qs-step-body">
+        <p>Click <strong>Insights</strong> in the navigation bar. Row Tracker reads your whole history and surfaces patterns in plain language — which day you row fastest, whether a rest day sharpens your next session, how your pace is trending, which stroke rate your steady pieces fly at, and more. Each pattern shows as a card, tagged <strong>Strong pattern</strong> or <strong>Early signal</strong> so you know how much to trust it, and the strongest ones suggest a next step.</p>
+        <p>Don't worry if it looks sparse at first — insights only appear once there's enough data behind them to trust, so more cards unlock as you log sessions.</p>
+        <div class="qs-tip-box">
+          💡 Want a short "coach's read" that ties the cards together? Set <code>USE_AI_INSIGHTS=true</code> and add an <code>ANTHROPIC_API_KEY</code> in your <code>.env</code>. It only rephrases the numbers already on the page, and the cards work exactly the same without it.
+        </div>
+        <a href="{{ url_for('tracker.insights') }}" class="qs-action-link">Go to Insights →</a>
       </div>
     </div>
 

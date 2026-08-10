@@ -55,6 +55,12 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Stroke rate vs pace efficiency scatter
 - CAWR (acute:chronic workload ratio) load management chart
 
+**Insights**
+- Automatic pattern-spotting across your whole history — timing, progress, technique, and habit patterns surfaced as plain-language cards ("Something about Saturdays just clicks", "Your steady rows fly at 20 spm")
+- Every insight is gated on a minimum-sample and significance check, so nothing appears until there's enough data to trust it — cards are tagged **Strong pattern** or **Early signal** so a claim never overstates its certainty
+- Actionable recommendations on the strongest patterns, some linking straight into the WOD generator
+- Optional AI "coach's read" (`USE_AI_INSIGHTS=true` + `ANTHROPIC_API_KEY`) — Claude Haiku writes a short first-person synthesis tying the cards together; it only ever rephrases the deterministic facts (never invents a number), and every card renders fine without it
+
 **Workout of the Day**
 - Rule-based periodization engine — reads last 28 days to set training phase
 - Target pace calculated from your 2k PB with zone offsets
@@ -185,6 +191,8 @@ Everything in Row Tracker works fully offline with `USE_AI_WOD=false` (the defau
 - Anthropic's response — just the coaching text — is used to replace the warm-up/cool-down/coaching notes for that WOD. No other data (your name, account, history, or PBs beyond what's needed for that one prompt) is sent.
 - Leave `ANTHROPIC_API_KEY` blank (the default) and this feature is completely inert.
 
+The **Insights** page has the same optional AI layer, gated separately by `USE_AI_INSIGHTS=true` (also off by default). When enabled, Row Tracker sends only the already-computed insight facts (the patterns and their numbers — no raw workout history) to Anthropic, and gets back a short coaching paragraph that rephrases them. The insight cards themselves are computed entirely on your server and show with or without the API key.
+
 Everything else — sync, PBs, badges, journeys, charts — is between your server and the Concept2 API only, with one other exception below.
 
 ---
@@ -210,6 +218,8 @@ row-tracker/
 ├── badge_engine.py         # Badge evaluation
 ├── wod_engine.py           # WOD generation
 ├── ai_coach.py             # Optional AI coaching narrative for WODs (USE_AI_WOD)
+├── insights_engine.py      # Deterministic pattern-spotting rules for the Insights page
+├── insights_ai.py          # Optional AI "coach's read" synthesis (USE_AI_INSIGHTS)
 ├── scheduler.py            # APScheduler jobs: nightly sync, PB recalc, badges, backup
 ├── backup.py               # Nightly SQLite backup with retention pruning
 ├── notify.py               # Email notifications: badges, milestones, journey completions

@@ -386,6 +386,27 @@ def personal_bests():
     return render_template("tracker/pb.html", pbs=pbs)
 
 
+@tracker_bp.route("/insights")
+def insights():
+    """Deterministic pattern-spotting across the whole history, plus an optional
+    AI 'coach's read' that only ever rephrases those same computed facts."""
+    from insights_engine import generate_insights, group_insights, dataset_overview
+    from insights_ai import generate_coach_read
+
+    found       = generate_insights()
+    overview    = dataset_overview()
+    groups      = group_insights(found)
+    coach_read  = generate_coach_read(found, overview)   # None unless USE_AI_INSIGHTS
+
+    return render_template(
+        "tracker/insights.html",
+        groups=groups,
+        overview=overview,
+        active_count=len(found),
+        coach_read=coach_read,
+    )
+
+
 @tracker_bp.route("/charts/pace")
 def chart_pace():
     days = request.args.get("days", 365, type=int)

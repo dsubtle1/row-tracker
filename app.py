@@ -83,6 +83,9 @@ def create_app():
 
     # Feature flags (read from .env via Docker)
     app.config["USE_AI_WOD"] = os.environ.get("USE_AI_WOD", "false").lower() == "true"
+    # Optional AI "coach's read" synthesis on the Insights page. Off by default;
+    # the deterministic insight cards render with or without it.
+    app.config["USE_AI_INSIGHTS"] = os.environ.get("USE_AI_INSIGHTS", "false").lower() == "true"
     app.config["ANTHROPIC_API_KEY"] = os.environ.get("ANTHROPIC_API_KEY", "")
 
     # C2 API credentials (populated once API key is approved)

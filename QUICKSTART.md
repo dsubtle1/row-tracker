@@ -102,6 +102,16 @@ Click **Achievements** in the navigation bar to see:
 
 ---
 
+## Step 8 — See Your Insights
+
+Click **Insights** in the navigation bar. Row Tracker reads your whole history and surfaces patterns in plain language — which day you row fastest, whether a rest day sharpens your next session, how your pace is trending, which stroke rate your steady pieces fly at, and more. Each pattern shows as a card, tagged **Strong pattern** or **Early signal** so you know how much to trust it, and the strongest ones suggest a next step.
+
+Don't worry if the page looks sparse at first — insights only appear once there's enough data behind them to trust, so more cards unlock as you log sessions.
+
+> Want a short "coach's read" that ties the cards together in a sentence or two? Set `USE_AI_INSIGHTS=true` and add an `ANTHROPIC_API_KEY` in your `.env`. It only ever rephrases the numbers already on the page, and the cards work exactly the same without it.
+
+---
+
 ## A Few Tips
 
 - **Dark/light mode** — use the ☀️ toggle in the top-right corner to switch themes
