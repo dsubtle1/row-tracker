@@ -41,3 +41,6 @@ designidea.webp
 
 # Local git worktrees
 .worktrees/
+
+# Local-only deploy trigger (references personal homelab; not for the public repo)
+deploy.sh
