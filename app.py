@@ -90,6 +90,13 @@ def create_app():
     app.config["C2_CLIENT_SECRET"] = os.environ.get("C2_CLIENT_SECRET", "")
     app.config["C2_REFRESH_TOKEN"] = os.environ.get("C2_REFRESH_TOKEN", "")
 
+    # CSRF tokens default to a 1-hour time limit, after which a POST from a
+    # long-open page (e.g. clicking Sync on a dashboard left open all day)
+    # fails with a 400 "token expired". For a single-user self-hosted tracker
+    # that expiry is pure UX friction — the token stays session-bound either
+    # way, which is the real CSRF protection. Disable the time limit.
+    app.config["WTF_CSRF_TIME_LIMIT"] = None
+
     # ---------------------------------------------------------- init extensions
     db.init_app(app)
     mail.init_app(app)

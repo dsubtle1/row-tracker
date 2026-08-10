@@ -9,6 +9,15 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.4] — 2026-08-10
+
+### Fixed
+- **Manual Sync (and any other POST) no longer fails after the page has been open a while.**
+  CSRF tokens carried a default 1-hour time limit, so clicking "Sync workouts" on a
+  long-open dashboard returned `400 request failed — check logs` with a
+  `CSRF token has expired` log line. The time limit is now disabled; tokens stay
+  session-bound, which is the actual CSRF protection.
+
 ## [0.9.3] — 2026-08-07
 
 Closes out the pre-public-release audit started in 0.9.2.
