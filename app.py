@@ -88,6 +88,12 @@ def create_app():
     app.config["USE_AI_INSIGHTS"] = os.environ.get("USE_AI_INSIGHTS", "false").lower() == "true"
     app.config["ANTHROPIC_API_KEY"] = os.environ.get("ANTHROPIC_API_KEY", "")
 
+    # Background scheduler (nightly C2 sync, PB recalc, badge eval, DB backup).
+    # On by default. Set RUN_SCHEDULER=false on a dev instance so it doesn't run
+    # the nightly jobs — and fire duplicate notification emails — alongside the
+    # production server that owns the live data.
+    app.config["RUN_SCHEDULER"] = os.environ.get("RUN_SCHEDULER", "true").lower() == "true"
+
     # C2 API credentials (populated once API key is approved)
     app.config["C2_CLIENT_ID"]     = os.environ.get("C2_CLIENT_ID", "")
     app.config["C2_CLIENT_SECRET"] = os.environ.get("C2_CLIENT_SECRET", "")
@@ -151,9 +157,13 @@ def create_app():
     # Skipped under TESTING — a real BackgroundScheduler thread has no
     # business running against a throwaway test database, and every test
     # that builds its own app via the factory would otherwise leak one.
-    if not app.testing:
+    # Also skipped when RUN_SCHEDULER=false (dev instances that shouldn't run
+    # the nightly jobs against the production server's live data).
+    if not app.testing and app.config["RUN_SCHEDULER"]:
         from scheduler import init_scheduler
         init_scheduler(app)
+    elif not app.testing:
+        app.logger.info("Scheduler disabled (RUN_SCHEDULER=false) — nightly jobs will not run.")
 
     return app
 
