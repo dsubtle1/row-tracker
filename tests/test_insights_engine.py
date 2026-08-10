@@ -21,6 +21,11 @@ from insights_engine import (
     _current_streak,
     _consistency,
     _fastest_rate_steady,
+    _year_over_year_volume,
+    _milestone_longevity,
+    _milestone_biggest_day,
+    _milestone_time_on_erg,
+    _milestone_longest_streak,
 )
 
 
@@ -140,3 +145,73 @@ def test_insights_page_renders(client):
     assert resp.status_code == 200
     assert b"What your rowing" in resp.data       # header copy
     assert b"Sessions analyzed" in resp.data      # stat strip
+
+
+# --------------------------------------------------------------------------- #
+#  Rule: year-over-year volume                                                 #
+# --------------------------------------------------------------------------- #
+
+def test_year_over_year_fires_when_well_ahead():
+    today = date.today()
+    this_start = date(today.year, 1, 1)
+    last_start = date(today.year - 1, 1, 1)
+    rows = [W(workout_date=this_start, distance_meters=50_000),
+            W(workout_date=last_start, distance_meters=10_000)]
+    ins = _year_over_year_volume(rows)
+    assert ins is not None
+    assert ins.facts["ahead"] is True
+    assert "ahead" in ins.headline.lower()
+
+
+def test_year_over_year_silent_without_a_prior_year():
+    today = date.today()
+    rows = [W(workout_date=date(today.year, 1, 1), distance_meters=50_000)]
+    assert _year_over_year_volume(rows) is None
+
+
+# --------------------------------------------------------------------------- #
+#  Rules: milestones — always-true facts, gated on a real history              #
+# --------------------------------------------------------------------------- #
+
+def _sixty_daily_rows(**extra):
+    return [W(workout_date=date.today() - timedelta(days=n), **extra) for n in range(60)]
+
+
+def test_milestones_stay_silent_below_the_history_floor():
+    rows = [W(workout_date=date.today() - timedelta(days=n)) for n in range(10)]
+    assert _milestone_longevity(rows) is None
+    assert _milestone_biggest_day(rows) is None
+    assert _milestone_longest_streak(rows) is None
+
+
+def test_milestone_longevity_reports_span_and_count():
+    rows = _sixty_daily_rows()
+    rows.append(W(workout_date=date.today() - timedelta(days=500)))   # push span past a year
+    ins = _milestone_longevity(rows)
+    assert ins is not None
+    assert ins.facts["years"] >= 1
+    assert ins.facts["sessions"] == 61
+    assert ins.chart["type"] == "stat"
+
+
+def test_milestone_biggest_day_picks_the_single_day_high():
+    rows = _sixty_daily_rows(distance_meters=5_000)
+    rows.append(W(workout_date=date.today() - timedelta(days=3), distance_meters=30_000))
+    ins = _milestone_biggest_day(rows)
+    assert ins is not None
+    # The 30k row shares its date with a 5k row → 35k that day.
+    assert ins.facts["meters"] == 35_000
+
+
+def test_milestone_longest_streak_counts_the_longest_run():
+    rows = _sixty_daily_rows()          # 60 consecutive days
+    ins = _milestone_longest_streak(rows)
+    assert ins is not None
+    assert ins.facts["longest_streak"] == 60
+
+
+def test_milestone_time_on_erg_sums_hours():
+    rows = _sixty_daily_rows(time_seconds=3600)     # 60 × 1h
+    ins = _milestone_time_on_erg(rows)
+    assert ins is not None
+    assert ins.facts["hours"] == 60.0

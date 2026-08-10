@@ -58,6 +58,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 **Insights**
 - Automatic pattern-spotting across your whole history — timing, progress, technique, and habit patterns surfaced as plain-language cards ("Something about Saturdays just clicks", "Your steady rows fly at 20 spm")
 - Every insight is gated on a minimum-sample and significance check, so nothing appears until there's enough data to trust it — cards are tagged **Strong pattern** or **Early signal** so a claim never overstates its certainty
+- Year-over-year progress and a **Milestones** section of all-time highlights — years rowing, biggest single day, total hours on the erg, longest streak
 - Actionable recommendations on the strongest patterns, some linking straight into the WOD generator
 - Optional AI "coach's read" (`USE_AI_INSIGHTS=true` + `ANTHROPIC_API_KEY`) — Claude Haiku writes a short first-person synthesis tying the cards together; it only ever rephrases the deterministic facts (never invents a number), and every card renders fine without it
 

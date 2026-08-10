@@ -97,6 +97,14 @@
   .ins-scale .seg .k{font-size:.6rem; color:var(--color-text-muted); text-transform:uppercase;
     letter-spacing:.05em;}
 
+  /* stat — big-number milestone treatment */
+  .ins-stat{display:flex; align-items:baseline; gap:8px; margin-top:2px;}
+  .ins-stat .val{font-size:2.2rem; font-weight:750; font-family:var(--font-mono);
+    font-variant-numeric:tabular-nums; letter-spacing:-.02em; color:var(--color-accent); line-height:1;}
+  .ins-stat .unit{font-size:.9rem; color:var(--color-text-muted); text-transform:uppercase;
+    letter-spacing:.06em;}
+  .ins-stat-sub{font-size:.74rem; color:var(--color-text-muted); font-family:var(--font-mono); margin-top:-2px;}
+
   /* pills */
   .ins-pills{display:flex; flex-wrap:wrap; gap:6px;}
   .ins-pill{font-size:.72rem; font-family:var(--font-mono); padding:4px 9px; border-radius:999px;
@@ -172,10 +180,12 @@
     <div class="insight-card">
       <div class="top">
         <p class="headline">{{ ins.headline }}</p>
-        {% if ins.is_strong %}
-          <span class="conf-chip strong">Strong pattern</span>
-        {% else %}
-          <span class="conf-chip early">Early signal</span>
+        {% if ins.category != "milestones" %}
+          {% if ins.is_strong %}
+            <span class="conf-chip strong">Strong pattern</span>
+          {% else %}
+            <span class="conf-chip early">Early signal</span>
+          {% endif %}
         {% endif %}
       </div>
       <p class="detail">{{ ins.detail }}</p>
@@ -206,6 +216,11 @@
               <div class="v">{{ s.key }}</div><div class="k">{{ s.label }}</div>
             </div>
             {% endfor %}
+          </div>
+        {% elif c.type == "stat" %}
+          <div>
+            <div class="ins-stat"><span class="val">{{ c.value }}</span><span class="unit">{{ c.unit }}</span></div>
+            {% if c.sub %}<div class="ins-stat-sub">{{ c.sub }}</div>{% endif %}
           </div>
         {% elif c.type == "pills" %}
           <div class="ins-pills">

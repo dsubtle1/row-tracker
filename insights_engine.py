@@ -37,10 +37,11 @@ from models import db, Workout, PersonalBest
 
 # Category display order + labels (drives the page's section order).
 CATEGORIES = [
-    ("timing",    "Timing & Rhythm"),
-    ("progress",  "Progress & Trends"),
-    ("technique", "Technique & Efficiency"),
-    ("habits",    "Habits"),
+    ("timing",     "Timing & Rhythm"),
+    ("progress",   "Progress & Trends"),
+    ("technique",  "Technique & Efficiency"),
+    ("habits",     "Habits"),
+    ("milestones", "Milestones"),
 ]
 
 
@@ -294,9 +295,13 @@ def _rest_gap_effect(rows) -> Optional[Insight]:
 
 
 def _pace_trend(rows, window_days=90) -> Optional[Insight]:
-    """Are your splits trending down over the recent window?"""
+    """Is your steady-state pace trending down over the recent window? Restricted
+    to steady pieces (20 min+) so a shift in workout mix — more sprints, more easy
+    volume — can't masquerade as a pace change."""
     cutoff = date.today() - timedelta(days=window_days)
-    recent = [w for w in rows if w.avg_pace_seconds and w.workout_date >= cutoff]
+    recent = [w for w in rows
+              if w.avg_pace_seconds and w.time_seconds and w.time_seconds >= 20 * 60
+              and w.workout_date >= cutoff]
     if len(recent) < 15:
         return None
     span = (recent[-1].workout_date - recent[0].workout_date).days
@@ -326,10 +331,11 @@ def _pace_trend(rows, window_days=90) -> Optional[Insight]:
         key="pace_trend",
         category="progress",
         confidence=confidence,
-        headline="Your splits keep getting quicker",
+        headline="Your steady-state pace keeps dropping",
         detail=(
-            f"Down about {improved}s/500m over the last {window_days // 30} months — "
-            f"a genuine improvement stretch. Whatever you're doing, keep doing it."
+            f"Down about {improved}s/500m on your longer pieces over the last "
+            f"{window_days // 30} months — a genuine improvement stretch. Whatever "
+            f"you're doing, keep doing it."
         ),
         facts={
             "window_days": window_days,
@@ -605,16 +611,164 @@ def _pb_cadence(rows) -> Optional[Insight]:
     )
 
 
+def _year_over_year_volume(rows) -> Optional[Insight]:
+    """Are you ahead of where you were a year ago? Compares meters logged from
+    Jan 1 through today against the identical span of last year."""
+    today = date.today()
+    this_start = date(today.year, 1, 1)
+    days_in = (today - this_start).days
+    last_start = date(today.year - 1, 1, 1)
+    last_end = last_start + timedelta(days=days_in)     # same number of days into the year
+
+    this_m = sum(w.distance_meters or 0 for w in rows if this_start <= w.workout_date <= today)
+    last_m = sum(w.distance_meters or 0 for w in rows if last_start <= w.workout_date <= last_end)
+    if last_m <= 0 or this_m <= 0:
+        return None
+
+    pct = (this_m - last_m) / last_m * 100
+    if abs(pct) < 10:
+        return None
+    ahead = pct > 0
+
+    return Insight(
+        key="year_over_year_volume",
+        category="progress",
+        confidence="strong",
+        headline=("You're ahead of last year's pace" if ahead
+                  else "You're behind last year's meters — for now"),
+        detail=(
+            f"By this point in {today.year} you've rowed {round(this_m / 1000):,}k m, "
+            f"{'up' if ahead else 'down'} {round(abs(pct))}% on the {round(last_m / 1000):,}k "
+            f"you'd logged by the same date in {today.year - 1}."
+        ),
+        facts={
+            "this_year_meters": this_m,
+            "last_year_meters": last_m,
+            "pct_change": round(pct, 1),
+            "ahead": ahead,
+        },
+        chart={"type": "pills", "pills": [
+            {"label": f"{today.year} · {round(this_m / 1000):,}k", "pct": None, "hot": ahead},
+            {"label": f"{today.year - 1} · {round(last_m / 1000):,}k", "pct": None, "hot": not ahead},
+        ]},
+    )
+
+
+# -- Milestones: always-true fun facts. No significance test — these aren't
+#    patterns, they're the headline numbers of a long rowing life. Gated only on
+#    having a real history behind them so a brand-new log doesn't show "0.1 years".
+
+def _milestone_longevity(rows) -> Optional[Insight]:
+    if len(rows) < MIN_TOTAL:
+        return None
+    first = min(w.workout_date for w in rows)
+    last = max(w.workout_date for w in rows)
+    years = (last - first).days / 365.25
+    if years < 1:
+        return None
+    return Insight(
+        key="milestone_longevity",
+        category="milestones",
+        confidence="strong",
+        headline=f"{years:.1f} years and still pulling",
+        detail=(
+            f"{len(rows):,} sessions logged since {first.strftime('%B %Y')}. "
+            f"That's a rowing habit most people never build."
+        ),
+        facts={"years": round(years, 1), "sessions": len(rows), "since": first.isoformat()},
+        chart={"type": "stat", "value": f"{years:.1f}", "unit": "years",
+               "sub": f"since {first.strftime('%b %Y')}"},
+    )
+
+
+def _milestone_biggest_day(rows) -> Optional[Insight]:
+    if len(rows) < MIN_TOTAL:
+        return None
+    by_day: dict[date, int] = {}
+    for w in rows:
+        by_day[w.workout_date] = by_day.get(w.workout_date, 0) + (w.distance_meters or 0)
+    if not by_day:
+        return None
+    day, meters = max(by_day.items(), key=lambda kv: kv[1])
+    if meters <= 0:
+        return None
+    return Insight(
+        key="milestone_biggest_day",
+        category="milestones",
+        confidence="strong",
+        headline=f"Your biggest day: {meters:,} m",
+        detail=(
+            f"On {day.strftime('%-d %B %Y')} you put down {meters:,} m in a single day — "
+            f"your all-time daily high."
+        ),
+        facts={"meters": meters, "date": day.isoformat()},
+        chart={"type": "stat", "value": f"{meters:,}", "unit": "meters",
+               "sub": day.strftime('%-d %b %Y')},
+    )
+
+
+def _milestone_time_on_erg(rows) -> Optional[Insight]:
+    if len(rows) < MIN_TOTAL:
+        return None
+    total_sec = sum(w.time_seconds or 0 for w in rows)
+    hours = total_sec / 3600
+    if hours < 10:
+        return None
+    days_equiv = hours / 24
+    return Insight(
+        key="milestone_time_on_erg",
+        category="milestones",
+        confidence="strong",
+        headline=f"{hours:,.0f} hours on the erg",
+        detail=(
+            f"Add up every session and you've spent {hours:,.0f} hours rowing — "
+            f"about {days_equiv:.0f} full days of pulling."
+        ),
+        facts={"hours": round(hours, 1), "total_seconds": total_sec},
+        chart={"type": "stat", "value": f"{hours:,.0f}", "unit": "hours",
+               "sub": f"≈ {days_equiv:.0f} days of rowing"},
+    )
+
+
+def _milestone_longest_streak(rows) -> Optional[Insight]:
+    dates = sorted({w.workout_date for w in rows})
+    if len(dates) < MIN_TOTAL:
+        return None
+    best = run = 1
+    for i in range(1, len(dates)):
+        run = run + 1 if (dates[i] - dates[i - 1]).days == 1 else 1
+        best = max(best, run)
+    if best < 5:                        # a handful of days isn't a milestone
+        return None
+    return Insight(
+        key="milestone_longest_streak",
+        category="milestones",
+        confidence="strong",
+        headline=f"Your longest streak: {best} days",
+        detail=(
+            f"{best} days in a row without missing — the longest unbroken run in your log."
+        ),
+        facts={"longest_streak": best},
+        chart={"type": "stat", "value": f"{best}", "unit": "days",
+               "sub": "longest unbroken run"},
+    )
+
+
 # Registry — order here is the fallback order within a category.
 RULES = [
     _best_day_of_week,
     _rest_gap_effect,
     _pace_trend,
     _volume_trend,
+    _year_over_year_volume,
     _fastest_rate_steady,
     _session_length_clusters,
     _consistency,
     _pb_cadence,
+    _milestone_longevity,
+    _milestone_biggest_day,
+    _milestone_time_on_erg,
+    _milestone_longest_streak,
 ]
 
 
