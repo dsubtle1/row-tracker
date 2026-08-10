@@ -9,6 +9,14 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.8] — 2026-08-10
+
+### Added
+- **`RUN_SCHEDULER` env flag** (default `true`). Set it to `false` on a secondary or
+  development instance so it doesn't run the nightly Concept2 sync, PB recalc, badge
+  evaluation, and backup — and doesn't fire duplicate notification emails — alongside the
+  instance that owns your live data. Documented in `.env.example`.
+
 ## [0.9.7] — 2026-08-10
 
 ### Added
