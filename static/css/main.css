@@ -100,6 +100,30 @@ code {
 
 .nav-logo { font-size: 1.25rem; }
 
+/* Brand emblem in the nav. The nav bar is dark in both themes, so the
+   dark-mode emblem (white/blue on transparent) is used throughout. */
+.nav-logo-img {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+/* Dashboard brand hero — theme-switched full lockup. Big enough to anchor the
+   home page, not so big it pushes the stats below the fold. */
+.brand-hero {
+  display: flex;
+  justify-content: center;
+  margin: 0.25rem 0 1.75rem;
+}
+.brand-logo {
+  height: clamp(104px, 20vw, 150px);
+  width: auto;
+  max-width: 88%;
+}
+.brand-logo--light { display: none; }
+[data-theme="light"] .brand-logo--dark { display: none; }
+[data-theme="light"] .brand-logo--light { display: block; }
+
 .nav-title {
   font-size: 1rem;
   font-weight: 600;

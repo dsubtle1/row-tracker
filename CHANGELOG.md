@@ -9,6 +9,16 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.7] — 2026-08-10
+
+### Added
+- **Brand logo throughout the app.** The circular rower emblem now sits in the nav bar
+  (desktop and mobile) in place of the placeholder emoji, and the full "ROW TRACKER"
+  lockup anchors the top of the Dashboard as a theme-switched hero — the dark-mode
+  artwork in dark mode, the light-mode artwork in light mode. Logos were processed to
+  transparent backgrounds so they sit cleanly on any surface, and both versions share an
+  identical frame so switching themes causes no size shift.
+
 ## [0.9.6] — 2026-08-10
 
 ### Added

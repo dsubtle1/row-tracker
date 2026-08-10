@@ -24,7 +24,7 @@
 
   <nav class="site-nav">
     <div class="nav-brand">
-      <span class="nav-logo">🚣</span>
+      <img class="nav-logo-img" src="{{ url_for('static', filename='img/logo-emblem.png') }}" alt="Row Tracker" />
       <span class="nav-title">Row Tracker</span>
     </div>
     <div class="nav-links" id="navLinks">
@@ -81,7 +81,7 @@
   <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileNav()"></div>
   <div class="mobile-nav-drawer" id="mobileNavDrawer">
     <div class="mobile-nav-header">
-      <span class="nav-logo">🚣</span>
+      <img class="nav-logo-img" src="{{ url_for('static', filename='img/logo-emblem.png') }}" alt="Row Tracker" />
       <span class="nav-title">Row Tracker</span>
       <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Close navigation">✕</button>
     </div>

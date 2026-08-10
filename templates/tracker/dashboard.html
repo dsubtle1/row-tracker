@@ -3,6 +3,16 @@
 
 {% block content %}
 
+{# ── Brand hero — theme-switched full logo ────────────────────────────── #}
+<div class="brand-hero">
+  <img class="brand-logo brand-logo--dark"
+       src="{{ url_for('static', filename='img/logo-dark.png') }}"
+       alt="Row Tracker — Train · Track · Improve" />
+  <img class="brand-logo brand-logo--light"
+       src="{{ url_for('static', filename='img/logo-light.png') }}"
+       alt="Row Tracker — Train · Track · Improve" />
+</div>
+
 {# ── Summary Bar ──────────────────────────────────────────────────────── #}
 <div class="summary-bar">
 
