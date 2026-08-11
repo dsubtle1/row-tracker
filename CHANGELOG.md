@@ -9,6 +9,14 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.9] — 2026-08-11
+
+### Fixed
+- **Insights volume figures now read in consistent kilometres.** The year-over-year and
+  weekly-volume cards rendered distances as an ambiguous "k m" hybrid (e.g. `1,996k m`,
+  `56.0k m/week`) that read like a typo. They now show clean kilometres (`1,996 km`,
+  `56.0 km/week`), including the pill and sparkline labels.
+
 ## [0.9.8] — 2026-08-10
 
 ### Added

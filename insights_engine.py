@@ -389,8 +389,8 @@ def _volume_trend(rows) -> Optional[Insight]:
         headline=("You're piling on the meters lately" if rising
                   else "You've eased off the volume lately"),
         detail=(
-            f"Averaging {round(recent_avg / 1000, 1)}k m/week, "
-            f"{'up' if rising else 'down'} from {round(prior_avg / 1000, 1)}k a month ago — "
+            f"Averaging {round(recent_avg / 1000, 1)} km/week, "
+            f"{'up' if rising else 'down'} from {round(prior_avg / 1000, 1)} km a month ago — "
             f"a {round(abs(pct))}% {'jump' if rising else 'drop'}."
         ),
         facts={
@@ -402,8 +402,8 @@ def _volume_trend(rows) -> Optional[Insight]:
         chart={
             **_sparkline([round(v / 1000, 1) for v in weeks[-12:]],
                          lower_is_better=False, accent="cool"),
-            "start_label": f"{round(weeks[-12] / 1000, 1)}k" if len(weeks) >= 12 else "",
-            "end_label": f"{round(weeks[-1] / 1000, 1)}k",
+            "start_label": f"{round(weeks[-12] / 1000, 1)} km" if len(weeks) >= 12 else "",
+            "end_label": f"{round(weeks[-1] / 1000, 1)} km",
         },
     )
 
@@ -637,8 +637,8 @@ def _year_over_year_volume(rows) -> Optional[Insight]:
         headline=("You're ahead of last year's pace" if ahead
                   else "You're behind last year's meters — for now"),
         detail=(
-            f"By this point in {today.year} you've rowed {round(this_m / 1000):,}k m, "
-            f"{'up' if ahead else 'down'} {round(abs(pct))}% on the {round(last_m / 1000):,}k "
+            f"By this point in {today.year} you've rowed {round(this_m / 1000):,} km, "
+            f"{'up' if ahead else 'down'} {round(abs(pct))}% on the {round(last_m / 1000):,} km "
             f"you'd logged by the same date in {today.year - 1}."
         ),
         facts={
@@ -648,8 +648,8 @@ def _year_over_year_volume(rows) -> Optional[Insight]:
             "ahead": ahead,
         },
         chart={"type": "pills", "pills": [
-            {"label": f"{today.year} · {round(this_m / 1000):,}k", "pct": None, "hot": ahead},
-            {"label": f"{today.year - 1} · {round(last_m / 1000):,}k", "pct": None, "hot": not ahead},
+            {"label": f"{today.year} · {round(this_m / 1000):,} km", "pct": None, "hot": ahead},
+            {"label": f"{today.year - 1} · {round(last_m / 1000):,} km", "pct": None, "hot": not ahead},
         ]},
     )
 
