@@ -1,4 +1,12 @@
-# 🚣 Row Tracker
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="static/img/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="static/img/logo-light.png">
+    <img alt="Row Tracker" src="static/img/logo-dark.png" width="200">
+  </picture>
+</p>
+
+# Row Tracker
 
 A self-hosted personal rowing tracker for Concept2 RowErg athletes. Syncs automatically from the Concept2 Logbook API, tracks personal bests, generates daily workouts, and turns your metres into virtual journeys around the world.
 
