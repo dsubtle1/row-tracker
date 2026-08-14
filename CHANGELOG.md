@@ -9,6 +9,23 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.11] — 2026-08-14
+
+### Security
+- **Chart.js now loads from a CDN with Subresource Integrity**, closing the one blind spot left
+  from the earlier security review: the vendored copy had no version pinned anywhere and no way
+  to know if it went stale. It's now pinned to Chart.js 4.4.1 with a `sha384` SRI hash verified
+  against the actual bytes jsDelivr serves — a tampered or compromised CDN response would simply
+  fail to execute rather than run silently.
+- **The local copy stays as an automatic fallback** (`window.Chart || document.write(...)`) so
+  Row Tracker's "no external dependencies required" promise holds even fully offline — an
+  air-gapped homelab or a CDN outage falls back to the same file the service worker already
+  pre-caches for offline PWA use. The fallback file is now byte-identical to the pinned CDN
+  version (previously a different, unverified build had been hand-vendored).
+- All five chart-rendering templates now share one partial (`_chart_cdn.html`) instead of
+  duplicating the script tag, with the exact commands to regenerate the hash and fallback file
+  documented inline for the next version bump.
+
 ## [0.9.10] — 2026-08-14
 
 ### Security
