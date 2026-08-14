@@ -9,6 +9,19 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.10] — 2026-08-14
+
+### Security
+- **Upgraded the Docker image's build toolchain and OS packages.** A vulnerability scan of the
+  built image found known CVEs in the base image's bundled `pip`/`setuptools`/`wheel` (and
+  `jaraco-context`, a pip dependency) — none had ever been upgraded past whatever version shipped
+  with the `python:3.11-slim` base image. The Dockerfile now explicitly upgrades them before
+  installing app dependencies, and runs `apt-get upgrade` for OS-level packages so future rebuilds
+  pick up Debian's security patches automatically. This resolved every fixable finding from the
+  scan (1 HIGH, 1 HIGH, 5 MEDIUM/LOW). The remaining findings are in Debian OS utilities (chiefly
+  `perl`, present in every Debian-based image) with no upstream fix published yet, and are not
+  reachable through the application's own code — Row Tracker never shells out to any OS binary.
+
 ## [0.9.9] — 2026-08-11
 
 ### Fixed
