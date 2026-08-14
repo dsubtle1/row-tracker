@@ -22,6 +22,9 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 ### Charts
 ![Charts](docs/screenshots/Charts.jpeg)
 
+### Insights
+![Insights](docs/screenshots/Insights.jpeg)
+
 ### Quick Start Guide
 ![Quick Start](docs/screenshots/Quick_Start.jpeg)
 
