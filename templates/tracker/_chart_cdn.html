@@ -1,0 +1,24 @@
+{#
+  Chart.js UMD build, loaded from jsDelivr with Subresource Integrity so the
+  fetched bytes are cryptographically verified against what's expected —
+  a compromised or tampered CDN response would simply fail to execute.
+
+  Falls back to the local copy in static/js/vendor/ if the CDN is
+  unreachable (offline/air-gapped homelab, CDN outage, blocked network) —
+  keeps "no external dependencies required" true. The CDN is an optional
+  accelerant, not a hard requirement. The service worker (sw.js) pre-caches
+  the local fallback for offline PWA use regardless of which path actually
+  serves the script.
+
+  To bump the pinned version: change the version below, then regenerate
+  both the integrity hash and the local fallback from the same URL so the
+  two stay byte-identical:
+    V=X.Y.Z
+    curl -fsSL "https://cdn.jsdelivr.net/npm/chart.js@$V/dist/chart.umd.min.js" \
+      -o static/js/vendor/chart.umd.min.js
+    openssl dgst -sha384 -binary static/js/vendor/chart.umd.min.js | openssl base64 -A
+#}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+        integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
+        crossorigin="anonymous"></script>
+<script>window.Chart || document.write('<script src="{{ url_for("static", filename="js/vendor/chart.umd.min.js") }}"><\/script>')</script>

@@ -30,7 +30,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/vendor/chart.umd.min.js') }}"></script>
+{% include "tracker/_chart_cdn.html" %}
 <script>
 (function () {
   let chart = null;
