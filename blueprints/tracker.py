@@ -242,6 +242,8 @@ def _cawr_series():
 
 @tracker_bp.route("/")
 def dashboard():
+    import sync_status
+
     lifetime_m = _lifetime_meters()
     next_milestone, next_label = _nearest_milestone(lifetime_m)
     milestone_pct = round((lifetime_m / next_milestone) * 100, 1) if next_milestone else None
@@ -258,7 +260,12 @@ def dashboard():
         "meters_to_milestone": (next_milestone - lifetime_m) if next_milestone else None,
         "last_workout":        last,
     }
-    return render_template("tracker/dashboard.html", summary=summary, heatmap=_heatmap_data(52))
+    return render_template(
+        "tracker/dashboard.html",
+        summary=summary,
+        heatmap=_heatmap_data(52),
+        sync_status=sync_status.get_status(),
+    )
 
 
 @tracker_bp.route("/workouts")
@@ -490,10 +497,16 @@ def sync():
 
     from notify import lifetime_meters, check_and_notify_milestone, notify_badges
     from blueprints.gamification import check_journey_completions
+    import sync_status
 
     # Run sync
     before_m = lifetime_meters()
     result = client.sync_workouts()
+
+    if result.get("errors", 0) > 0:
+        sync_status.record_failure(result.get("message", "Sync reported errors — see logs."))
+    else:
+        sync_status.record_success(result.get("message", "Sync complete."))
 
     # Post-sync jobs only if new data arrived
     newly_awarded = []

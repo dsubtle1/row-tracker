@@ -136,3 +136,64 @@ def test_get_stroke_data_returns_none_on_http_error(monkeypatch):
 def test_get_stroke_data_returns_none_when_not_configured():
     client = C2ApiClient(client_id="", client_secret="", refresh_token="")
     assert client.get_stroke_data(12345) is None
+
+
+# --------------------------------------------------------------------------- #
+#  get_results() / sync_workouts() — last_error surfacing                     #
+#                                                                              #
+#  A 401 or network failure must be distinguishable from a call that          #
+#  genuinely succeeded and found nothing new — otherwise an expired/bad       #
+#  token looks identical to "already up to date" to every caller.             #
+# --------------------------------------------------------------------------- #
+
+def test_get_results_success_clears_last_error(monkeypatch):
+    monkeypatch.setattr(
+        "c2_api.requests.get",
+        lambda *a, **k: _FakeResponse(200, {"data": [], "meta": {"last_page": 1}}),
+    )
+    client = _client()
+    client.last_error = "stale error from a previous call"
+    client.get_results()
+    assert client.last_error is None
+
+
+def test_get_results_401_sets_last_error(monkeypatch):
+    monkeypatch.setattr("c2_api.requests.get", lambda *a, **k: _FakeResponse(401))
+    client = _client()
+    results = client.get_results()
+    assert results == []
+    assert client.last_error is not None
+    assert "401" in client.last_error
+
+
+def test_get_results_request_exception_sets_last_error(monkeypatch):
+    import requests
+
+    def _raise(*a, **k):
+        raise requests.ConnectionError("boom")
+
+    monkeypatch.setattr("c2_api.requests.get", _raise)
+    client = _client()
+    results = client.get_results()
+    assert results == []
+    assert client.last_error is not None
+
+
+def test_sync_workouts_reports_error_on_401(monkeypatch, full_app_ctx):
+    monkeypatch.setattr("c2_api.requests.get", lambda *a, **k: _FakeResponse(401))
+    client = _client()
+    result = client.sync_workouts()
+    assert result["errors"] == 1
+    assert "401" in result["message"]
+    assert result["inserted"] == 0
+
+
+def test_sync_workouts_genuinely_empty_is_not_an_error(monkeypatch, full_app_ctx):
+    monkeypatch.setattr(
+        "c2_api.requests.get",
+        lambda *a, **k: _FakeResponse(200, {"data": [], "meta": {"last_page": 1}}),
+    )
+    client = _client()
+    result = client.sync_workouts()
+    assert result["errors"] == 0
+    assert result["message"] == "No new results from C2 API."

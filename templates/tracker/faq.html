@@ -59,7 +59,14 @@
       <details class="faq-item">
         <summary class="faq-question">How often does my data sync?</summary>
         <div class="faq-answer">
-          Automatically every night at 3:00 AM Toronto time. You can also click the Sync button on the Dashboard at any time to pull in your latest workouts immediately.
+          Automatically every night at 3:00 AM (see <code>TZ</code> in your <code>.env</code> — defaults to Toronto time). You can also click the Sync button on the Dashboard at any time to pull in your latest workouts immediately.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">How do I know if the nightly sync is actually working?</summary>
+        <div class="faq-answer">
+          The Dashboard shows a "Last synced" indicator next to the Sync button. If a nightly sync, PB recalc, badge evaluation, or backup job fails, Row Tracker also emails whatever address <code>NOTIFY_EMAIL</code> (or <code>MAIL_USERNAME</code>) points to — the same address badge and milestone notifications use.
         </div>
       </details>
 

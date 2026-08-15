@@ -28,7 +28,10 @@ Yes. On iPhone/iPad, open Row Tracker in Safari, tap the Share icon, then **Add 
 ### Data & Sync
 
 **How often does my data sync?**
-Automatically every night at 3:00 AM Toronto time. You can also click the Sync button on the Dashboard at any time to pull in your latest workouts immediately.
+Automatically every night at 3:00 AM (see `TZ` in your `.env` — defaults to Toronto time). You can also click the Sync button on the Dashboard at any time to pull in your latest workouts immediately.
+
+**How do I know if the nightly sync is actually working?**
+The Dashboard shows a "Last synced" indicator next to the Sync button, so you don't have to take it on faith. If a nightly sync, PB recalc, badge evaluation, or backup job fails, Row Tracker also emails whatever address `NOTIFY_EMAIL` (or `MAIL_USERNAME`) points to — the same address badge and milestone notifications use — so a broken sync doesn't go unnoticed.
 
 **My latest workout isn't showing — what should I do?**
 First, make sure your workout has synced to the Concept2 Online Logbook via ErgData. Then click the Sync button on the Dashboard. If it still doesn't appear, wait a few minutes and try again — occasionally the Concept2 API has a short delay.
