@@ -87,6 +87,25 @@ def check_and_notify_milestone(before_m, after_m):
     _send(subject, body)
 
 
+def notify_job_failure(job_name, error):
+    """
+    Email that a nightly scheduled job failed and needs attention.
+
+    Distinct from every other notify_* function here — those are happy-path
+    achievement pings; this is the one that exists so a broken sync doesn't
+    go unnoticed for weeks. Sent every time the job fails (no dedup/backoff)
+    since this app runs one job of each kind per night, so worst case is one
+    email a night until it's fixed.
+    """
+    subject = f"[Row Tracker] Scheduled job failed: {job_name}"
+    body = (
+        f"The nightly \"{job_name}\" job failed and needs attention.\n\n"
+        f"Error: {error}\n\n"
+        f"Check the container logs (docker logs row-tracker) for the full traceback.\n"
+    )
+    _send(subject, body)
+
+
 def notify_journey_complete(route_key, journey):
     """Email that a virtual journey has been completed."""
     name = JOURNEY_NAMES.get(route_key, route_key)

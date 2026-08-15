@@ -37,6 +37,11 @@ class C2ApiClient:
         self.client_secret = client_secret
         self.refresh_token = refresh_token
         self.access_token  = None
+        # Set by get_results() when the API call itself fails (bad token,
+        # network error) — distinct from a call that succeeded and simply
+        # returned zero results. Without this, an expired/bad token looks
+        # identical to "already up to date" to every caller.
+        self.last_error    = None
 
     def is_configured(self) -> bool:
         return bool(self.client_id and self.client_secret and self.refresh_token)
@@ -71,8 +76,11 @@ class C2ApiClient:
         since_date: date object — only fetch results on or after this date.
         Returns list of raw result dicts from the API.
         """
+        self.last_error = None
+
         if not self.access_token:
             if not self.refresh_access_token():
+                self.last_error = "Could not obtain a C2 access token — check C2_CLIENT_ID/C2_CLIENT_SECRET/C2_REFRESH_TOKEN."
                 return []
 
         results = []
@@ -92,12 +100,14 @@ class C2ApiClient:
                 )
                 if resp.status_code == 401:
                     logger.error("C2 API returned 401 — check that C2_REFRESH_TOKEN in .env is correct.")
+                    self.last_error = "C2 API returned 401 (unauthorized) — check that C2_REFRESH_TOKEN in .env is correct."
                     break
 
                 resp.raise_for_status()
                 data = resp.json()
             except requests.RequestException as e:
                 logger.error(f"C2 API request failed (page {page}): {e}")
+                self.last_error = f"C2 API request failed: {e}"
                 break
 
             page_data = data.get("data", [])
@@ -168,6 +178,9 @@ class C2ApiClient:
         logger.info(f"Syncing C2 workouts since: {since_date or 'beginning'}")
 
         raw_results = self.get_results(since_date=since_date)
+        if self.last_error:
+            return {"inserted": 0, "skipped": 0, "errors": 1,
+                    "message": self.last_error}
         if not raw_results:
             return {"inserted": 0, "skipped": 0, "errors": 0,
                     "message": "No new results from C2 API."}

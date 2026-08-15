@@ -73,6 +73,14 @@
     <span class="sync-icon">⟳</span> Sync Workouts
   </button>
   <span class="sync-status" id="syncStatus"></span>
+  {% set sync_failing = sync_status and sync_status.last_error and (not sync_status.last_success_at or sync_status.last_attempt_at > sync_status.last_success_at) %}
+  <span
+    class="sync-lastrun {{ 'sync-lastrun--error' if sync_failing else '' }}"
+    id="syncLastRun"
+    data-last-success="{{ (sync_status.last_success_at.isoformat() ~ 'Z') if sync_status and sync_status.last_success_at else '' }}"
+    data-failing="{{ 'true' if sync_failing else 'false' }}"
+    title="{{ sync_status.last_error if sync_failing else '' }}"
+  ></span>
   <a href="{{ url_for('tracker.import_csv_view') }}" class="btn btn-ghost btn-sm">Import CSV</a>
   <a href="{{ url_for('tracker.export_page') }}" class="btn btn-ghost btn-sm">Export Data</a>
 </div>
@@ -548,6 +556,33 @@ document.addEventListener("keydown", function(e) {
   if (e.key === "Escape") closeDayModal();
 });
 
+// ── Last-synced indicator ──────────────────────────────────────────────────
+(function () {
+  const el = document.getElementById("syncLastRun");
+  if (!el) return;
+
+  if (el.dataset.failing === "true") {
+    el.textContent = "⚠ Last sync failed — see logs";
+    return;
+  }
+
+  const iso = el.dataset.lastSuccess;
+  if (!iso) {
+    el.textContent = "Not yet synced";
+    return;
+  }
+
+  const then = new Date(iso);
+  const mins = Math.round((Date.now() - then.getTime()) / 60000);
+  let text;
+  if (mins < 1)        text = "Last synced: just now";
+  else if (mins < 60)  text = `Last synced: ${mins}m ago`;
+  else if (mins < 1440) text = `Last synced: ${Math.round(mins / 60)}h ago`;
+  else                 text = `Last synced: ${Math.round(mins / 1440)}d ago`;
+  el.textContent = text;
+  el.title = then.toLocaleString();
+})();
+
 // ── Sync button ──────────────────────────────────────────────────────────
 function triggerSync() {
   const btn    = document.getElementById("syncBtn");
@@ -564,9 +599,15 @@ function triggerSync() {
       btn.disabled    = false;
       btn.innerHTML   = "<span class='sync-icon'>⟳</span> Sync Workouts";
 
-      if (data.status === "error") {
-        status.textContent = "✗ " + data.message;
+      if (data.status === "error" || data.status === "partial") {
+        status.textContent = "✗ " + (data.message || "Sync failed — see logs.");
         status.className   = "sync-status sync-status--error";
+        const lastRun = document.getElementById("syncLastRun");
+        if (lastRun) {
+          lastRun.textContent = "⚠ Last sync failed — see logs";
+          lastRun.className   = "sync-lastrun sync-lastrun--error";
+          lastRun.title       = data.message || "";
+        }
         return;
       }
 
@@ -578,6 +619,13 @@ function triggerSync() {
 
       status.textContent = "✓ " + parts.join(" · ");
       status.className   = "sync-status sync-status--ok";
+
+      const lastRun = document.getElementById("syncLastRun");
+      if (lastRun) {
+        lastRun.textContent = "Last synced: just now";
+        lastRun.className   = "sync-lastrun";
+        lastRun.title       = new Date().toLocaleString();
+      }
 
       // Reload after a beat if new data arrived
       if (data.inserted > 0) {

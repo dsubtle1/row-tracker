@@ -118,6 +118,27 @@ def test_milestone_multiple_crossed_in_one_email(full_app_ctx, sent_messages):
 
 
 # --------------------------------------------------------------------------- #
+#  notify_job_failure()                                                       #
+# --------------------------------------------------------------------------- #
+
+def test_notify_job_failure_sends_an_email(full_app_ctx, sent_messages):
+    notify.notify_job_failure("Nightly C2 sync", "C2 API returned 401")
+
+    assert len(sent_messages) == 1
+    msg = sent_messages[0]
+    assert "Nightly C2 sync" in msg.subject
+    assert "failed" in msg.subject.lower()
+    assert "C2 API returned 401" in msg.body
+
+
+def test_notify_job_failure_skips_when_no_recipient_configured(full_app, sent_messages):
+    full_app.config["NOTIFY_EMAIL"] = ""
+    with full_app.app_context():
+        notify.notify_job_failure("Nightly database backup", "disk full")
+    assert sent_messages == []
+
+
+# --------------------------------------------------------------------------- #
 #  notify_journey_complete()                                                  #
 # --------------------------------------------------------------------------- #
 

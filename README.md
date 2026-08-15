@@ -100,6 +100,8 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Multiple journeys can run simultaneously
 
 **Other**
+- "Last synced" indicator on the Dashboard, and an email alert (to `NOTIFY_EMAIL`) if a nightly
+  sync, PB recalc, badge evaluation, or backup job fails — so a broken sync doesn't sit unnoticed
 - Nightly automated database backup (30-day retention), written to `data/backups/`
 - Dark mode default with light mode toggle (persisted)
 - Fully responsive — iPhone and iPad optimised with hamburger nav drawer

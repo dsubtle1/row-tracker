@@ -165,3 +165,24 @@ class Journey(db.Model):
     def __repr__(self):
         status = "complete" if self.completed else "active"
         return f"<Journey route={self.route_key} started={self.start_date} [{status}]>"
+
+
+class SyncStatus(db.Model):
+    """
+    Singleton row (there's only ever one, since this is a single-user app)
+    tracking the last sync attempt/success/failure — powers the Dashboard's
+    "last synced" indicator and lets scheduled jobs tell a genuine failure
+    apart from a quiet night with nothing new. Updated by both the nightly
+    scheduler and the manual /sync route.
+    """
+    __tablename__ = "sync_status"
+
+    id               = db.Column(db.Integer, primary_key=True)
+    last_attempt_at  = db.Column(db.DateTime)
+    last_success_at  = db.Column(db.DateTime)
+    last_result      = db.Column(db.Text, nullable=True)   # human-readable summary of the last successful run
+    last_error       = db.Column(db.Text, nullable=True)   # cleared on the next success
+
+    def __repr__(self):
+        state = "error" if self.last_error else "ok"
+        return f"<SyncStatus last_attempt={self.last_attempt_at} [{state}]>"

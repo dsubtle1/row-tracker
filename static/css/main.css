@@ -1919,6 +1919,17 @@ code {
 .sync-status--ok    { color: #3ddc84; }
 .sync-status--error { color: #ff6b6b; }
 
+.sync-lastrun {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #7a82a0);
+  margin-left: auto;
+}
+
+.sync-lastrun--error {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
 /* ============================================================
    Random WOD Generator
    ============================================================ */

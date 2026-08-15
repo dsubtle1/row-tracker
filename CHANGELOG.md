@@ -9,6 +9,36 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.10.0] — 2026-08-15
+
+### Fixed
+- **The v0.9.12 timezone fix didn't actually fix the root cause.** `scheduler.py` has always
+  passed `timezone="America/Toronto"` to `BackgroundScheduler`, which looks correct — but that
+  setting does **not** propagate to a job's `CronTrigger` unless the trigger is *also* given an
+  explicit timezone. Every nightly `CronTrigger(hour=3, ...)` call was silently falling back to
+  the container's OS clock instead, which is exactly the bug v0.9.12's `TZ` env var papered over
+  by making the OS clock coincidentally correct. Every `CronTrigger` now gets the timezone
+  explicitly (sourced from the `TZ` env var, defaulting to `America/Toronto`), so the schedule is
+  correct regardless of the container's OS timezone.
+- **A bad or expired C2 API token was indistinguishable from "nothing new to sync."** `get_results()`
+  caught 401s and network failures internally and just returned an empty list — identical to a
+  genuinely successful call that found zero new workouts. `C2ApiClient` now tracks the actual
+  failure reason (`last_error`) and `sync_workouts()` surfaces it as a real error instead of a
+  silent no-op.
+- The manual Sync button's frontend only treated `status: "error"` as a failure, missing the
+  `"partial"` state the `/sync` route already returns when a sync completes with errors — a
+  partially-failed sync showed as a plain success in the UI. Now shown as a failure with the
+  actual error message.
+
+### Added
+- **"Last synced" indicator on the Dashboard**, next to the Sync button — shows how long ago the
+  last successful sync ran, or a clear warning if the most recent attempt failed. Backed by a new
+  `SyncStatus` table, updated by both the nightly scheduler and manual syncs.
+- **Email alerts on scheduled-job failure.** The nightly sync, PB recalc, badge evaluation, and
+  backup jobs previously only logged their own failures — now they also email `NOTIFY_EMAIL`
+  (same address badge/milestone notifications already use), so a broken job doesn't sit unnoticed
+  until someone happens to check container logs.
+
 ## [0.9.12] — 2026-08-15
 
 ### Fixed
