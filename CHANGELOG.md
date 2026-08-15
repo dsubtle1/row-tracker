@@ -9,6 +9,19 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.9.12] — 2026-08-15
+
+### Fixed
+- **The nightly 3:00 AM scheduler (sync, PB recalc, badge eval, backup) was actually running at
+  3:00 AM UTC**, not 3:00 AM local time as the FAQ/Quick Start have always documented ("3:00 AM
+  Toronto time"). The container had no timezone configured, so it silently defaulted to UTC —
+  for anyone east of Greenwich in winter or west of it generally, that's several hours off from
+  the documented time, and any workout logged in that gap wouldn't sync until the *following*
+  night. Added a `TZ` variable to `.env.example` (defaults to `America/Toronto`, matching the
+  docs) — set it to your own [IANA zone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+  if you're elsewhere. Existing deployments need to add `TZ=` to their own `.env` and restart —
+  see the updated README.
+
 ## [0.9.11] — 2026-08-14
 
 ### Security

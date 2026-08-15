@@ -151,6 +151,7 @@ Edit `.env` and fill in your credentials:
 
 ```
 SECRET_KEY=your-secret-key-here
+TZ=America/Toronto
 C2_CLIENT_ID=your-c2-client-id
 C2_CLIENT_SECRET=your-c2-client-secret
 C2_REFRESH_TOKEN=your-c2-bearer-token
@@ -159,6 +160,11 @@ MAIL_PASSWORD=your-gmail-app-password
 USE_AI_WOD=false
 ANTHROPIC_API_KEY=
 ```
+
+`TZ` sets the container's clock, which is what the 3:00 AM nightly scheduler reads — without it the
+container defaults to UTC regardless of where it's hosted, so "3:00 AM" silently means 3:00 AM UTC.
+Use an [IANA time zone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for your
+own location, e.g. `America/New_York`, `Europe/London`.
 
 `ANTHROPIC_API_KEY` is only needed if you set `USE_AI_WOD=true` — get one at [console.anthropic.com](https://console.anthropic.com/).
 
