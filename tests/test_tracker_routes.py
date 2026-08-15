@@ -9,6 +9,7 @@ renders without a Jinja error, and returns the right shape/status.
 """
 
 import io
+import re
 
 from models import PersonalBest
 
@@ -32,6 +33,28 @@ def test_dashboard_loads_with_data(client, full_make_workout):
 def test_faq_and_quickstart_pages(client):
     assert client.get("/faq").status_code == 200
     assert client.get("/quickstart").status_code == 200
+
+
+def test_mobile_nav_has_every_desktop_nav_link(client):
+    """
+    Regression test: the "Insights" link was added to the desktop nav
+    (templates/base.html) when that feature shipped, but never added to
+    the mobile drawer, so it was invisible on phones for weeks. Every href
+    in the desktop nav-links block should also appear in the mobile
+    drawer's nav-links block.
+    """
+    html = client.get("/").data.decode()
+
+    desktop_block = re.search(r'id="navLinks">(.*?)</div>\s*<div class="nav-actions"', html, re.S)
+    mobile_block  = re.search(r'class="mobile-nav-links">(.*?)</div>\s*<div class="mobile-nav-footer"', html, re.S)
+    assert desktop_block and mobile_block, "Couldn't locate nav blocks — base.html markup changed?"
+
+    desktop_hrefs = set(re.findall(r'href="([^"]+)"', desktop_block.group(1)))
+    mobile_hrefs  = set(re.findall(r'href="([^"]+)"', mobile_block.group(1)))
+
+    assert desktop_hrefs, "Desktop nav block matched but contained no links"
+    missing_from_mobile = desktop_hrefs - mobile_hrefs
+    assert not missing_from_mobile, f"Links on desktop but missing from mobile nav: {missing_from_mobile}"
 
 
 def test_app_version_is_read_and_rendered(full_app, client):

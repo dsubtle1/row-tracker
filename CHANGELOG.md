@@ -9,6 +9,14 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.10.1] — 2026-08-15
+
+### Fixed
+- **"Insights" was missing from the mobile nav drawer** — it was added to the desktop nav when
+  the Insights page shipped (0.9.5) but never added to the hamburger menu, so it was invisible on
+  phones/tablets ever since. Added, and covered by a new regression test that diffs the desktop
+  and mobile nav link sets so a future addition can't silently repeat this.
+
 ## [0.10.0] — 2026-08-15
 
 ### Fixed
