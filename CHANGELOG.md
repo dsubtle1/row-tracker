@@ -9,6 +9,14 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.10.4] — 2026-08-16
+
+### Added
+- **Dependabot** (`.github/dependabot.yml`) — weekly automated PRs for outdated pip dependencies
+  (`requirements.txt`/`requirements-dev.txt`), the Docker base image, and the GitHub Actions added
+  in 0.10.2. Every Dependabot PR gets checked by the same CI workflow as any other PR, so a bump
+  that breaks something fails the check instead of merging silently.
+
 ## [0.10.3] — 2026-08-16
 
 ### Fixed
