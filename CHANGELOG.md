@@ -9,6 +9,13 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.10.3] — 2026-08-16
+
+### Fixed
+- CI workflow pinned `actions/checkout@v4` and `actions/setup-python@v5` — the first run flagged
+  both as being forced onto a deprecated Node.js runtime. Bumped to the current majors
+  (`@v7`/`@v7`).
+
 ## [0.10.2] — 2026-08-16
 
 ### Added
