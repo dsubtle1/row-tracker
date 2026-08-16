@@ -26,7 +26,9 @@ If you're running the app and just want to flag something quickly, the in-app **
    docker compose exec row-tracker pip install -r requirements-dev.txt
    docker compose exec row-tracker python -m pytest
    ```
-5. Open a PR against `main` with a short description of what changed and why.
+5. Open a PR against `main` with a short description of what changed and why. GitHub Actions runs
+   the full test suite automatically on every PR (see the badge at the top of the README) — a red
+   check means something needs a look before merge.
 
 ## What's especially useful
 

@@ -9,6 +9,16 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.10.2] — 2026-08-16
+
+### Added
+- **CI: GitHub Actions now runs the full test suite on every push to `main` and every PR**
+  (`.github/workflows/tests.yml`) — 228 tests, Python 3.11 to match the Docker base image, pip
+  dependency caching. The test suite has existed for a while but nothing ran it automatically;
+  now a red check on a PR means something needs a look before merge. Status badge added to the
+  top of the README, alongside the license badge.
+- `CONTRIBUTING.md` updated to mention the automated check.
+
 ## [0.10.1] — 2026-08-15
 
 ### Fixed

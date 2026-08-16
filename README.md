@@ -8,6 +8,9 @@
 
 # Row Tracker
 
+[![Tests](https://github.com/dsubtle1/row-tracker/actions/workflows/tests.yml/badge.svg)](https://github.com/dsubtle1/row-tracker/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+
 A self-hosted personal rowing tracker for Concept2 RowErg athletes. Syncs automatically from the Concept2 Logbook API, tracks personal bests, generates daily workouts, and turns your metres into virtual journeys around the world.
 
 Built with Flask, SQLite, and Docker. Runs on a home server at a single port with no external dependencies.
