@@ -9,7 +9,18 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
-## [0.10.4] — 2026-08-16
+## [0.10.5] — 2026-08-16
+
+### Added
+- **Pre-built multi-arch Docker images, published to GHCR on every version tag**
+  (`.github/workflows/publish-image.yml`) — `linux/amd64` and `linux/arm64` (Raspberry Pi and
+  other ARM boards), tagged with the version, `major.minor`, and `latest`. This is an
+  *additional* way to run Row Tracker, not a replacement — `docker-compose.yml` still defaults
+  to `build: .` so the homelab deploy flow (`deploy.sh`) is unaffected. Self-hosters who'd rather
+  `docker compose pull` than build locally can swap in `image: ghcr.io/dsubtle1/row-tracker:latest`
+  — documented in the README under "Using the pre-built image instead of building locally."
+
+
 
 ### Added
 - **Dependabot** (`.github/dependabot.yml`) — weekly automated PRs for outdated pip dependencies
