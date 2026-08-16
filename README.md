@@ -204,6 +204,21 @@ http://localhost:7376
 
 Click **Sync Workouts** on the dashboard to pull in your full workout history from the Concept2 Logbook.
 
+### Using the pre-built image instead of building locally
+
+Every tagged release is also published to GHCR as a multi-arch image (`linux/amd64` +
+`linux/arm64`, so this covers Raspberry Pi and other ARM boards too). If you'd rather pull than
+build, swap the `build: .` line in `docker-compose.yml` for:
+
+```yaml
+    image: ghcr.io/dsubtle1/row-tracker:latest
+```
+
+then run `docker compose up -d` instead of `docker compose up -d --build`. Pin to a specific
+version instead of `latest` if you want (e.g. `ghcr.io/dsubtle1/row-tracker:0.10.4`) — see the
+[Releases page](https://github.com/dsubtle1/row-tracker/releases) for available tags. Everything
+else (`.env`, volumes, ports) stays the same either way.
+
 ---
 
 ## AI-Assisted Coaching (Optional)
@@ -267,7 +282,6 @@ row-tracker/
 
 - [ ] Force-curve / drive-recovery-time visualisation per stroke (basic pace & stroke-rate-over-time chart already shipped)
 - [ ] Real map overlays for virtual journeys (Leaflet.js + OpenStreetMap)
-- [ ] Publish pre-built images to a registry (e.g. GHCR) via GitHub Actions on each version tag, so `docker-compose.yml` can pull instead of building from source — likely multi-arch (amd64 + arm64) for Raspberry Pi/NAS setups
 
 ---
 
