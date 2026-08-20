@@ -9,6 +9,26 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.11.0] — 2026-08-20
+
+### Fixed
+- **Interval workout "rest" meters (light rowing between intervals) were silently dropped from
+  every lifetime/volume total.** Concept2 tracks rest-interval distance as a separate
+  `rest_distance` field, apart from each interval's own `distance` — the C2 sync only ever read
+  `distance`, so none of it ever made it into Row Tracker. Discovered by comparing against the
+  Concept2 website's "Lifetime Meters" figure, which includes it. New `rest_distance_meters`
+  column (`models.py`) captured on every sync going forward; `backfill_rest_meters.py` backfills
+  it from `raw_json` for existing workouts and retroactively corrects the earned dates of the
+  five volume badges and one virtual journey that had already crossed their thresholds under the
+  old, undercounted totals.
+- Pace, personal bests, single-piece test results, and CAWR/training-load are unaffected — they
+  were already, and remain, based on work-interval distance/time only, so a slower recovery split
+  can never inflate a time or a PB.
+
+### Added
+- Workout detail page now shows rest-interval meters alongside the main distance stat when a
+  session had any.
+
 ## [0.10.5] — 2026-08-16
 
 ### Added

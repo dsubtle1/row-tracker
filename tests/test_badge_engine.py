@@ -96,6 +96,21 @@ def test_first_100k_finds_crossing_workout(app_ctx, make_workout, days_ago):
     assert achieved_date == crossing.workout_date
 
 
+def test_first_100k_counts_rest_meters_toward_the_total(app_ctx, make_workout):
+    # 95,000 work-only — short of 100k on its own, but +6,000 rest crosses it.
+    make_workout(id=1, distance_meters=95_000, rest_distance_meters=6_000, time_seconds=20_000)
+    earned, _, _ = _check_first_100k()
+    assert earned is True
+
+
+def test_pace_badges_are_unaffected_by_rest_meters(app_ctx, make_workout, days_ago):
+    # A slow rest split shouldn't change whether a workout counts as a fast one —
+    # avg_pace_seconds is computed from work distance/time only, upstream in c2_api.
+    make_workout(id=1, avg_pace_seconds=125, rest_distance_meters=50_000, workout_date=days_ago(1))
+    earned, _, _ = _check_sub_2_06_pace()
+    assert earned is True
+
+
 # ---------------------------------------------------------------------------
 # century_month / iron_month — per-calendar-month aggregates
 # ---------------------------------------------------------------------------

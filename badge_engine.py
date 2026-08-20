@@ -98,36 +98,36 @@ def _check_2k_legend():
     return (True, w.id, w.workout_date) if w else (False, None, None)
 
 def _check_10k_club():
-    w = Workout.query.filter(Workout.distance_meters >= 10000).order_by(Workout.workout_date.asc()).first()
+    w = Workout.query.filter(Workout.total_distance_meters >= 10000).order_by(Workout.workout_date.asc()).first()
     return (True, w.id, w.workout_date) if w else (False, None, None)
 
 def _check_half_marathon():
-    w = Workout.query.filter(Workout.distance_meters >= 21097).order_by(Workout.workout_date.asc()).first()
+    w = Workout.query.filter(Workout.total_distance_meters >= 21097).order_by(Workout.workout_date.asc()).first()
     return (True, w.id, w.workout_date) if w else (False, None, None)
 
 def _check_first_100k():
-    total = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
+    total = db.session.query(func.sum(Workout.total_distance_meters)).scalar() or 0
     if total >= 100_000:
         w = _find_milestone_workout(100_000)
         return (True, w.id if w else None, w.workout_date if w else None)
     return (False, None, None)
 
 def _check_quarter_million():
-    total = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
+    total = db.session.query(func.sum(Workout.total_distance_meters)).scalar() or 0
     if total >= 250_000:
         w = _find_milestone_workout(250_000)
         return (True, w.id if w else None, w.workout_date if w else None)
     return (False, None, None)
 
 def _check_half_million():
-    total = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
+    total = db.session.query(func.sum(Workout.total_distance_meters)).scalar() or 0
     if total >= 500_000:
         w = _find_milestone_workout(500_000)
         return (True, w.id if w else None, w.workout_date if w else None)
     return (False, None, None)
 
 def _check_one_million():
-    total = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
+    total = db.session.query(func.sum(Workout.total_distance_meters)).scalar() or 0
     if total >= 1_000_000:
         w = _find_milestone_workout(1_000_000)
         return (True, w.id if w else None, w.workout_date if w else None)
@@ -138,7 +138,7 @@ def _find_milestone_workout(target_metres):
     workouts = Workout.query.order_by(Workout.workout_date.asc()).all()
     cumulative = 0
     for w in workouts:
-        cumulative += w.distance_meters
+        cumulative += w.total_distance_meters
         if cumulative >= target_metres:
             return w
     return None
@@ -148,8 +148,8 @@ def _check_century_month():
     result = db.session.query(
         extract('year', Workout.workout_date).label('yr'),
         extract('month', Workout.workout_date).label('mo'),
-        func.sum(Workout.distance_meters).label('total')
-    ).group_by('yr', 'mo').having(func.sum(Workout.distance_meters) >= 100_000) \
+        func.sum(Workout.total_distance_meters).label('total')
+    ).group_by('yr', 'mo').having(func.sum(Workout.total_distance_meters) >= 100_000) \
      .order_by('yr', 'mo').first()
     if not result:
         return (False, None, None)
@@ -161,7 +161,7 @@ def _check_century_month():
     ).order_by(Workout.workout_date.asc()).all()
     cumulative = 0
     for w in month_workouts:
-        cumulative += w.distance_meters
+        cumulative += w.total_distance_meters
         if cumulative >= 100_000:
             return (True, w.id, w.workout_date)
     return (True, None, month_workouts[-1].workout_date if month_workouts else None)
@@ -408,13 +408,13 @@ def evaluate_badges():
 
 def _make_lifetime_progress(target):
     def fn():
-        total = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
+        total = db.session.query(func.sum(Workout.total_distance_meters)).scalar() or 0
         return {"current": total, "target": target}
     return fn
 
 def _make_best_session_progress(target):
     def fn():
-        best = db.session.query(func.max(Workout.distance_meters)).scalar() or 0
+        best = db.session.query(func.max(Workout.total_distance_meters)).scalar() or 0
         return {"current": best, "target": target}
     return fn
 
@@ -422,7 +422,7 @@ def _progress_century_month():
     rows = db.session.query(
         extract('year', Workout.workout_date).label('yr'),
         extract('month', Workout.workout_date).label('mo'),
-        func.sum(Workout.distance_meters).label('total')
+        func.sum(Workout.total_distance_meters).label('total')
     ).group_by('yr', 'mo').all()
     best = max((r.total for r in rows), default=0)
     return {"current": best, "target": 100_000}

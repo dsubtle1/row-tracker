@@ -2999,6 +2999,11 @@ body.mobile-nav-open { overflow: hidden; }
   color: var(--color-text-muted);
 }
 
+.wd-stat-sublabel {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
 /* ── Section ── */
 .wd-section {
   margin-bottom: 2rem;

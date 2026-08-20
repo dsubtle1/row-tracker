@@ -52,8 +52,8 @@ def _send(subject, body):
 
 
 def lifetime_meters():
-    """Current lifetime rower metres — used to snapshot before/after a sync."""
-    return db.session.query(func.sum(Workout.distance_meters)).filter_by(workout_type="rower").scalar() or 0
+    """Current lifetime rower metres (work + rest) — used to snapshot before/after a sync."""
+    return db.session.query(func.sum(Workout.total_distance_meters)).filter_by(workout_type="rower").scalar() or 0
 
 
 def notify_badges(badge_keys):

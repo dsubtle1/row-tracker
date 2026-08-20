@@ -35,6 +35,17 @@ def test_maps_core_fields(app_ctx):
     assert w.distance_meters == 2000
 
 
+def test_maps_rest_distance_from_interval_workouts(app_ctx):
+    w = _map_result_to_workout(_raw_result(rest_distance=350))
+    assert w.rest_distance_meters == 350
+    assert w.distance_meters == 2000  # work distance untouched by rest
+
+
+def test_rest_distance_defaults_to_zero_when_absent(app_ctx):
+    w = _map_result_to_workout(_raw_result())
+    assert w.rest_distance_meters == 0
+
+
 def test_pace_calculated_from_time_and_distance(app_ctx):
     # pace = (time_seconds / distance_meters) * 500
     w = _map_result_to_workout(_raw_result(distance=2000, time=4800))

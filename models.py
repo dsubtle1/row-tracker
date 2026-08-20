@@ -6,6 +6,8 @@ Builds 2 and 3 add tables only — never modify Build 1 tables.
 
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
+from sqlalchemy.ext.hybrid import hybrid_property
 
 db = SQLAlchemy()
 
@@ -22,7 +24,8 @@ class Workout(db.Model):
     workout_date      = db.Column(db.Date, nullable=False, index=True)
     workout_type      = db.Column(db.Text, nullable=False, default="rower")
     time_seconds      = db.Column(db.Integer)                     # total elapsed seconds
-    distance_meters   = db.Column(db.Integer)
+    distance_meters   = db.Column(db.Integer)                     # work-interval distance only — drives pace/PBs, never mixed with rest
+    rest_distance_meters = db.Column(db.Integer, nullable=True)   # light rowing between intervals (C2 "rest_distance"); NULL = unknown (CSV import / no raw_json), 0 = confirmed no rest
     avg_pace_seconds  = db.Column(db.Integer)                     # 500m split in seconds
     avg_stroke_rate   = db.Column(db.Integer)
     total_calories    = db.Column(db.Integer)
@@ -37,6 +40,17 @@ class Workout(db.Model):
 
     def __repr__(self):
         return f"<Workout id={self.id} date={self.workout_date} dist={self.distance_meters}m>"
+
+    @hybrid_property
+    def total_distance_meters(self):
+        """Work distance plus any rest-interval distance — the real distance rowed.
+        Used for lifetime/volume totals (badges, journeys, challenges); never for
+        pace or PBs, which stay work-only so rest doesn't dilute effort pace."""
+        return self.distance_meters + (self.rest_distance_meters or 0)
+
+    @total_distance_meters.expression
+    def total_distance_meters(cls):
+        return cls.distance_meters + func.coalesce(cls.rest_distance_meters, 0)
 
     @property
     def avg_pace_formatted(self):

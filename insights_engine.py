@@ -816,7 +816,7 @@ def dataset_overview() -> dict:
     """Headline numbers for the page's stat strip."""
     q = Workout.query.filter_by(workout_type="rower")
     n = q.count()
-    meters = db.session.query(func.sum(Workout.distance_meters)) \
+    meters = db.session.query(func.sum(Workout.total_distance_meters)) \
         .filter_by(workout_type="rower").scalar() or 0
     first = q.order_by(Workout.workout_date.asc()).first()
     last = q.order_by(Workout.workout_date.desc()).first()

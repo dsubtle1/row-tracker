@@ -169,7 +169,7 @@ def _get_stale_pbs():
     ).all()
 
 def _get_gamification_stats():
-    total_metres = db.session.query(func.sum(Workout.distance_meters)).scalar() or 0
+    total_metres = db.session.query(func.sum(Workout.total_distance_meters)).scalar() or 0
     earned_count = Badge.query.filter(Badge.earned_date != None).count()
     total_count  = Badge.query.count()
     return {
@@ -242,7 +242,7 @@ def _get_rhine_data():
             "eta": None, "weekly_avg_km": 0, "journey_metres": 0,
         }
 
-    journey_m = db.session.query(func.sum(Workout.distance_meters)).filter(
+    journey_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
         Workout.workout_date >= journey.start_date,
         Workout.workout_type == "rower",
     ).scalar() or 0
@@ -267,7 +267,7 @@ def _get_rhine_data():
     )
 
     cutoff = date.today() - timedelta(days=28)
-    recent_m = db.session.query(func.sum(Workout.distance_meters)).filter(
+    recent_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
         Workout.workout_date >= cutoff, Workout.workout_type == "rower",
     ).scalar() or 0
     weekly_avg_m = (recent_m / 28) * 7
@@ -358,7 +358,7 @@ def _get_holland_data():
             "eta": None, "weekly_avg_km": 0, "journey_metres": 0,
         }
 
-    journey_m = db.session.query(func.sum(Workout.distance_meters)).filter(
+    journey_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
         Workout.workout_date >= journey.start_date,
         Workout.workout_type == "rower",
     ).scalar() or 0
@@ -383,7 +383,7 @@ def _get_holland_data():
     )
 
     cutoff = date.today() - timedelta(days=28)
-    recent_m = db.session.query(func.sum(Workout.distance_meters)).filter(
+    recent_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
         Workout.workout_date >= cutoff, Workout.workout_type == "rower",
     ).scalar() or 0
     weekly_avg_m = (recent_m / 28) * 7
@@ -472,7 +472,7 @@ def _get_route66_data():
             "eta": None, "weekly_avg_km": 0, "journey_metres": 0,
         }
 
-    journey_m = db.session.query(func.sum(Workout.distance_meters)).filter(
+    journey_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
         Workout.workout_date >= journey.start_date,
         Workout.workout_type == "rower",
     ).scalar() or 0
@@ -495,7 +495,7 @@ def _get_route66_data():
     waypoints, marker = _layout_horizontal_route(ROUTE66_PATH_POINTS, waypoints, pct)
 
     cutoff = date.today() - timedelta(days=28)
-    recent_m = db.session.query(func.sum(Workout.distance_meters)).filter(
+    recent_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
         Workout.workout_date >= cutoff, Workout.workout_type == "rower",
     ).scalar() or 0
     weekly_avg_m = (recent_m / 28) * 7
@@ -584,7 +584,7 @@ def _get_transcan_data():
             "eta": None, "weekly_avg_km": 0, "journey_metres": 0,
         }
 
-    journey_m = db.session.query(func.sum(Workout.distance_meters)).filter(
+    journey_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
         Workout.workout_date >= journey.start_date,
         Workout.workout_type == "rower",
     ).scalar() or 0
@@ -607,7 +607,7 @@ def _get_transcan_data():
     waypoints, marker = _layout_horizontal_route(TRANSCAN_PATH_POINTS, waypoints, pct)
 
     cutoff = date.today() - timedelta(days=28)
-    recent_m = db.session.query(func.sum(Workout.distance_meters)).filter(
+    recent_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
         Workout.workout_date >= cutoff, Workout.workout_type == "rower",
     ).scalar() or 0
     weekly_avg_m = (recent_m / 28) * 7
@@ -654,7 +654,7 @@ def _get_challenges():
     # ── 1. Quarterly metre target ──────────────────────────────────────────
     # Target: 200,000m per quarter (~5 sessions/week at ~10k each)
     QUARTER_TARGET = 200_000
-    q_metres = db.session.query(func.sum(Workout.distance_meters)).filter(
+    q_metres = db.session.query(func.sum(Workout.total_distance_meters)).filter(
         Workout.workout_date >= q_start,
         Workout.workout_date <= today,
     ).scalar() or 0
@@ -690,7 +690,7 @@ def _get_challenges():
     # ── 4. Volume month — current calendar month stretch goal ─────────────
     MONTH_TARGET = 80_000
     month_start = today.replace(day=1)
-    month_metres = db.session.query(func.sum(Workout.distance_meters)).filter(
+    month_metres = db.session.query(func.sum(Workout.total_distance_meters)).filter(
         Workout.workout_date >= month_start,
         Workout.workout_date <= today,
     ).scalar() or 0

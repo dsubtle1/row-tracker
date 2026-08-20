@@ -241,8 +241,11 @@ def _map_result_to_workout(result: dict):
     except (ValueError, TypeError):
         workout_date = date.today()
 
-    # Distance and time
+    # Distance and time — "distance" is work-interval only; C2 tracks light
+    # rowing between intervals separately as "rest_distance" (absent/0 for
+    # non-interval workouts, so default to 0 rather than leaving it unknown).
     distance_m = result.get("distance", 0) or 0
+    rest_distance_m = result.get("rest_distance", 0) or 0
     # C2 time is in tenths of a second
     time_raw   = result.get("time", 0) or 0
     time_s     = round(time_raw / 10) if time_raw else None
@@ -276,6 +279,7 @@ def _map_result_to_workout(result: dict):
         workout_type     = "rower",
         time_seconds     = time_s,
         distance_meters  = int(distance_m),
+        rest_distance_meters = int(rest_distance_m),
         avg_pace_seconds = pace_s,
         avg_stroke_rate  = stroke_rate,
         total_calories   = calories,

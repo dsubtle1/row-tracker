@@ -23,6 +23,9 @@
   <div class="wd-stat-card wd-stat-card--primary">
     <span class="wd-stat-value">{{ "{:,}".format(workout.distance_meters) if workout.distance_meters else "—" }}m</span>
     <span class="wd-stat-label">Distance</span>
+    {% if workout.rest_distance_meters %}
+    <span class="wd-stat-sublabel">+ {{ "{:,}".format(workout.rest_distance_meters) }}m rest</span>
+    {% endif %}
   </div>
 
   <div class="wd-stat-card">

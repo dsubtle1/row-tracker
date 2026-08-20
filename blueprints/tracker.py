@@ -93,7 +93,7 @@ def _workouts_this_month():
 
 
 def _lifetime_meters():
-    result = db.session.query(func.sum(Workout.distance_meters)).filter_by(workout_type="rower").scalar()
+    result = db.session.query(func.sum(Workout.total_distance_meters)).filter_by(workout_type="rower").scalar()
     return result or 0
 
 
@@ -113,7 +113,7 @@ def _heatmap_data(weeks=52):
     today = date.today()
     start = today - timedelta(weeks=weeks)
     rows = (
-        db.session.query(Workout.workout_date, func.sum(Workout.distance_meters))
+        db.session.query(Workout.workout_date, func.sum(Workout.total_distance_meters))
         .filter_by(workout_type="rower")
         .filter(Workout.workout_date >= start)
         .group_by(Workout.workout_date)
