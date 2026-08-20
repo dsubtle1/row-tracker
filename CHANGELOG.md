@@ -9,6 +9,19 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.11.2] — 2026-08-20
+
+### Added
+- **GitHub Releases are now created automatically on every version tag push**
+  (`.github/workflows/publish-image.yml`), with notes pulled straight from that version's
+  CHANGELOG.md section. Previously a tag push only built the GHCR image — the Release itself was
+  always a manual step, and it quietly stopped happening after v0.10.4 (v0.10.5 through v0.11.1
+  shipped with tags but no Releases until this was noticed and backfilled).
+
+### Fixed
+- CHANGELOG.md was missing the `## [0.10.4]` header — the Dependabot entry had been folded
+  invisibly into `[0.10.5]`'s section since it shipped.
+
 ## [0.11.1] — 2026-08-20
 
 ### Fixed
