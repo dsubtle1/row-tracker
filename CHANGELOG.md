@@ -9,6 +9,23 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.11.1] — 2026-08-20
+
+### Fixed
+- **`C2ApiClient.get_results()` was reading the wrong pagination key** (`meta.last_page` instead
+  of the real `meta.pagination.total_pages`), so it silently stopped after the first 100 results
+  on every sync. Nightly incremental syncs rarely hit that ceiling so it went unnoticed, but a
+  historical backfill or a sync recovering from a long outage would have quietly dropped
+  everything past page 1. Fixed, and now covered by a regression test.
+- Added retries (3 attempts, short backoff) for transient C2 API failures — its results endpoint
+  returns occasional bare 500s in normal operation, seen firsthand in production, and one of
+  those was tripping the nightly sync's failure alert for no real reason.
+- `backfill_rest_meters.py` (see 0.11.0) now sources rest-distance values from a live re-fetch of
+  the full C2 history (matched by workout ID) instead of local `raw_json` — most historical
+  workouts here were CSV-imported and never had `raw_json` locally, so the previous approach only
+  recovered data for ~150 of 2559 workouts. Re-running it against the live API on top of this
+  release backfilled the rest correctly.
+
 ## [0.11.0] — 2026-08-20
 
 ### Fixed
@@ -24,21 +41,10 @@ these releases weren't tagged contemporaneously, but the groupings and dates ref
 - Pace, personal bests, single-piece test results, and CAWR/training-load are unaffected — they
   were already, and remain, based on work-interval distance/time only, so a slower recovery split
   can never inflate a time or a PB.
-- **`C2ApiClient.get_results()` was reading the wrong pagination key** (`meta.last_page` instead
-  of the real `meta.pagination.total_pages`), so it silently stopped after the first 100 results
-  on every sync. Nightly incremental syncs rarely hit that ceiling so it went unnoticed, but a
-  historical backfill or a sync recovering from a long outage would have quietly dropped
-  everything past page 1. Fixed, and now covered by a regression test.
-- Added retries (3 attempts, short backoff) for transient C2 API failures — its results endpoint
-  returns occasional bare 500s in normal operation, seen firsthand in production, and one of
-  those was tripping the nightly sync's failure alert for no real reason.
 
 ### Added
 - Workout detail page now shows rest-interval meters alongside the main distance stat when a
   session had any.
-- `backfill_rest_meters.py` now sources rest-distance values from a live re-fetch of the full C2
-  history (matched by workout ID) rather than local `raw_json` — most historical workouts here
-  were CSV-imported and never had it locally.
 
 ## [0.10.5] — 2026-08-16
 
