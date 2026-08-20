@@ -14,6 +14,7 @@ Scopes: user:read, results:read
 """
 
 import logging
+import time
 from datetime import datetime, date
 
 import requests
@@ -24,6 +25,13 @@ C2_BASE_URL   = "https://log.concept2.com"
 TOKEN_URL     = f"{C2_BASE_URL}/oauth/access_token"
 RESULTS_URL   = f"{C2_BASE_URL}/api/users/me/results"
 PAGE_SIZE     = 100
+
+# C2's API returns occasional bare 5xx errors under normal conditions (seen
+# in production, not just under load) — retried a few times with a short
+# backoff before giving up, rather than failing the whole nightly sync (and
+# paging the user) over what's usually a transient blip.
+MAX_PAGE_RETRIES = 3
+RETRY_BACKOFF_SECONDS = 2
 
 
 class C2ApiClient:
@@ -91,31 +99,46 @@ class C2ApiClient:
             if since_date:
                 params["from"] = since_date.isoformat()
 
-            try:
-                resp = requests.get(
-                    RESULTS_URL,
-                    headers=self._get_headers(),
-                    params=params,
-                    timeout=30,
-                )
-                if resp.status_code == 401:
-                    logger.error("C2 API returned 401 — check that C2_REFRESH_TOKEN in .env is correct.")
-                    self.last_error = "C2 API returned 401 (unauthorized) — check that C2_REFRESH_TOKEN in .env is correct."
-                    break
+            data = None
+            page_error = None
+            for attempt in range(1, MAX_PAGE_RETRIES + 1):
+                try:
+                    resp = requests.get(
+                        RESULTS_URL,
+                        headers=self._get_headers(),
+                        params=params,
+                        timeout=30,
+                    )
+                    if resp.status_code == 401:
+                        logger.error("C2 API returned 401 — check that C2_REFRESH_TOKEN in .env is correct.")
+                        self.last_error = "C2 API returned 401 (unauthorized) — check that C2_REFRESH_TOKEN in .env is correct."
+                        return results
 
-                resp.raise_for_status()
-                data = resp.json()
-            except requests.RequestException as e:
-                logger.error(f"C2 API request failed (page {page}): {e}")
-                self.last_error = f"C2 API request failed: {e}"
+                    resp.raise_for_status()
+                    data = resp.json()
+                    page_error = None
+                    break
+                except requests.RequestException as e:
+                    page_error = e
+                    if attempt < MAX_PAGE_RETRIES:
+                        logger.warning(f"C2 API request failed (page {page}, attempt {attempt}/{MAX_PAGE_RETRIES}): {e} — retrying")
+                        time.sleep(RETRY_BACKOFF_SECONDS)
+
+            if page_error is not None:
+                logger.error(f"C2 API request failed (page {page}) after {MAX_PAGE_RETRIES} attempts: {page_error}")
+                self.last_error = f"C2 API request failed: {page_error}"
                 break
 
             page_data = data.get("data", [])
             results.extend(page_data)
 
-            # Pagination — stop when we get fewer results than page size
-            meta = data.get("meta", {})
-            last_page = meta.get("last_page", 1)
+            # Pagination — C2 nests it under meta.pagination.total_pages, not
+            # meta.last_page. Reading the wrong key silently capped every
+            # sync at page 1 (100 results); harmless for nightly incremental
+            # syncs (rarely >100 new results) but would have quietly dropped
+            # data after any outage long enough to queue up more than that.
+            pagination = data.get("meta", {}).get("pagination", {})
+            last_page = pagination.get("total_pages", 1)
             if page >= last_page:
                 break
             page += 1

@@ -160,12 +160,31 @@ def test_get_stroke_data_returns_none_when_not_configured():
 def test_get_results_success_clears_last_error(monkeypatch):
     monkeypatch.setattr(
         "c2_api.requests.get",
-        lambda *a, **k: _FakeResponse(200, {"data": [], "meta": {"last_page": 1}}),
+        lambda *a, **k: _FakeResponse(200, {"data": [], "meta": {"pagination": {"total_pages": 1}}}),
     )
     client = _client()
     client.last_error = "stale error from a previous call"
     client.get_results()
     assert client.last_error is None
+
+
+def test_get_results_follows_pagination_past_page_one(monkeypatch):
+    # C2 nests page count under meta.pagination.total_pages, not meta.last_page —
+    # reading the wrong key silently capped every sync at 100 results (page 1).
+    pages = {
+        1: {"data": [{"id": 1}], "meta": {"pagination": {"total_pages": 3}}},
+        2: {"data": [{"id": 2}], "meta": {"pagination": {"total_pages": 3}}},
+        3: {"data": [{"id": 3}], "meta": {"pagination": {"total_pages": 3}}},
+    }
+
+    def _fake_get(*a, **k):
+        page = k["params"]["page"]
+        return _FakeResponse(200, pages[page])
+
+    monkeypatch.setattr("c2_api.requests.get", _fake_get)
+    client = _client()
+    results = client.get_results()
+    assert [r["id"] for r in results] == [1, 2, 3]
 
 
 def test_get_results_401_sets_last_error(monkeypatch):
@@ -184,10 +203,31 @@ def test_get_results_request_exception_sets_last_error(monkeypatch):
         raise requests.ConnectionError("boom")
 
     monkeypatch.setattr("c2_api.requests.get", _raise)
+    monkeypatch.setattr("c2_api.time.sleep", lambda *a: None)
     client = _client()
     results = client.get_results()
     assert results == []
     assert client.last_error is not None
+
+
+def test_get_results_retries_transient_failure_then_succeeds(monkeypatch):
+    # A bare 500 (seen from C2's API in production) shouldn't fail the whole
+    # sync if a retry a couple seconds later would have worked.
+    calls = {"n": 0}
+
+    def _flaky_get(*a, **k):
+        calls["n"] += 1
+        if calls["n"] < 2:
+            return _FakeResponse(500)
+        return _FakeResponse(200, {"data": [{"id": 1}], "meta": {"pagination": {"total_pages": 1}}})
+
+    monkeypatch.setattr("c2_api.requests.get", _flaky_get)
+    monkeypatch.setattr("c2_api.time.sleep", lambda *a: None)
+    client = _client()
+    results = client.get_results()
+    assert [r["id"] for r in results] == [1]
+    assert client.last_error is None
+    assert calls["n"] == 2
 
 
 def test_sync_workouts_reports_error_on_401(monkeypatch, full_app_ctx):
@@ -202,7 +242,7 @@ def test_sync_workouts_reports_error_on_401(monkeypatch, full_app_ctx):
 def test_sync_workouts_genuinely_empty_is_not_an_error(monkeypatch, full_app_ctx):
     monkeypatch.setattr(
         "c2_api.requests.get",
-        lambda *a, **k: _FakeResponse(200, {"data": [], "meta": {"last_page": 1}}),
+        lambda *a, **k: _FakeResponse(200, {"data": [], "meta": {"pagination": {"total_pages": 1}}}),
     )
     client = _client()
     result = client.sync_workouts()

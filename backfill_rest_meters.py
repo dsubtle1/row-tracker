@@ -4,7 +4,16 @@ backfill_rest_meters.py — One-time migration script
 Adds the rest_distance_meters column (light rowing between intervals,
 tracked separately by Concept2 as "rest_distance" and never included in
 the top-level "distance" field the sync previously read) and backfills it
-from raw_json for every workout that has it.
+by re-fetching every rower result from the live Concept2 API and matching
+by workout ID.
+
+Deliberately does NOT source this from local raw_json: most historical
+workouts here were CSV-imported (raw_json unavailable), and — due to a
+SQLAlchemy JSON-column quirk in the CSV import path — even show up as
+"not NULL" in a raw SQL check (they're the literal JSON string "null", not
+real SQL NULL), so a raw_json-based backfill would silently only recover
+data for the recently API-synced minority. The live API is authoritative
+and has it for every workout regardless of how it first got into Row Tracker.
 
 distance_meters / avg_pace_seconds / PBs are untouched — they stay
 work-interval-only. rest_distance_meters only feeds Workout.total_distance_meters,
@@ -49,29 +58,48 @@ def _add_column_if_missing(db):
     logger.info("Added rest_distance_meters column.")
 
 
-def _backfill_values(db, Workout):
-    workouts = Workout.query.filter(Workout.raw_json.isnot(None)).all()
-    logger.info(f"Found {len(workouts)} workouts with raw_json to backfill.")
+def _fetch_all_rest_distances(app):
+    """Re-fetch every rower result from the live C2 API. Returns {c2_id: rest_distance}."""
+    from c2_api import C2ApiClient
 
-    updated = skipped = errors = 0
+    client = C2ApiClient(
+        client_id     = app.config.get("C2_CLIENT_ID", ""),
+        client_secret = app.config.get("C2_CLIENT_SECRET", ""),
+        refresh_token = app.config.get("C2_REFRESH_TOKEN", ""),
+    )
+    if not client.is_configured():
+        raise RuntimeError("C2 credentials not configured — cannot backfill from the live API.")
+
+    raw_results = client.get_results(since_date=None)
+    if client.last_error:
+        raise RuntimeError(f"C2 API fetch failed: {client.last_error}")
+
+    return {r["id"]: int(r.get("rest_distance", 0) or 0) for r in raw_results}
+
+
+def _backfill_values(db, Workout, app):
+    rest_by_id = _fetch_all_rest_distances(app)
+    logger.info(f"Fetched {len(rest_by_id)} rower results from the live C2 API.")
+
+    workouts = Workout.query.filter_by(workout_type="rower").all()
+    logger.info(f"Matching against {len(workouts)} local rower workouts.")
+
+    updated = skipped = not_found = 0
     for w in workouts:
-        try:
-            raw = w.raw_json
-            if not isinstance(raw, dict):
-                skipped += 1
-                continue
-            rest = int(raw.get("rest_distance", 0) or 0)
-            if w.rest_distance_meters != rest:
-                w.rest_distance_meters = rest
-                updated += 1
-            else:
-                skipped += 1
-        except Exception as e:
-            logger.error(f"Error processing workout {w.id}: {e}")
-            errors += 1
+        if w.id not in rest_by_id:
+            # Not present in the live API results (e.g. CSV-imported from a
+            # season Concept2 no longer serves) — leave as-is (0/unknown).
+            not_found += 1
+            continue
+        rest = rest_by_id[w.id]
+        if w.rest_distance_meters != rest:
+            w.rest_distance_meters = rest
+            updated += 1
+        else:
+            skipped += 1
 
     db.session.commit()
-    logger.info(f"Values backfilled. Updated: {updated}  Skipped: {skipped}  Errors: {errors}")
+    logger.info(f"Values backfilled. Updated: {updated}  Skipped: {skipped}  Not found in live API: {not_found}")
     return updated
 
 
@@ -148,7 +176,7 @@ def run_backfill():
     app = create_app()
     with app.app_context():
         _add_column_if_missing(db)
-        updated = _backfill_values(db, Workout)
+        updated = _backfill_values(db, Workout, app)
 
         if updated:
             logger.info("Recomputing pace/PBs is unaffected (work-only fields untouched).")
