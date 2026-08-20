@@ -57,7 +57,7 @@ these releases weren't tagged contemporaneously, but the groupings and dates ref
   `docker compose pull` than build locally can swap in `image: ghcr.io/dsubtle1/row-tracker:latest`
   — documented in the README under "Using the pre-built image instead of building locally."
 
-
+## [0.10.4] — 2026-08-16
 
 ### Added
 - **Dependabot** (`.github/dependabot.yml`) — weekly automated PRs for outdated pip dependencies
