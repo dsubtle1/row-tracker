@@ -1,10 +1,10 @@
 name: Publish Docker image
 
-# Builds and pushes a multi-arch (amd64 + arm64) image to GHCR on every
-# version tag. This is an *additional* way to run Row Tracker — the
-# default docker-compose.yml still builds from source locally; this just
-# gives self-hosters who'd rather `docker compose pull` than build an
-# option to do that. See README's "Pre-built image" section.
+# On every version tag push: builds and pushes a multi-arch (amd64 + arm64)
+# image to GHCR (an *additional* way to run Row Tracker — the default
+# docker-compose.yml still builds from source locally; see README's
+# "Pre-built image" section), and creates the matching GitHub Release with
+# notes pulled straight from that version's CHANGELOG.md section.
 
 on:
   push:
@@ -57,3 +57,36 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  create-release:
+    # A tag push alone never created a GitHub Release — v0.10.5 through v0.11.1 all shipped
+    # without one until this was added, purely because nobody remembered the manual step.
+    # Runs independently of build-and-push so a GHCR hiccup can't block the release, or vice versa.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Extract this version's CHANGELOG section
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" { flag=1; next }
+            /^## \[/ { flag=0 }
+            flag { print }
+          ' CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "::error::No CHANGELOG.md section found for [$VERSION] — add one before tagging."
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release_notes.md
