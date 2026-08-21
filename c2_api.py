@@ -293,6 +293,17 @@ def _map_result_to_workout(result: dict):
     if calories:
         calories = int(calories)
 
+    # Stroke count — whole-session total, no work/rest split like distance/time.
+    stroke_count = result.get("stroke_count") or None
+    if stroke_count:
+        stroke_count = int(stroke_count)
+
+    # Peak heart rate — a single physiological reading for the session, not
+    # additive like distance/time, so no rest counterpart to worry about.
+    heart_rate_max = (result.get("heart_rate") or {}).get("max") or None
+    if heart_rate_max:
+        heart_rate_max = int(heart_rate_max)
+
     # result["stroke_data"] is just a boolean flag from the results-list
     # endpoint ("per-stroke detail exists on C2 for this workout"), not the
     # actual stroke array — that's stored in raw_json and read via
@@ -310,6 +321,8 @@ def _map_result_to_workout(result: dict):
         avg_pace_seconds = pace_s,
         avg_stroke_rate  = stroke_rate,
         total_calories   = calories,
+        stroke_count     = stroke_count,
+        heart_rate_max   = heart_rate_max,
         stroke_data      = None,
         raw_json         = result,
         synced_at        = datetime.utcnow(),

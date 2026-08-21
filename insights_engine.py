@@ -776,6 +776,51 @@ def _milestone_total_calories(rows) -> Optional[Insight]:
     )
 
 
+def _milestone_total_strokes(rows) -> Optional[Insight]:
+    if len(rows) < MIN_TOTAL:
+        return None
+    # Whole-session total already — C2 doesn't split stroke_count by work/rest
+    # the way it does distance and time, so this is a plain sum.
+    total_strokes = sum(w.stroke_count or 0 for w in rows)
+    if total_strokes <= 0:
+        return None
+    return Insight(
+        key="milestone_total_strokes",
+        category="milestones",
+        confidence="strong",
+        headline=f"{total_strokes:,} strokes taken",
+        detail=(
+            f"Every drive, every finish, every recovery — {total_strokes:,} strokes "
+            f"across your whole rowing history."
+        ),
+        facts={"strokes": total_strokes},
+        chart={"type": "stat", "value": f"{total_strokes:,}", "unit": "strokes",
+               "sub": "lifetime total"},
+    )
+
+
+def _milestone_max_heart_rate(rows) -> Optional[Insight]:
+    if len(rows) < MIN_TOTAL:
+        return None
+    with_hr = [w for w in rows if w.heart_rate_max]
+    if not with_hr:
+        return None
+    w = max(with_hr, key=lambda x: x.heart_rate_max)
+    return Insight(
+        key="milestone_max_heart_rate",
+        category="milestones",
+        confidence="strong",
+        headline=f"Peak heart rate: {w.heart_rate_max} bpm",
+        detail=(
+            f"Your hardest-working heart rate on record — {w.heart_rate_max} bpm, "
+            f"on {w.workout_date.strftime('%-d %B %Y')}."
+        ),
+        facts={"heart_rate_max": w.heart_rate_max, "date": w.workout_date.isoformat()},
+        chart={"type": "stat", "value": f"{w.heart_rate_max}", "unit": "bpm",
+               "sub": w.workout_date.strftime('%-d %b %Y')},
+    )
+
+
 def _milestone_longest_streak(rows) -> Optional[Insight]:
     dates = sorted({w.workout_date for w in rows})
     if len(dates) < MIN_TOTAL:
@@ -816,6 +861,8 @@ RULES = [
     _milestone_time_on_erg,
     _milestone_total_workouts,
     _milestone_total_calories,
+    _milestone_total_strokes,
+    _milestone_max_heart_rate,
     _milestone_longest_streak,
 ]
 

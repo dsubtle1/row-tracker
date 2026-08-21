@@ -30,6 +30,8 @@ class Workout(db.Model):
     avg_pace_seconds  = db.Column(db.Integer)                     # 500m split in seconds
     avg_stroke_rate   = db.Column(db.Integer)
     total_calories    = db.Column(db.Integer)
+    stroke_count      = db.Column(db.Integer, nullable=True)      # total strokes, whole session — C2 doesn't split this by work/rest like distance/time
+    heart_rate_max    = db.Column(db.Integer, nullable=True)      # peak HR for the session (C2 "heart_rate.max"); NULL = no HR strap worn / no data
     stroke_data       = db.Column(db.JSON, nullable=True)         # per-stroke array, fetched on demand; NULL until first detail-page view
     raw_json          = db.Column(db.JSON, nullable=True)         # full API payload; NULL from CSV
     synced_at         = db.Column(db.DateTime, default=datetime.utcnow)

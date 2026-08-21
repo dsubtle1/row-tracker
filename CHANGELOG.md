@@ -9,6 +9,19 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.13.0] — 2026-08-21
+
+### Added
+- **Two more Insights Milestones: total strokes taken and peak heart rate.** New `stroke_count`
+  and `heart_rate_max` columns, captured on every sync going forward. Neither has a work/rest
+  split to worry about — C2 doesn't report rest-period strokes or a separate rest heart rate, so
+  both are plain per-session values (total strokes is a whole-session sum; peak HR is the highest
+  single reading across history, with the date it happened).
+- `backfill_strokes_hr.py` — same live-API backfill pattern as `backfill_rest_meters.py`, for the
+  same reason (most historical workouts here were CSV-imported, no local raw_json to read this
+  from). Unlike badges/journeys, Insights milestones are computed fresh on every page load rather
+  than earned-once-and-locked, so there's nothing to retroactively correct here.
+
 ## [0.12.0] — 2026-08-21
 
 ### Added

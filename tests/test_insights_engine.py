@@ -27,6 +27,8 @@ from insights_engine import (
     _milestone_time_on_erg,
     _milestone_total_workouts,
     _milestone_total_calories,
+    _milestone_total_strokes,
+    _milestone_max_heart_rate,
     _milestone_longest_streak,
 )
 
@@ -186,6 +188,8 @@ def test_milestones_stay_silent_below_the_history_floor():
     assert _milestone_longest_streak(rows) is None
     assert _milestone_total_workouts(rows) is None
     assert _milestone_total_calories(rows) is None
+    assert _milestone_total_strokes(rows) is None
+    assert _milestone_max_heart_rate(rows) is None
 
 
 def test_milestone_longevity_reports_span_and_count():
@@ -246,3 +250,28 @@ def test_milestone_total_calories_sums_every_session():
 def test_milestone_total_calories_silent_without_data():
     rows = _sixty_daily_rows()     # total_calories defaults to None
     assert _milestone_total_calories(rows) is None
+
+
+def test_milestone_total_strokes_sums_every_session():
+    rows = _sixty_daily_rows(stroke_count=400)     # 60 × 400
+    ins = _milestone_total_strokes(rows)
+    assert ins is not None
+    assert ins.facts["strokes"] == 24_000
+
+
+def test_milestone_total_strokes_silent_without_data():
+    rows = _sixty_daily_rows()     # stroke_count defaults to None
+    assert _milestone_total_strokes(rows) is None
+
+
+def test_milestone_max_heart_rate_picks_the_highest_reading():
+    rows = _sixty_daily_rows(heart_rate_max=150)
+    rows.append(W(workout_date=date.today() - timedelta(days=3), heart_rate_max=182))
+    ins = _milestone_max_heart_rate(rows)
+    assert ins is not None
+    assert ins.facts["heart_rate_max"] == 182
+
+
+def test_milestone_max_heart_rate_silent_without_any_hr_data():
+    rows = _sixty_daily_rows()     # heart_rate_max defaults to None
+    assert _milestone_max_heart_rate(rows) is None

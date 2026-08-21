@@ -46,6 +46,26 @@ def test_rest_distance_defaults_to_zero_when_absent(app_ctx):
     assert w.rest_distance_meters == 0
 
 
+def test_maps_stroke_count(app_ctx):
+    w = _map_result_to_workout(_raw_result(stroke_count=412))
+    assert w.stroke_count == 412
+
+
+def test_stroke_count_is_none_when_absent(app_ctx):
+    w = _map_result_to_workout(_raw_result())
+    assert w.stroke_count is None
+
+
+def test_maps_heart_rate_max(app_ctx):
+    w = _map_result_to_workout(_raw_result(heart_rate={"min": 110, "average": 145, "max": 172, "ending": 168}))
+    assert w.heart_rate_max == 172
+
+
+def test_heart_rate_max_is_none_when_absent(app_ctx):
+    w = _map_result_to_workout(_raw_result())
+    assert w.heart_rate_max is None
+
+
 def test_pace_calculated_from_time_and_distance(app_ctx):
     # pace = (time_seconds / distance_meters) * 500
     w = _map_result_to_workout(_raw_result(distance=2000, time=4800))
