@@ -710,7 +710,9 @@ def _milestone_biggest_day(rows) -> Optional[Insight]:
 def _milestone_time_on_erg(rows) -> Optional[Insight]:
     if len(rows) < MIN_TOTAL:
         return None
-    total_sec = sum(w.time_seconds or 0 for w in rows)
+    # total_time_seconds = work + rest-interval time — real time spent rowing,
+    # same reasoning as total_distance_meters (never mixed into pace/PBs).
+    total_sec = sum(w.total_time_seconds or 0 for w in rows)
     hours = total_sec / 3600
     if hours < 10:
         return None
@@ -727,6 +729,50 @@ def _milestone_time_on_erg(rows) -> Optional[Insight]:
         facts={"hours": round(hours, 1), "total_seconds": total_sec},
         chart={"type": "stat", "value": f"{hours:,.0f}", "unit": "hours",
                "sub": f"≈ {days_equiv:.0f} days of rowing"},
+    )
+
+
+def _milestone_total_workouts(rows) -> Optional[Insight]:
+    if len(rows) < MIN_TOTAL:
+        return None
+    count = len(rows)
+    first = min(w.workout_date for w in rows)
+    return Insight(
+        key="milestone_total_workouts",
+        category="milestones",
+        confidence="strong",
+        headline=f"{count:,} workouts logged",
+        detail=(
+            f"Every session on the erg since {first.strftime('%B %Y')}, all {count:,} of them."
+        ),
+        facts={"workouts": count, "since": first.isoformat()},
+        chart={"type": "stat", "value": f"{count:,}", "unit": "workouts",
+               "sub": f"since {first.strftime('%b %Y')}"},
+    )
+
+
+def _milestone_total_calories(rows) -> Optional[Insight]:
+    if len(rows) < MIN_TOTAL:
+        return None
+    # No rest-period calorie figure exists in C2's API (no such field on the
+    # interval or top-level payload) — this is exactly what total_calories
+    # already was, summed.
+    total_cal = sum(w.total_calories or 0 for w in rows)
+    if total_cal <= 0:
+        return None
+    thousands = total_cal / 1000
+    return Insight(
+        key="milestone_total_calories",
+        category="milestones",
+        confidence="strong",
+        headline=f"{total_cal:,} calories burned",
+        detail=(
+            f"{thousands:,.1f}k calories across every logged session — "
+            f"roughly {round(total_cal / 2000):,} days' worth of food energy."
+        ),
+        facts={"calories": total_cal},
+        chart={"type": "stat", "value": f"{total_cal:,}", "unit": "cal",
+               "sub": f"{thousands:,.1f}k total"},
     )
 
 
@@ -768,6 +814,8 @@ RULES = [
     _milestone_longevity,
     _milestone_biggest_day,
     _milestone_time_on_erg,
+    _milestone_total_workouts,
+    _milestone_total_calories,
     _milestone_longest_streak,
 ]
 

@@ -25,6 +25,8 @@ from insights_engine import (
     _milestone_longevity,
     _milestone_biggest_day,
     _milestone_time_on_erg,
+    _milestone_total_workouts,
+    _milestone_total_calories,
     _milestone_longest_streak,
 )
 
@@ -182,6 +184,8 @@ def test_milestones_stay_silent_below_the_history_floor():
     assert _milestone_longevity(rows) is None
     assert _milestone_biggest_day(rows) is None
     assert _milestone_longest_streak(rows) is None
+    assert _milestone_total_workouts(rows) is None
+    assert _milestone_total_calories(rows) is None
 
 
 def test_milestone_longevity_reports_span_and_count():
@@ -215,3 +219,30 @@ def test_milestone_time_on_erg_sums_hours():
     ins = _milestone_time_on_erg(rows)
     assert ins is not None
     assert ins.facts["hours"] == 60.0
+
+
+def test_milestone_time_on_erg_includes_rest_time():
+    # 60 × (1h work + 10min rest) — rest counts toward real time on the erg.
+    rows = _sixty_daily_rows(time_seconds=3600, rest_time_seconds=600)
+    ins = _milestone_time_on_erg(rows)
+    assert ins is not None
+    assert ins.facts["hours"] == 70.0
+
+
+def test_milestone_total_workouts_counts_every_session():
+    rows = _sixty_daily_rows()
+    ins = _milestone_total_workouts(rows)
+    assert ins is not None
+    assert ins.facts["workouts"] == 60
+
+
+def test_milestone_total_calories_sums_every_session():
+    rows = _sixty_daily_rows(total_calories=300)     # 60 × 300
+    ins = _milestone_total_calories(rows)
+    assert ins is not None
+    assert ins.facts["calories"] == 18_000
+
+
+def test_milestone_total_calories_silent_without_data():
+    rows = _sixty_daily_rows()     # total_calories defaults to None
+    assert _milestone_total_calories(rows) is None

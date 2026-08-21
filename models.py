@@ -23,7 +23,8 @@ class Workout(db.Model):
     id                = db.Column(db.Integer, primary_key=True)   # C2 Log ID
     workout_date      = db.Column(db.Date, nullable=False, index=True)
     workout_type      = db.Column(db.Text, nullable=False, default="rower")
-    time_seconds      = db.Column(db.Integer)                     # total elapsed seconds
+    time_seconds      = db.Column(db.Integer)                     # work-interval time only — drives pace/PBs, never mixed with rest
+    rest_time_seconds = db.Column(db.Integer, nullable=True)      # time spent on rest-interval rowing (C2 "rest_time"); NULL = unknown, 0 = confirmed no rest
     distance_meters   = db.Column(db.Integer)                     # work-interval distance only — drives pace/PBs, never mixed with rest
     rest_distance_meters = db.Column(db.Integer, nullable=True)   # light rowing between intervals (C2 "rest_distance"); NULL = unknown (CSV import / no raw_json), 0 = confirmed no rest
     avg_pace_seconds  = db.Column(db.Integer)                     # 500m split in seconds
@@ -46,11 +47,25 @@ class Workout(db.Model):
         """Work distance plus any rest-interval distance — the real distance rowed.
         Used for lifetime/volume totals (badges, journeys, challenges); never for
         pace or PBs, which stay work-only so rest doesn't dilute effort pace."""
-        return self.distance_meters + (self.rest_distance_meters or 0)
+        return (self.distance_meters or 0) + (self.rest_distance_meters or 0)
 
     @total_distance_meters.expression
     def total_distance_meters(cls):
-        return cls.distance_meters + func.coalesce(cls.rest_distance_meters, 0)
+        return func.coalesce(cls.distance_meters, 0) + func.coalesce(cls.rest_distance_meters, 0)
+
+    @hybrid_property
+    def total_time_seconds(self):
+        """Work time plus any rest-interval time — real time spent rowing.
+        Used for lifetime totals; never for pace or PBs, which stay work-only."""
+        return (self.time_seconds or 0) + (self.rest_time_seconds or 0)
+
+    @total_time_seconds.expression
+    def total_time_seconds(cls):
+        return func.coalesce(cls.time_seconds, 0) + func.coalesce(cls.rest_time_seconds, 0)
+
+    @total_time_seconds.expression
+    def total_time_seconds(cls):
+        return cls.time_seconds + func.coalesce(cls.rest_time_seconds, 0)
 
     @property
     def avg_pace_formatted(self):

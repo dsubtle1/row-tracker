@@ -55,7 +55,7 @@ def make_workout(app_ctx):
 
     def _make(id, workout_date=None, distance_meters=2000, time_seconds=480,
               avg_pace_seconds=None, avg_stroke_rate=None, total_calories=None,
-              rest_distance_meters=0, workout_type="rower", commit=True):
+              rest_distance_meters=0, rest_time_seconds=0, workout_type="rower", commit=True):
         if workout_date is None:
             workout_date = date.today()
         if avg_pace_seconds is None and distance_meters:
@@ -68,6 +68,7 @@ def make_workout(app_ctx):
             time_seconds=time_seconds,
             distance_meters=distance_meters,
             rest_distance_meters=rest_distance_meters,
+            rest_time_seconds=rest_time_seconds,
             avg_pace_seconds=avg_pace_seconds,
             avg_stroke_rate=avg_stroke_rate,
             total_calories=total_calories,
@@ -146,7 +147,7 @@ def full_make_workout(full_app_ctx):
 
     def _make(id, workout_date=None, distance_meters=2000, time_seconds=480,
               avg_pace_seconds=None, avg_stroke_rate=None, total_calories=None,
-              rest_distance_meters=0, workout_type="rower", commit=True):
+              rest_distance_meters=0, rest_time_seconds=0, workout_type="rower", commit=True):
         if workout_date is None:
             workout_date = date.today()
         if avg_pace_seconds is None and distance_meters:
@@ -159,6 +160,7 @@ def full_make_workout(full_app_ctx):
             time_seconds=time_seconds,
             distance_meters=distance_meters,
             rest_distance_meters=rest_distance_meters,
+            rest_time_seconds=rest_time_seconds,
             avg_pace_seconds=avg_pace_seconds,
             avg_stroke_rate=avg_stroke_rate,
             total_calories=total_calories,

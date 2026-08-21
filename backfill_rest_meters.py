@@ -1,11 +1,12 @@
 """
 backfill_rest_meters.py — One-time migration script
 =====================================================
-Adds the rest_distance_meters column (light rowing between intervals,
-tracked separately by Concept2 as "rest_distance" and never included in
-the top-level "distance" field the sync previously read) and backfills it
-by re-fetching every rower result from the live Concept2 API and matching
-by workout ID.
+Adds the rest_distance_meters and rest_time_seconds columns (light rowing
+between intervals, and the time spent doing it — tracked separately by
+Concept2 as "rest_distance"/"rest_time" and never included in the
+top-level "distance"/"time" fields the sync previously read) and backfills
+both by re-fetching every rower result from the live Concept2 API and
+matching by workout ID.
 
 Deliberately does NOT source this from local raw_json: most historical
 workouts here were CSV-imported (raw_json unavailable), and — due to a
@@ -15,9 +16,10 @@ real SQL NULL), so a raw_json-based backfill would silently only recover
 data for the recently API-synced minority. The live API is authoritative
 and has it for every workout regardless of how it first got into Row Tracker.
 
-distance_meters / avg_pace_seconds / PBs are untouched — they stay
-work-interval-only. rest_distance_meters only feeds Workout.total_distance_meters,
-which lifetime/volume totals (badges, journeys, challenges) now use instead.
+distance_meters / time_seconds / avg_pace_seconds / PBs are untouched — they stay
+work-interval-only. rest_distance_meters and rest_time_seconds only feed
+Workout.total_distance_meters / total_time_seconds, which lifetime/volume
+totals (badges, journeys, challenges, Insights milestones) now use instead.
 
 Because five volume badges and the Holland journey were already earned/completed
 under the old work-only totals, this also retroactively corrects their
@@ -48,18 +50,18 @@ _VOLUME_MILESTONE_BADGES = {
 }
 
 
-def _add_column_if_missing(db):
+def _add_column_if_missing(db, column, ddl_type="INTEGER"):
     cols = [row[1] for row in db.session.execute(text("PRAGMA table_info(workouts)")).fetchall()]
-    if "rest_distance_meters" in cols:
-        logger.info("rest_distance_meters column already exists — skipping ALTER TABLE.")
+    if column in cols:
+        logger.info(f"{column} column already exists — skipping ALTER TABLE.")
         return
-    db.session.execute(text("ALTER TABLE workouts ADD COLUMN rest_distance_meters INTEGER"))
+    db.session.execute(text(f"ALTER TABLE workouts ADD COLUMN {column} {ddl_type}"))
     db.session.commit()
-    logger.info("Added rest_distance_meters column.")
+    logger.info(f"Added {column} column.")
 
 
-def _fetch_all_rest_distances(app):
-    """Re-fetch every rower result from the live C2 API. Returns {c2_id: rest_distance}."""
+def _fetch_all_rest_values(app):
+    """Re-fetch every rower result from the live C2 API. Returns {c2_id: (rest_distance, rest_time_seconds)}."""
     from c2_api import C2ApiClient
 
     client = C2ApiClient(
@@ -74,11 +76,17 @@ def _fetch_all_rest_distances(app):
     if client.last_error:
         raise RuntimeError(f"C2 API fetch failed: {client.last_error}")
 
-    return {r["id"]: int(r.get("rest_distance", 0) or 0) for r in raw_results}
+    return {
+        r["id"]: (
+            int(r.get("rest_distance", 0) or 0),
+            round((r.get("rest_time", 0) or 0) / 10),
+        )
+        for r in raw_results
+    }
 
 
 def _backfill_values(db, Workout, app):
-    rest_by_id = _fetch_all_rest_distances(app)
+    rest_by_id = _fetch_all_rest_values(app)
     logger.info(f"Fetched {len(rest_by_id)} rower results from the live C2 API.")
 
     workouts = Workout.query.filter_by(workout_type="rower").all()
@@ -91,9 +99,15 @@ def _backfill_values(db, Workout, app):
             # season Concept2 no longer serves) — leave as-is (0/unknown).
             not_found += 1
             continue
-        rest = rest_by_id[w.id]
-        if w.rest_distance_meters != rest:
-            w.rest_distance_meters = rest
+        rest_dist, rest_time = rest_by_id[w.id]
+        changed = False
+        if w.rest_distance_meters != rest_dist:
+            w.rest_distance_meters = rest_dist
+            changed = True
+        if w.rest_time_seconds != rest_time:
+            w.rest_time_seconds = rest_time
+            changed = True
+        if changed:
             updated += 1
         else:
             skipped += 1
@@ -175,7 +189,8 @@ def run_backfill():
 
     app = create_app()
     with app.app_context():
-        _add_column_if_missing(db)
+        _add_column_if_missing(db, "rest_distance_meters")
+        _add_column_if_missing(db, "rest_time_seconds")
         updated = _backfill_values(db, Workout, app)
 
         if updated:

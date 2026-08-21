@@ -9,6 +9,22 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.12.0] — 2026-08-21
+
+### Added
+- **Two new Insights Milestones: total workouts logged and total calories burned.** Lifetime
+  counterparts to the existing "years rowing" and "hours on the erg" cards, same "always-true
+  fun fact" treatment (gated only on having enough history, no significance test). Concept2 has
+  no rest-period calorie figure anywhere in its API, so total calories is a plain sum — no
+  work/rest split to worry about there, unlike distance and time.
+- **New `rest_time_seconds` column, mirroring `rest_distance_meters` (0.11.0).** Concept2 tracks
+  rest-interval time separately from work-interval time the same way it does distance —
+  `Workout.total_time_seconds` (work + rest) now feeds the "hours on the erg" milestone, so a
+  session with light rowing between intervals counts all of it as real time spent rowing. Pace
+  and PBs stay on work-only `time_seconds`, untouched, same reasoning as the meters fix.
+- `backfill_rest_meters.py` now backfills both `rest_distance_meters` and `rest_time_seconds` in
+  the same live-API pass.
+
 ## [0.11.2] — 2026-08-20
 
 ### Added

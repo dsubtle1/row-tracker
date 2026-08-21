@@ -269,9 +269,12 @@ def _map_result_to_workout(result: dict):
     # non-interval workouts, so default to 0 rather than leaving it unknown).
     distance_m = result.get("distance", 0) or 0
     rest_distance_m = result.get("rest_distance", 0) or 0
-    # C2 time is in tenths of a second
-    time_raw   = result.get("time", 0) or 0
-    time_s     = round(time_raw / 10) if time_raw else None
+    # C2 time is in tenths of a second. "rest_time" is the rest-interval
+    # counterpart to "rest_distance" above — same work/rest split, same reason.
+    time_raw      = result.get("time", 0) or 0
+    time_s        = round(time_raw / 10) if time_raw else None
+    rest_time_raw = result.get("rest_time", 0) or 0
+    rest_time_s   = round(rest_time_raw / 10) if rest_time_raw else 0
 
     # Pace — not provided by C2, calculated from time and distance
     # pace = (time_seconds / distance_meters) * 500
@@ -301,6 +304,7 @@ def _map_result_to_workout(result: dict):
         workout_date     = workout_date,
         workout_type     = "rower",
         time_seconds     = time_s,
+        rest_time_seconds = rest_time_s,
         distance_meters  = int(distance_m),
         rest_distance_meters = int(rest_distance_m),
         avg_pace_seconds = pace_s,
