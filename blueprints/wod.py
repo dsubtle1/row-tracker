@@ -41,6 +41,8 @@ def _enrich(row: WodHistory) -> dict:
         "coaching_notes": j.get("coaching_notes", ""),
         "total_work_meters":  j.get("total_work_meters", 0),
         "total_work_seconds": j.get("total_work_seconds", 0),
+        "cawr":          j.get("cawr"),
+        "cawr_note":     j.get("cawr_note", ""),
         "actual_workout": row.actual_workout,
     }
 

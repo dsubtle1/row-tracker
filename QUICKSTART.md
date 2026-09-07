@@ -64,6 +64,8 @@ Click **WOD** in the navigation bar.
 
 Row Tracker generates a daily Workout of the Day based on your recent training. Pace targets are set automatically from your 2k personal best.
 
+If your training load (CAWR, see Step 4) is unusually high or low, the WOD card shows a short note explaining why today's session was nudged easier or toward quality work.
+
 If today's WOD doesn't suit you, you can:
 - Click **Force Regenerate** for a new one
 - Browse the **WOD Library** and assign any workout manually

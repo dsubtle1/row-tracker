@@ -9,6 +9,17 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.14.0] — 2026-09-06
+
+### Added
+- **CAWR training-load transparency on the WOD page.** The periodization engine has always computed
+  your acute:chronic workload ratio and silently swapped today's session to steady-state when it's
+  elevated (or biased it toward interval/threshold when it's low) — but never said why. The WOD
+  card now shows the CAWR value and a plain-language note whenever it's available, so a session
+  swap is explainable instead of mysterious. No schema change: `WodSpec` gained `cawr`/`cawr_note`
+  fields that ride along in the existing `wod_history.wod_json` blob. Random-generator WODs are
+  unaffected — that path never used periodization or CAWR to begin with.
+
 ## [0.13.0] — 2026-08-21
 
 ### Added

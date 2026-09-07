@@ -77,6 +77,9 @@ It lets you generate a one-off workout by specifying intensity (light / medium /
 **What does the WOD History calendar show?**
 Click View all under History on the WOD page to open a month-by-month calendar of every day a WOD was generated. Days are colour-coded for pending vs. completed, and clicking any day opens its workout title, target pace, zone, and status. Use Prev/Next to browse other months, including previous years.
 
+**Why does my WOD sometimes say "training load elevated" or "training load is low"?**
+The engine tracks your CAWR (acute:chronic workload ratio — your last 7 days of volume vs. your last 42 days) and quietly uses it to steer today's session: a high ratio forces an easy steady-state day so you can recover, a low ratio biases toward interval or threshold work to rebuild fitness. The note on the WOD card just makes that visible — same logic as always, it used to happen with no explanation. It only appears once you have 42+ days of workout history for the ratio to be computed.
+
 **Can Claude write my coaching notes?**
 Optionally. Set `USE_AI_WOD=true` and add an `ANTHROPIC_API_KEY` in your `.env` and Claude Haiku will write the warm-up, cool-down, and coaching notes for each WOD, tailored to your recent training load, effort request, or any notes you type into the Random WOD Generator. The workout structure itself (intervals, pace targets) is always rule-based and unaffected. If the API key isn't set, or the request fails for any reason, Row Tracker silently falls back to the built-in static coaching text — this feature is off by default and never blocks WOD generation.
 

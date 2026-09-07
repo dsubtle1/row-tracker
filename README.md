@@ -80,6 +80,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Rule-based periodization engine — reads last 28 days to set training phase
 - Target pace calculated from your 2k PB with zone offsets
 - Warm-up, main set, cool-down, and coaching notes generated daily
+- Training-load transparency — today's CAWR value is shown on the WOD card whenever it swaps in an easier or harder session for you, so the "why" is never hidden
 - Optional AI-assisted coaching narrative (`USE_AI_WOD=true` + `ANTHROPIC_API_KEY`) — Claude Haiku writes the warm-up/cool-down/coaching text for each WOD, tailored to your recent training load; the structured workout itself stays rule-based, and it falls back to the static text automatically if the API is unavailable
 - Random WOD generator — choose intensity, effort level, and workout type; your free-text notes are passed to the AI coach when enabled
 - 27 distinct workout templates

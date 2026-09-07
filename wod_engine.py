@@ -66,6 +66,8 @@ class WodSpec:
     coaching_notes: str
     total_work_meters: int
     total_work_seconds: int
+    cawr:      Optional[float] = None
+    cawr_note: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -81,6 +83,8 @@ class WodSpec:
             "coaching_notes":       self.coaching_notes,
             "total_work_meters":    self.total_work_meters,
             "total_work_seconds":   self.total_work_seconds,
+            "cawr":                 self.cawr,
+            "cawr_note":            self.cawr_note,
         }
 
 
@@ -505,6 +509,26 @@ def _choose_session_type(cawr: Optional[float]) -> str:
     return random.choice(candidates)
 
 
+def _cawr_note(cawr: Optional[float], force_type: Optional[str]) -> str:
+    """
+    Human-readable explanation of the CAWR signal, if any. Only claims the
+    signal *drove* today's session type when periodization actually ran
+    (force_type bypasses _choose_session_type entirely, so the causal
+    framing would be misleading there).
+    """
+    if cawr is None:
+        return ""
+    if cawr > 1.3:
+        if force_type is None:
+            return f"Training load elevated (CAWR {cawr}) — kept today easy to help you recover."
+        return f"Training load elevated (CAWR {cawr})."
+    if cawr < 0.8:
+        if force_type is None:
+            return f"Training load is low (CAWR {cawr}) — leaning toward quality work today."
+        return f"Training load is low (CAWR {cawr})."
+    return f"Training load normal (CAWR {cawr})."
+
+
 def _pick_wod_key(session_type: str) -> str:
     """Pick a specific WOD from the library for the given session type."""
     by_type = {
@@ -605,6 +629,8 @@ def generate_wod(force_type: Optional[str] = None) -> WodSpec:
         coaching_notes      = defn["coaching"],
         total_work_meters   = total_meters,
         total_work_seconds  = total_seconds,
+        cawr                = cawr,
+        cawr_note           = _cawr_note(cawr, force_type),
     )
 
     last_test = _last_test_piece_date()
