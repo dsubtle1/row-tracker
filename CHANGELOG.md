@@ -9,6 +9,16 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.17.0] — 2026-09-07
+
+### Added
+- **ETA projections on the four lifetime-metres badges** (First 100k, Quarter Million, Half
+  Million, One Million). While locked, each now shows a rough unlock date projected from your
+  rolling 28-day average pace — the same calculation the virtual journeys already use for
+  waypoint ETAs, now shared via `badge_engine.weekly_avg_meters()` instead of copy-pasted four
+  times across the journey routes in `blueprints/gamification.py`. No ETA shown when recent pace
+  is flat or the target's already passed.
+
 ## [0.16.0] — 2026-09-07
 
 ### Added

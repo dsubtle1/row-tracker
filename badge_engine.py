@@ -406,10 +406,32 @@ def evaluate_badges():
 # distance or streak count does, so they stay a plain "Locked" label.
 # ---------------------------------------------------------------------------
 
+def weekly_avg_meters(days=28):
+    """
+    28-day rolling average metres/week (work + rest). Same calc the virtual
+    journey ETAs already use (blueprints/gamification.py) — exposed here so
+    badge progress can reuse it too instead of a second copy.
+    """
+    cutoff = date.today() - timedelta(days=days)
+    recent_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
+        Workout.workout_date >= cutoff, Workout.workout_type == "rower",
+    ).scalar() or 0
+    return (recent_m / days) * 7
+
+
+def _eta_for_lifetime_target(current, target):
+    """ISO date this lifetime badge is projected to unlock at, or None."""
+    remaining = max(target - current, 0)
+    avg = weekly_avg_meters()
+    if avg <= 0 or remaining <= 0:
+        return None
+    return (date.today() + timedelta(weeks=remaining / avg)).isoformat()
+
+
 def _make_lifetime_progress(target):
     def fn():
         total = db.session.query(func.sum(Workout.total_distance_meters)).scalar() or 0
-        return {"current": total, "target": target}
+        return {"current": total, "target": target, "eta": _eta_for_lifetime_target(total, target)}
     return fn
 
 def _make_best_session_progress(target):

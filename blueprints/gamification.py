@@ -6,7 +6,7 @@ Phase 3C (versus board) adds to this file next.
 
 from flask import Blueprint, render_template, jsonify
 from models import db, Badge, Workout, PersonalBest, Journey
-from badge_engine import evaluate_badges, BADGE_ICONS, get_badge_progress
+from badge_engine import evaluate_badges, BADGE_ICONS, get_badge_progress, weekly_avg_meters
 from datetime import date, timedelta
 from sqlalchemy import func, extract
 
@@ -266,11 +266,7 @@ def _get_rhine_data():
         RHINE_PATH_POINTS, waypoints, pct, side_fn=_rhine_waypoint_side,
     )
 
-    cutoff = date.today() - timedelta(days=28)
-    recent_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
-        Workout.workout_date >= cutoff, Workout.workout_type == "rower",
-    ).scalar() or 0
-    weekly_avg_m = (recent_m / 28) * 7
+    weekly_avg_m = weekly_avg_meters()
     remaining_m = max(RHINE_TOTAL_M - journey_m, 0)
     eta = (date.today() + timedelta(weeks=remaining_m / weekly_avg_m)) if weekly_avg_m > 0 and remaining_m > 0 else None
 
@@ -382,11 +378,7 @@ def _get_holland_data():
         HOLLAND_PATH_POINTS, waypoints, pct, side_fn=_holland_waypoint_side,
     )
 
-    cutoff = date.today() - timedelta(days=28)
-    recent_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
-        Workout.workout_date >= cutoff, Workout.workout_type == "rower",
-    ).scalar() or 0
-    weekly_avg_m = (recent_m / 28) * 7
+    weekly_avg_m = weekly_avg_meters()
     remaining_m = max(HOLLAND_TOTAL_M - journey_m, 0)
     eta = (date.today() + timedelta(weeks=remaining_m / weekly_avg_m)) if weekly_avg_m > 0 and remaining_m > 0 else None
 
@@ -494,11 +486,7 @@ def _get_route66_data():
 
     waypoints, marker = _layout_horizontal_route(ROUTE66_PATH_POINTS, waypoints, pct)
 
-    cutoff = date.today() - timedelta(days=28)
-    recent_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
-        Workout.workout_date >= cutoff, Workout.workout_type == "rower",
-    ).scalar() or 0
-    weekly_avg_m = (recent_m / 28) * 7
+    weekly_avg_m = weekly_avg_meters()
     remaining_m = max(ROUTE66_TOTAL_M - journey_m, 0)
     eta = (date.today() + timedelta(weeks=remaining_m / weekly_avg_m)) if weekly_avg_m > 0 and remaining_m > 0 else None
 
@@ -606,11 +594,7 @@ def _get_transcan_data():
 
     waypoints, marker = _layout_horizontal_route(TRANSCAN_PATH_POINTS, waypoints, pct)
 
-    cutoff = date.today() - timedelta(days=28)
-    recent_m = db.session.query(func.sum(Workout.total_distance_meters)).filter(
-        Workout.workout_date >= cutoff, Workout.workout_type == "rower",
-    ).scalar() or 0
-    weekly_avg_m = (recent_m / 28) * 7
+    weekly_avg_m = weekly_avg_meters()
     remaining_m = max(TRANSCAN_TOTAL_M - journey_m, 0)
     eta = (date.today() + timedelta(weeks=remaining_m / weekly_avg_m)) if weekly_avg_m > 0 and remaining_m > 0 else None
 

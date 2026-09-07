@@ -112,6 +112,9 @@ Badge evaluation runs after each sync. Try triggering a manual sync from the Das
 **Why do some locked badges show a progress bar and others just say "Locked"?**
 Badges with a single clear numeric target (lifetime metres, best single-session distance, streak length, or best 7-day workout count) show a progress bar toward that target. Badges based on a one-off condition (like a specific pace threshold or a PB improvement) don't reduce to a meaningful percentage, so they stay a plain "Locked" until earned.
 
+**What's the ETA shown on some locked badges?**
+The four lifetime-metres badges (First 100k, Quarter Million, Half Million, One Million) project a rough unlock date from your rolling 28-day average pace — the same calculation the virtual journeys use for their waypoint ETAs. It disappears if your recent pace is flat (no data to project from) and updates as your pace changes, so treat it as a rough "at this rate" estimate, not a promise.
+
 **What are Season Challenges?**
 Quarterly targets that reset on January 1, April 1, July 1, and October 1. They include a distance target, a PB season checklist, a consistency challenge, and a monthly volume goal.
 

@@ -1425,6 +1425,11 @@ code {
   font-variant-numeric: tabular-nums;
 }
 
+.badge-progress-eta {
+  font-size: 0.65rem;
+  color: var(--color-text-muted, #7a82a0);
+}
+
 /* Section title with count */
 .section-title {
   font-size: 1rem;
@@ -2405,6 +2410,7 @@ code {
 [data-theme="light"] .dms-label,
 [data-theme="light"] .badge-locked-label,
 [data-theme="light"] .badge-progress-label,
+[data-theme="light"] .badge-progress-eta,
 [data-theme="light"] .waypoint-modal-km,
 [data-theme="light"] .waypoint-modal-status.wpt-locked,
 [data-theme="light"] .wod-section-label,

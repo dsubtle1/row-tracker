@@ -44,6 +44,9 @@
           <div class="badge-progress-label">
             {{ "{:,}".format(badge.progress.current) }} / {{ "{:,}".format(badge.progress.target) }}
           </div>
+          {% if badge.progress.eta %}
+          <div class="badge-progress-eta">ETA at current pace: {{ badge.progress.eta }}</div>
+          {% endif %}
         </div>
       {% else %}
         <div class="badge-locked-label">Locked</div>

@@ -14,6 +14,8 @@ import badge_engine
 from badge_engine import (
     seed_badges,
     evaluate_badges,
+    get_badge_progress,
+    weekly_avg_meters,
     BADGE_DEFINITIONS,
     CHECK_FUNCTIONS,
     _check_sub_2_06_pace,
@@ -362,3 +364,54 @@ def test_evaluate_badges_survives_a_failing_check(app_ctx, monkeypatch):
 def test_every_badge_definition_has_a_check_function():
     for badge_key, _, _ in BADGE_DEFINITIONS:
         assert badge_key in CHECK_FUNCTIONS, f"missing check function for {badge_key}"
+
+
+# ---------------------------------------------------------------------------
+# Lifetime badge progress — ETA projection
+# ---------------------------------------------------------------------------
+
+def test_weekly_avg_meters_zero_with_no_workouts(app_ctx):
+    assert weekly_avg_meters() == 0
+
+
+def test_weekly_avg_meters_scales_28_day_total_to_a_week(app_ctx, make_workout, days_ago):
+    # 14,000m across the last 28 days -> 3,500m/week average.
+    make_workout(id=1, distance_meters=14_000, time_seconds=3000, workout_date=days_ago(10))
+    assert weekly_avg_meters() == 3500
+
+
+def test_weekly_avg_meters_ignores_workouts_outside_the_window(app_ctx, make_workout, days_ago):
+    make_workout(id=1, distance_meters=100_000, time_seconds=20_000, workout_date=days_ago(60))
+    assert weekly_avg_meters() == 0
+
+
+def test_lifetime_progress_no_eta_with_no_recent_pace(app_ctx, make_workout, days_ago):
+    # Well past the 28-day window, so weekly_avg_meters() is 0 -> no ETA to compute.
+    make_workout(id=1, distance_meters=50_000, time_seconds=10_000, workout_date=days_ago(60))
+    progress = get_badge_progress("first_100k")
+    assert progress["current"] == 50_000
+    assert progress["eta"] is None
+
+
+def test_lifetime_progress_eta_projects_forward_at_current_pace(app_ctx, make_workout, days_ago):
+    # 70,000m in the last 28 days -> 17,500m/week. 30,000m remaining to 100k
+    # -> ~1.71 weeks out, so the ETA must land within the next 2 weeks.
+    make_workout(id=1, distance_meters=70_000, time_seconds=14_000, workout_date=days_ago(10))
+    progress = get_badge_progress("first_100k")
+    assert progress["eta"] is not None
+    eta_date = date.fromisoformat(progress["eta"])
+    assert date.today() < eta_date <= date.today() + timedelta(weeks=2)
+
+
+def test_lifetime_progress_no_eta_once_target_already_reached(app_ctx, make_workout, days_ago):
+    make_workout(id=1, distance_meters=150_000, time_seconds=30_000, workout_date=days_ago(5))
+    progress = get_badge_progress("first_100k")
+    assert progress["current"] >= 100_000
+    assert progress["eta"] is None
+
+
+def test_best_session_progress_has_no_eta_key(app_ctx, make_workout, days_ago):
+    """10k_club is a best-single-session badge — no 'remaining' concept, so no ETA."""
+    make_workout(id=1, distance_meters=12_000, time_seconds=2400, workout_date=days_ago(1))
+    progress = get_badge_progress("10k_club")
+    assert "eta" not in progress
