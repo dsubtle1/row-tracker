@@ -305,13 +305,20 @@
       <details class="faq-item">
         <summary class="faq-question">What are the virtual journeys?</summary>
         <div class="faq-answer">
-          Four independent routes you can row your way along using real workout metres:
+          Four independent routes you can row your way along using real workout metres, plotted on a real map (Leaflet + OpenStreetMap) with every waypoint at its actual real-world coordinates:
           <ul class="faq-list">
             <li><strong>Rhine River</strong> — Basel to Rotterdam, 820 km, 14 waypoints</li>
             <li><strong>Holland Tour</strong> — Amsterdam scenic loop, 550 km, 17 waypoints</li>
-            <li><strong>Trans-Canada Highway</strong> — Victoria BC to St. John's NL, 7,821 km, 23 waypoints</li>
-            <li><strong>Route 66</strong> — Chicago, IL to Santa Monica, CA, 3,940 km</li>
+            <li><strong>Trans-Canada Highway</strong> — Victoria BC to St. John's NL, 7,821 km, 24 waypoints</li>
+            <li><strong>Route 66</strong> — Chicago, IL to Santa Monica, CA, 3,940 km, 24 waypoints</li>
           </ul>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Does the journey map need an internet connection?</summary>
+        <div class="faq-answer">
+          Yes, for the map tiles specifically — they're fetched live from OpenStreetMap on every view, unlike the rest of the app, which works fully offline. If tiles can't load (no network, air-gapped homelab), the map area will just appear blank; your progress, stats, and the waypoint list below it are unaffected either way, since those come from your own server.
         </div>
       </details>
 

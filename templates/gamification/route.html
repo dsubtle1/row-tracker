@@ -51,41 +51,8 @@
 {# Show completed map below #}
 <div class="card mb-4">
   <div class="card-body">
-   <div class="map-scroll-wrap">
-    <svg class="rhine-map" viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="riverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="var(--color-teal,#00829b)" stop-opacity="0.9"/>
-          <stop offset="100%" stop-color="var(--color-teal,#00829b)" stop-opacity="0.4"/>
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      <rect width="700" height="520" fill="transparent"/>
-      <path class="rhine-river-bg"
-        d="M 350,470 C 320,420 380,380 340,330 C 300,280 370,240 330,190 C 290,140 360,100 340,50"
-        fill="none" stroke="var(--color-border,#2e3350)" stroke-width="12" stroke-linecap="round"/>
-      <path class="rhine-river"
-        d="M 350,470 C 320,420 380,380 340,330 C 300,280 370,240 330,190 C 290,140 360,100 340,50"
-        fill="none" stroke="url(#riverGrad)" stroke-width="6" stroke-linecap="round"
-        stroke-dasharray="800, 800"/>
-      {% for wp in rhine.waypoints %}
-        <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="true">
-          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="12" fill="transparent"/>
-          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="7"
-            fill="var(--color-teal,#00829b)" stroke="var(--color-surface,#1e2130)" stroke-width="2" filter="url(#glow)"/>
-          {% if wp.label_right %}
-            <text x="{{ wp.x + 14 }}" y="{{ wp.y + 4 }}" class="wp-label wp-passed">{{ wp.emoji }} {{ wp.name }}</text>
-          {% else %}
-            <text x="{{ wp.x - 14 }}" y="{{ wp.y + 4 }}" class="wp-label wp-passed" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
-          {% endif %}
-        </g>
-      {% endfor %}
-      <text x="340" y="28" class="position-label" text-anchor="middle">🏆 Rotterdam reached!</text>
-    </svg>
-   </div>
+    <div id="rhineMap" class="journey-map"></div>
+    <p class="chart-note text-center mt-2">🏆 Rotterdam reached!</p>
   </div>
 </div>
 
@@ -127,53 +94,11 @@
   </div>
 </div>
 
-{# SVG map — map coordinates and label placement (side + marker clearance,
-   so "You are here" doesn't land on top of a nearby waypoint label) are
-   computed in blueprints/gamification.py, see _layout_side_alternating_route. #}
-{% from "gamification/_position_marker.html" import position_marker_side %}
+{# Real map — waypoint lat/lon and the interpolated "you are here" marker
+   are computed in blueprints/gamification.py, see _layout_geo_route. #}
 <div class="card mb-4">
   <div class="card-body">
-   <div class="map-scroll-wrap">
-    <svg class="rhine-map" viewBox="0 0 700 520" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="riverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%"   stop-color="var(--color-teal,#00829b)" stop-opacity="0.9"/>
-          <stop offset="100%" stop-color="var(--color-teal,#00829b)" stop-opacity="0.4"/>
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      <rect width="700" height="520" fill="transparent"/>
-      <path class="rhine-river-bg"
-        d="M 350,470 C 320,420 380,380 340,330 C 300,280 370,240 330,190 C 290,140 360,100 340,50"
-        fill="none" stroke="var(--color-border,#2e3350)" stroke-width="12" stroke-linecap="round"/>
-      <path class="rhine-river"
-        d="M 350,470 C 320,420 380,380 340,330 C 300,280 370,240 330,190 C 290,140 360,100 340,50"
-        fill="none" stroke="url(#riverGrad)" stroke-width="6" stroke-linecap="round"
-        stroke-dasharray="{{ rhine.pct * 8 }}, 800"/>
-
-      {% for wp in rhine.waypoints %}
-        {% set passed = wp.passed %}
-        <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="{{ 'true' if passed else 'false' }}">
-          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="12" fill="transparent"/>
-          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="7"
-            fill="{% if passed %}var(--color-teal,#00829b){% else %}var(--color-border,#2e3350){% endif %}"
-            stroke="var(--color-surface,#1e2130)" stroke-width="2"
-            {% if passed %}filter="url(#glow)"{% endif %}/>
-          {% if wp.label_right %}
-            <text x="{{ wp.x + 14 }}" y="{{ wp.y + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}">{{ wp.emoji }} {{ wp.name }}</text>
-          {% else %}
-            <text x="{{ wp.x - 14 }}" y="{{ wp.y + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" text-anchor="end">{{ wp.name }} {{ wp.emoji }}</text>
-          {% endif %}
-        </g>
-      {% endfor %}
-
-      {# Current position marker #}
-      {{ position_marker_side(rhine.marker) }}
-    </svg>
-   </div>
+    <div id="rhineMap" class="journey-map"></div>
   </div>
 </div>
 
@@ -213,4 +138,16 @@
 
 {% include "gamification/_waypoint_modal.html" %}
 
+{% endblock %}
+
+{% block extra_js %}
+{% if rhine.active or rhine.complete %}
+{% include "gamification/_leaflet_cdn.html" %}
+<script src="{{ url_for('static', filename='js/journey-map.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    initJourneyMap("rhineMap", {{ rhine.waypoints | tojson }}, {{ rhine.marker | tojson if rhine.active else "null" }});
+  });
+</script>
+{% endif %}
 {% endblock %}

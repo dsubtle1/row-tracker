@@ -1588,37 +1588,47 @@ code {
 .progress-track--rhine { height: 10px; }
 .progress-fill--rhine  { background: var(--color-teal, #00829b); }
 
-/* Rhine SVG map */
-.rhine-map {
+/* Real Leaflet/OpenStreetMap journey maps */
+.journey-map {
   width: 100%;
-  max-width: 700px;
-  min-width: 600px;
-  display: block;
-  margin: 0 auto;
+  height: 420px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
 }
-/* Waypoint labels are sized in SVG user units, so they scale down with the
-   whole map — below 600px wide they become illegible. Rather than let the
-   map keep shrinking to fit a phone screen, hold it at 600px and let the
-   card scroll horizontally instead (same pattern as .wd-splits-wrap). */
-.map-scroll-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+.journey-wp-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-border, #2e3350);
+  border: 2px solid var(--color-surface, #1e2130);
+  box-sizing: border-box;
 }
-.wp-label {
-  font-size: 11px;
-  fill: var(--color-text-muted, #7a82a0);
-  font-family: inherit;
+.journey-wp-dot--passed {
+  background: var(--color-teal, #00829b);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--color-teal, #00829b) 70%, transparent);
 }
-.wp-passed {
-  fill: var(--color-text-primary, #e8ecf4);
-  font-weight: 600;
+.journey-marker-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-accent, #cdfa3f);
+  border: 3px solid var(--color-surface, #1e2130);
+  box-sizing: border-box;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--color-accent, #cdfa3f) 80%, transparent);
+  animation: journey-pulse 2s ease-in-out infinite;
 }
-.position-label {
-  font-size: 10px;
-  fill: var(--color-accent, #f4c542);
-  font-weight: 600;
-  font-family: inherit;
+@keyframes journey-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.25); }
 }
+/* Leaflet's own CSS ships zero-margin defaults on these; scope the overrides
+   here rather than editing the vendored leaflet.css. */
+.journey-map .leaflet-container { background: var(--color-surface-2); font-family: inherit; }
+.journey-map .leaflet-control-attribution {
+  background: color-mix(in srgb, var(--color-surface) 85%, transparent);
+  color: var(--color-text-muted);
+}
+.journey-map .leaflet-control-attribution a { color: var(--color-text-muted); }
 
 /* Waypoint timeline */
 .waypoint-timeline {

@@ -81,12 +81,12 @@ Click **View all →** under History to open the WOD calendar — a month-by-mon
 
 Click **Journeys** in the navigation bar.
 
-Pick one of four virtual routes and click **Start**. Every metre you row from that point counts toward your progress along the route:
+Pick one of four virtual routes and click **Start**. Every metre you row from that point counts toward your progress along the route, plotted on a real map with every waypoint at its actual coordinates:
 
 - 🇨🇭 **Rhine River** — Basel to Rotterdam, 820 km, 14 waypoints
 - 🇳🇱 **Holland Tour** — Amsterdam scenic loop, 550 km, 17 waypoints
-- 🇨🇦 **Trans-Canada Highway** — Victoria BC to St. John's NL, 7,821 km, 23 waypoints
-- 🇺🇸 **Route 66** — Chicago, IL to Santa Monica, CA, 3,940 km
+- 🇨🇦 **Trans-Canada Highway** — Victoria BC to St. John's NL, 7,821 km, 24 waypoints
+- 🇺🇸 **Route 66** — Chicago, IL to Santa Monica, CA, 3,940 km, 24 waypoints
 
 You can run all four simultaneously. Each shows your current position, upcoming waypoints, and an estimated arrival date based on your recent training pace. Click any waypoint — on the map or in the list — for a popup with more detail and a link to look it up on Wikipedia.
 

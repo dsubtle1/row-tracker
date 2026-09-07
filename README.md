@@ -101,10 +101,11 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 
 **Virtual Journeys**
 - Row the world's great routes — metres rowed move you along the route in real time
+- Real maps (Leaflet.js + OpenStreetMap) — every waypoint plots at its real-world coordinates, with a smoothed route line through them and your current position as a pulsing marker
 - Rhine River — Basel, Switzerland to Rotterdam, Netherlands · 820 km · 14 waypoints
 - Holland Tour — Amsterdam scenic loop · 550 km · 17 waypoints
-- Trans-Canada Highway — Victoria, BC to St. John's, NL · 7,821 km · 23 waypoints
-- Route 66 — Chicago, IL to Santa Monica, CA · 3,940 km
+- Trans-Canada Highway — Victoria, BC to St. John's, NL · 7,821 km · 24 waypoints
+- Route 66 — Chicago, IL to Santa Monica, CA · 3,940 km · 24 waypoints
 - Waypoint ETAs based on 28-day rolling average pace
 - Click any waypoint (map or list) for a popup with details and a Wikipedia link
 - Multiple journeys can run simultaneously
@@ -249,7 +250,7 @@ Everything in Row Tracker works fully offline with `USE_AI_WOD=false` (the defau
 
 The **Insights** page has the same optional AI layer, gated separately by `USE_AI_INSIGHTS=true` (also off by default). When enabled, Row Tracker sends only the already-computed insight facts (the patterns and their numbers — no raw workout history) to Anthropic, and gets back a short coaching paragraph that rephrases them. The insight cards themselves are computed entirely on your server and show with or without the API key.
 
-Everything else — sync, PBs, badges, journeys, charts — is between your server and the Concept2 API only, with one other exception below.
+Everything else — sync, PBs, badges, charts — is between your server and the Concept2 API only. Virtual Journeys are a partial exception: the route maps fetch tile images live from OpenStreetMap on every view (no offline cache, unlike the rest of the app), and clicking a waypoint sends its name to Wikipedia's API to fetch a summary and photo. Neither sends any of your workout data — just place names and map viewport coordinates, the same as any other web map.
 
 ---
 
@@ -298,8 +299,7 @@ row-tracker/
 
 ## Roadmap
 
-- [ ] Force-curve / drive-recovery-time visualisation per stroke (basic pace & stroke-rate-over-time chart already shipped)
-- [ ] Real map overlays for virtual journeys (Leaflet.js + OpenStreetMap)
+- [ ] Force-curve / drive-recovery-time visualisation per stroke (basic pace & stroke-rate-over-time chart already shipped) — **note:** likely blocked by data availability; Concept2's Logbook API only exposes per-stroke time/distance/pace/rate/heart-rate, no force-curve data (that's PM5-local, not in the cloud API this app talks to)
 
 ---
 

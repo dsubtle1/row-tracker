@@ -14,116 +14,34 @@ gamification_bp = Blueprint("gamification", __name__, url_prefix="/gamification"
 
 
 # ---------------------------------------------------------------------------
-# Route map label layout — shared by the horizontal routes (Trans-Canada,
-# Route 66). A handful of waypoints on every real route end up close
-# together in x once the whole map is scaled to the full route length (e.g.
-# Trans-Canada's Victoria/Nanaimo/Vancouver/Kamloops all sit inside the
-# first 5% of 7,821 km), so a fixed above/below alternation isn't enough —
-# consecutive same-side labels there collide. This fans them out: each
-# label alternates above/below as before, but if the last label placed on
-# that side is closer than min_gap, it's pushed one more "rung" outward.
+# Route map marker interpolation — shared by all four journeys now that the
+# map itself is real (Leaflet + OpenStreetMap tiles, see journey-map.js)
+# instead of a hand-tuned SVG illustration. Real maps handle marker
+# placement and zoom themselves, so this replaces what used to be a much
+# larger SVG-label-collision-avoidance system (fan-out ranks, left/right
+# alternation) — none of that applies once waypoints are real lat/lon pins
+# on real tiles.
 # ---------------------------------------------------------------------------
 
-def _fan_label_layout(coords, min_gap=42):
+def _layout_geo_route(waypoints, pct):
     """
-    coords: [(x, y), ...] in path order.
-    Returns a parallel list of {"above": bool, "rank": int} — rank 0 is the
-    closest rung, higher ranks push the label further from the dot.
+    Interpolate the current-position marker's lat/lon between whichever two
+    waypoints straddle the current progress percentage — same index-based
+    interpolation the old SVG layout used for x/y, just in lat/lon instead.
+    Waypoints themselves need no per-route layout; each already carries its
+    own real "lat"/"lon".
     """
-    layout = []
-    last_x = {True: None, False: None}
-    last_rank = {True: -1, False: -1}
-    above = True
-    for x, _y in coords:
-        if last_x[above] is not None and (x - last_x[above]) < min_gap:
-            rank = last_rank[above] + 1
-        else:
-            rank = 0
-        layout.append({"above": above, "rank": rank})
-        last_x[above] = x
-        last_rank[above] = rank
-        above = not above
-    return layout
-
-
-def _marker_label_clearance(flank_a, flank_b, closer_is_a):
-    """
-    Placement for the animated "You are here" label: opposite side from
-    whichever flanking waypoint it's closer to, and pushed one rung further
-    out than either neighbour, so it never lands in the same lane as a
-    waypoint label that happens to be nearby.
-    """
-    near = flank_a if closer_is_a else flank_b
-    return {
-        "above": not near["above"],
-        "rank": max(flank_a["rank"], flank_b["rank"]) + 1,
-    }
-
-
-def _layout_horizontal_route(path_points, waypoints, pct, min_gap=42):
-    """
-    Attach map coordinates + fanned label placement to each waypoint, and
-    compute the current-position marker's coordinates + label placement.
-    Shared by the two horizontal (west-to-east) routes — Trans-Canada and
-    Route 66 — which hit the same problem: a handful of waypoints always
-    end up close together in x once the map is scaled to the full route
-    length (e.g. Victoria/Nanaimo/Vancouver/Kamloops all sit inside the
-    first 5% of Trans-Canada's 7,821 km).
-    """
-    layout = _fan_label_layout(path_points, min_gap=min_gap)
-    out_waypoints = [
-        {**wp, "x": x, "y": y, "label_above": lay["above"], "label_rank": lay["rank"]}
-        for wp, (x, y), lay in zip(waypoints, path_points, layout)
-    ]
-
-    n = len(path_points)
+    n = len(waypoints)
     idx_f = (pct / 100) * (n - 1)
     idx_i = int(idx_f)
     idx_j = min(idx_i + 1, n - 1)
     frac = idx_f - idx_i
-    mx = path_points[idx_i][0] + frac * (path_points[idx_j][0] - path_points[idx_i][0])
-    my = path_points[idx_i][1] + frac * (path_points[idx_j][1] - path_points[idx_i][1])
-
-    marker_layout = _marker_label_clearance(layout[idx_i], layout[idx_j], closer_is_a=frac < 0.5)
+    a, b = waypoints[idx_i], waypoints[idx_j]
     marker = {
-        "x": round(mx), "y": round(my),
-        "label_above": marker_layout["above"], "label_rank": marker_layout["rank"],
+        "lat": a["lat"] + frac * (b["lat"] - a["lat"]),
+        "lon": a["lon"] + frac * (b["lon"] - a["lon"]),
     }
-    return out_waypoints, marker
-
-
-def _layout_side_alternating_route(path_points, waypoints, pct, side_fn):
-    """
-    Attach map coordinates + label side to each waypoint (side_fn decides
-    left/right per index, same rule the template used to apply inline),
-    and compute the current-position marker's placement — opposite side
-    from its nearest neighbour, pushed further out — so it doesn't land in
-    the same lane as a nearby waypoint label. Shared by Rhine (mostly
-    vertical) and Holland (loop), whose waypoints alternate sides by a
-    fixed per-index rule rather than the horizontal routes' proximity-based
-    fan-out (see _layout_horizontal_route).
-    """
-    out_waypoints = [
-        {**wp, "x": x, "y": y, "label_right": side_fn(i)}
-        for i, (wp, (x, y)) in enumerate(zip(waypoints, path_points))
-    ]
-
-    n = len(path_points)
-    idx_f = (pct / 100) * (n - 1)
-    idx_i = int(idx_f)
-    idx_j = min(idx_i + 1, n - 1)
-    frac = idx_f - idx_i
-    mx = path_points[idx_i][0] + frac * (path_points[idx_j][0] - path_points[idx_i][0])
-    my = path_points[idx_i][1] + frac * (path_points[idx_j][1] - path_points[idx_i][1])
-
-    flank_a = {"above": side_fn(idx_i), "rank": 0}
-    flank_b = {"above": side_fn(idx_j), "rank": 0}
-    marker_layout = _marker_label_clearance(flank_a, flank_b, closer_is_a=frac < 0.5)
-    marker = {
-        "x": round(mx), "y": round(my),
-        "right": marker_layout["above"], "rank": marker_layout["rank"],
-    }
-    return out_waypoints, marker
+    return waypoints, marker
 
 
 # ---------------------------------------------------------------------------
@@ -188,35 +106,21 @@ RHINE_TOTAL_KM = 820
 RHINE_TOTAL_M  = 820_000
 
 RHINE_WAYPOINTS = [
-    {"km":   0, "name": "Basel, Switzerland",          "emoji": "🇨🇭"},
-    {"km":  74, "name": "Breisach am Rhein",            "emoji": "🏰"},
-    {"km": 145, "name": "Strasbourg, France",           "emoji": "🇫🇷"},
-    {"km": 220, "name": "Karlsruhe, Germany",           "emoji": "🏛️"},
-    {"km": 293, "name": "Mannheim / Heidelberg",        "emoji": "🎓"},
-    {"km": 360, "name": "Frankfurt am Main",            "emoji": "🏙️"},
-    {"km": 430, "name": "Koblenz",                      "emoji": "⛰️"},
-    {"km": 500, "name": "Bonn",                         "emoji": "🎵"},
-    {"km": 530, "name": "Cologne — Kölner Dom",         "emoji": "⛪"},
-    {"km": 590, "name": "Düsseldorf",                   "emoji": "🎨"},
-    {"km": 640, "name": "Duisburg",                     "emoji": "⚓"},
-    {"km": 710, "name": "Arnhem, Netherlands",          "emoji": "🇳🇱"},
-    {"km": 760, "name": "Utrecht",                      "emoji": "🚲"},
-    {"km": 820, "name": "Rotterdam",                    "emoji": "🚢"},
+    {"km":   0, "name": "Basel, Switzerland",          "emoji": "🇨🇭", "lat": 47.5596, "lon": 7.5886},
+    {"km":  74, "name": "Breisach am Rhein",            "emoji": "🏰", "lat": 48.0333, "lon": 7.5833},
+    {"km": 145, "name": "Strasbourg, France",           "emoji": "🇫🇷", "lat": 48.5734, "lon": 7.7521},
+    {"km": 220, "name": "Karlsruhe, Germany",           "emoji": "🏛️", "lat": 49.0069, "lon": 8.4037},
+    {"km": 293, "name": "Mannheim / Heidelberg",        "emoji": "🎓", "lat": 49.4875, "lon": 8.4660},
+    {"km": 360, "name": "Frankfurt am Main",            "emoji": "🏙️", "lat": 50.1109, "lon": 8.6821},
+    {"km": 430, "name": "Koblenz",                      "emoji": "⛰️", "lat": 50.3569, "lon": 7.5890},
+    {"km": 500, "name": "Bonn",                         "emoji": "🎵", "lat": 50.7374, "lon": 7.0982},
+    {"km": 530, "name": "Cologne — Kölner Dom",         "emoji": "⛪", "lat": 50.9375, "lon": 6.9603},
+    {"km": 590, "name": "Düsseldorf",                   "emoji": "🎨", "lat": 51.2277, "lon": 6.7735},
+    {"km": 640, "name": "Duisburg",                     "emoji": "⚓", "lat": 51.4344, "lon": 6.7623},
+    {"km": 710, "name": "Arnhem, Netherlands",          "emoji": "🇳🇱", "lat": 51.9851, "lon": 5.8987},
+    {"km": 760, "name": "Utrecht",                      "emoji": "🚲", "lat": 52.0907, "lon": 5.1214},
+    {"km": 820, "name": "Rotterdam",                    "emoji": "🚢", "lat": 51.9244, "lon": 4.4777},
 ]
-
-# Map coordinates — 700×520 viewBox, index-aligned with RHINE_WAYPOINTS
-# (0=Basel at the bottom, 13=Rotterdam at the top).
-RHINE_PATH_POINTS = [
-    (350, 470), (338, 432), (325, 395), (345, 358), (335, 322), (320, 286),
-    (342, 250), (330, 214), (325, 195), (318, 170), (328, 148), (335, 112),
-    (338, 82),  (340, 50),
-]
-
-
-def _rhine_waypoint_side(i):
-    """Right/left rule the template used inline — kept as-is; only the
-    marker's placement changes (see _layout_side_alternating_route)."""
-    return i % 2 == 0
 
 
 def _get_rhine_data():
@@ -229,9 +133,8 @@ def _get_rhine_data():
     )
 
     if not journey:
-        empty_waypoints, empty_marker = _layout_side_alternating_route(
-            RHINE_PATH_POINTS, [{**wp, "passed": False} for wp in RHINE_WAYPOINTS], pct=0,
-            side_fn=_rhine_waypoint_side,
+        empty_waypoints, empty_marker = _layout_geo_route(
+            [{**wp, "passed": False} for wp in RHINE_WAYPOINTS], pct=0,
         )
         return {
             "active": False, "complete": False, "start_date": None,
@@ -262,9 +165,7 @@ def _get_rhine_data():
         elif next_wp is None: next_wp = wp
         waypoints.append({**wp, "passed": passed})
 
-    waypoints, marker = _layout_side_alternating_route(
-        RHINE_PATH_POINTS, waypoints, pct, side_fn=_rhine_waypoint_side,
-    )
+    waypoints, marker = _layout_geo_route(waypoints, pct)
 
     weekly_avg_m = weekly_avg_meters()
     remaining_m = max(RHINE_TOTAL_M - journey_m, 0)
@@ -298,37 +199,24 @@ HOLLAND_TOTAL_KM = 550
 HOLLAND_TOTAL_M  = 550_000
 
 HOLLAND_WAYPOINTS = [
-    {"km":   0, "name": "Amsterdam",              "emoji": "🌷"},
-    {"km":  25, "name": "Volendam",               "emoji": "🐟"},
-    {"km":  50, "name": "Edam",                   "emoji": "🧀"},
-    {"km":  90, "name": "Alkmaar",                "emoji": "🧀"},
-    {"km": 130, "name": "Zandvoort aan Zee",      "emoji": "🏖️"},
-    {"km": 165, "name": "Haarlem",                "emoji": "🌸"},
-    {"km": 200, "name": "Keukenhof / Lisse",      "emoji": "🌺"},
-    {"km": 230, "name": "Leiden",                 "emoji": "🎓"},
-    {"km": 265, "name": "Delft",                  "emoji": "🏺"},
-    {"km": 295, "name": "The Hague",              "emoji": "⚖️"},
-    {"km": 330, "name": "Rotterdam",              "emoji": "🚢"},
-    {"km": 360, "name": "Kinderdijk Windmills",   "emoji": "🌬️"},
-    {"km": 395, "name": "Gouda",                  "emoji": "🧀"},
-    {"km": 430, "name": "Utrecht",                "emoji": "🔔"},
-    {"km": 480, "name": "Muiden Castle",          "emoji": "🏰"},
-    {"km": 515, "name": "Waterland Polder",       "emoji": "🐄"},
-    {"km": 550, "name": "Amsterdam (return)",     "emoji": "🌷"},
+    {"km":   0, "name": "Amsterdam",              "emoji": "🌷", "lat": 52.3676, "lon": 4.9041},
+    {"km":  25, "name": "Volendam",               "emoji": "🐟", "lat": 52.4990, "lon": 5.0723},
+    {"km":  50, "name": "Edam",                   "emoji": "🧀", "lat": 52.5125, "lon": 5.0367},
+    {"km":  90, "name": "Alkmaar",                "emoji": "🧀", "lat": 52.6324, "lon": 4.7534},
+    {"km": 130, "name": "Zandvoort aan Zee",      "emoji": "🏖️", "lat": 52.3730, "lon": 4.5327},
+    {"km": 165, "name": "Haarlem",                "emoji": "🌸", "lat": 52.3874, "lon": 4.6462},
+    {"km": 200, "name": "Keukenhof / Lisse",      "emoji": "🌺", "lat": 52.2693, "lon": 4.5497},
+    {"km": 230, "name": "Leiden",                 "emoji": "🎓", "lat": 52.1601, "lon": 4.4970},
+    {"km": 265, "name": "Delft",                  "emoji": "🏺", "lat": 52.0116, "lon": 4.3571},
+    {"km": 295, "name": "The Hague",              "emoji": "⚖️", "lat": 52.0705, "lon": 4.3007},
+    {"km": 330, "name": "Rotterdam",              "emoji": "🚢", "lat": 51.9244, "lon": 4.4777},
+    {"km": 360, "name": "Kinderdijk Windmills",   "emoji": "🌬️", "lat": 51.8825, "lon": 4.6317},
+    {"km": 395, "name": "Gouda",                  "emoji": "🧀", "lat": 52.0115, "lon": 4.7104},
+    {"km": 430, "name": "Utrecht",                "emoji": "🔔", "lat": 52.0907, "lon": 5.1214},
+    {"km": 480, "name": "Muiden Castle",          "emoji": "🏰", "lat": 52.3336, "lon": 5.0714},
+    {"km": 515, "name": "Waterland Polder",       "emoji": "🐄", "lat": 52.4167, "lon": 4.9667},
+    {"km": 550, "name": "Amsterdam (return)",     "emoji": "🌷", "lat": 52.3676, "lon": 4.9041},
 ]
-
-# Map coordinates — 700×400 viewBox, index-aligned with HOLLAND_WAYPOINTS.
-HOLLAND_PATH_POINTS = [
-    (360, 120), (400, 85),  (420, 68),  (435, 42),  (320, 42),  (255, 85),
-    (210, 135), (225, 185), (235, 230), (220, 268), (265, 318), (330, 330),
-    (370, 295), (415, 250), (460, 245), (430, 180), (370, 120),
-]
-
-
-def _holland_waypoint_side(i):
-    """Right/left rule the template used inline — kept as-is; only the
-    marker's placement changes (see _layout_side_alternating_route)."""
-    return i not in (0, 4, 5, 6, 7, 8, 9)
 
 
 def _get_holland_data():
@@ -341,9 +229,8 @@ def _get_holland_data():
     )
 
     if not journey:
-        empty_waypoints, empty_marker = _layout_side_alternating_route(
-            HOLLAND_PATH_POINTS, [{**wp, "passed": False} for wp in HOLLAND_WAYPOINTS], pct=0,
-            side_fn=_holland_waypoint_side,
+        empty_waypoints, empty_marker = _layout_geo_route(
+            [{**wp, "passed": False} for wp in HOLLAND_WAYPOINTS], pct=0,
         )
         return {
             "active": False, "complete": False, "start_date": None,
@@ -374,9 +261,7 @@ def _get_holland_data():
         elif next_wp is None: next_wp = wp
         waypoints.append({**wp, "passed": passed})
 
-    waypoints, marker = _layout_side_alternating_route(
-        HOLLAND_PATH_POINTS, waypoints, pct, side_fn=_holland_waypoint_side,
-    )
+    waypoints, marker = _layout_geo_route(waypoints, pct)
 
     weekly_avg_m = weekly_avg_meters()
     remaining_m = max(HOLLAND_TOTAL_M - journey_m, 0)
@@ -407,38 +292,30 @@ ROUTE66_TOTAL_KM = 3940
 ROUTE66_TOTAL_M  = 3_940_000
 
 ROUTE66_WAYPOINTS = [
-    {"km":    0, "name": "Chicago, IL — Start",          "emoji": "🌆"},
-    {"km":   80, "name": "Joliet, IL",                   "emoji": "🎰"},
-    {"km":  210, "name": "Bloomington, IL",               "emoji": "🌽"},
-    {"km":  320, "name": "Springfield, IL",               "emoji": "🎩"},
-    {"km":  440, "name": "St. Louis, MO — Gateway Arch", "emoji": "⛩️"},
-    {"km":  590, "name": "Cuba, MO",                     "emoji": "🛣️"},
-    {"km":  700, "name": "Springfield, MO",               "emoji": "🎸"},
-    {"km":  830, "name": "Joplin, MO",                   "emoji": "🏙️"},
-    {"km":  920, "name": "Tulsa, OK — Oil Capital",      "emoji": "🛢️"},
-    {"km": 1100, "name": "Oklahoma City, OK",             "emoji": "🤠"},
-    {"km": 1280, "name": "Amarillo, TX — Big Texan",     "emoji": "🥩"},
-    {"km": 1490, "name": "Tucumcari, NM",                "emoji": "🌵"},
-    {"km": 1640, "name": "Santa Fe, NM",                 "emoji": "🏺"},
-    {"km": 1780, "name": "Albuquerque, NM",              "emoji": "🎈"},
-    {"km": 1960, "name": "Gallup, NM",                   "emoji": "🪶"},
-    {"km": 2080, "name": "Flagstaff, AZ",                "emoji": "🌲"},
-    {"km": 2180, "name": "Williams, AZ — Grand Canyon",  "emoji": "🏔️"},
-    {"km": 2310, "name": "Kingman, AZ",                  "emoji": "🎲"},
-    {"km": 2430, "name": "Oatman, AZ — Gold Rush Town",  "emoji": "🫏"},
-    {"km": 2560, "name": "Needles, CA",                  "emoji": "🌡️"},
-    {"km": 2720, "name": "Barstow, CA",                  "emoji": "🏜️"},
-    {"km": 2880, "name": "San Bernardino, CA",           "emoji": "🍊"},
-    {"km": 3020, "name": "Pasadena, CA",                 "emoji": "🌸"},
-    {"km": 3940, "name": "Santa Monica, CA — End",       "emoji": "🏖️"},
-]
-
-# Map coordinates — 900×250 viewBox, index-aligned with ROUTE66_WAYPOINTS.
-ROUTE66_PATH_POINTS = [
-    (28,  90),  (68,  94),  (130, 96),  (190, 95),  (265, 108), (318, 118),
-    (364, 122), (402, 138), (440, 158), (476, 172), (518, 178), (555, 172),
-    (578, 162), (598, 168), (622, 175), (646, 168), (664, 160), (690, 158),
-    (706, 148), (724, 142), (748, 136), (774, 118), (800, 105), (870, 92),
+    {"km":    0, "name": "Chicago, IL — Start",          "emoji": "🌆", "lat": 41.8781, "lon": -87.6298},
+    {"km":   80, "name": "Joliet, IL",                   "emoji": "🎰", "lat": 41.5250, "lon": -88.0817},
+    {"km":  210, "name": "Bloomington, IL",               "emoji": "🌽", "lat": 40.4842, "lon": -88.9937},
+    {"km":  320, "name": "Springfield, IL",               "emoji": "🎩", "lat": 39.7817, "lon": -89.6501},
+    {"km":  440, "name": "St. Louis, MO — Gateway Arch", "emoji": "⛩️", "lat": 38.6270, "lon": -90.1994},
+    {"km":  590, "name": "Cuba, MO",                     "emoji": "🛣️", "lat": 38.0645, "lon": -91.4093},
+    {"km":  700, "name": "Springfield, MO",               "emoji": "🎸", "lat": 37.2090, "lon": -93.2923},
+    {"km":  830, "name": "Joplin, MO",                   "emoji": "🏙️", "lat": 37.0842, "lon": -94.5133},
+    {"km":  920, "name": "Tulsa, OK — Oil Capital",      "emoji": "🛢️", "lat": 36.1540, "lon": -95.9928},
+    {"km": 1100, "name": "Oklahoma City, OK",             "emoji": "🤠", "lat": 35.4676, "lon": -97.5164},
+    {"km": 1280, "name": "Amarillo, TX — Big Texan",     "emoji": "🥩", "lat": 35.2220, "lon": -101.8313},
+    {"km": 1490, "name": "Tucumcari, NM",                "emoji": "🌵", "lat": 35.1717, "lon": -103.7250},
+    {"km": 1640, "name": "Santa Fe, NM",                 "emoji": "🏺", "lat": 35.6870, "lon": -105.9378},
+    {"km": 1780, "name": "Albuquerque, NM",              "emoji": "🎈", "lat": 35.0844, "lon": -106.6504},
+    {"km": 1960, "name": "Gallup, NM",                   "emoji": "🪶", "lat": 35.5281, "lon": -108.7426},
+    {"km": 2080, "name": "Flagstaff, AZ",                "emoji": "🌲", "lat": 35.1983, "lon": -111.6513},
+    {"km": 2180, "name": "Williams, AZ — Grand Canyon",  "emoji": "🏔️", "lat": 35.2494, "lon": -112.1901},
+    {"km": 2310, "name": "Kingman, AZ",                  "emoji": "🎲", "lat": 35.1894, "lon": -114.0530},
+    {"km": 2430, "name": "Oatman, AZ — Gold Rush Town",  "emoji": "🫏", "lat": 35.0264, "lon": -114.3830},
+    {"km": 2560, "name": "Needles, CA",                  "emoji": "🌡️", "lat": 34.8481, "lon": -114.6141},
+    {"km": 2720, "name": "Barstow, CA",                  "emoji": "🏜️", "lat": 34.8958, "lon": -117.0173},
+    {"km": 2880, "name": "San Bernardino, CA",           "emoji": "🍊", "lat": 34.1083, "lon": -117.2898},
+    {"km": 3020, "name": "Pasadena, CA",                 "emoji": "🌸", "lat": 34.1478, "lon": -118.1445},
+    {"km": 3940, "name": "Santa Monica, CA — End",       "emoji": "🏖️", "lat": 34.0195, "lon": -118.4912},
 ]
 
 
@@ -452,8 +329,8 @@ def _get_route66_data():
     )
 
     if not journey:
-        empty_waypoints, empty_marker = _layout_horizontal_route(
-            ROUTE66_PATH_POINTS, [{**wp, "passed": False} for wp in ROUTE66_WAYPOINTS], pct=0,
+        empty_waypoints, empty_marker = _layout_geo_route(
+            [{**wp, "passed": False} for wp in ROUTE66_WAYPOINTS], pct=0,
         )
         return {
             "active": False, "complete": False, "start_date": None,
@@ -484,7 +361,7 @@ def _get_route66_data():
         elif next_wp is None: next_wp = wp
         waypoints.append({**wp, "passed": passed})
 
-    waypoints, marker = _layout_horizontal_route(ROUTE66_PATH_POINTS, waypoints, pct)
+    waypoints, marker = _layout_geo_route(waypoints, pct)
 
     weekly_avg_m = weekly_avg_meters()
     remaining_m = max(ROUTE66_TOTAL_M - journey_m, 0)
@@ -515,38 +392,30 @@ TRANSCAN_TOTAL_KM = 7821
 TRANSCAN_TOTAL_M  = 7_821_000
 
 TRANSCAN_WAYPOINTS = [
-    {"km":    0, "name": "Victoria, BC — Mile Zero",         "emoji": "🇨🇦"},
-    {"km":   99, "name": "Nanaimo, BC (ferry to mainland)",  "emoji": "⛴️"},
-    {"km":  200, "name": "Vancouver, BC",                    "emoji": "🌁"},
-    {"km":  380, "name": "Kamloops, BC",                     "emoji": "🏔️"},
-    {"km":  610, "name": "Banff, AB",                        "emoji": "🦌"},
-    {"km":  730, "name": "Calgary, AB",                      "emoji": "🤠"},
-    {"km": 1100, "name": "Medicine Hat, AB",                 "emoji": "🎩"},
-    {"km": 1300, "name": "Regina, SK",                       "emoji": "🌾"},
-    {"km": 1600, "name": "Brandon, MB",                      "emoji": "🌻"},
-    {"km": 1780, "name": "Winnipeg, MB",                     "emoji": "🦬"},
-    {"km": 2300, "name": "Thunder Bay, ON",                  "emoji": "⛈️"},
-    {"km": 2750, "name": "Sault Ste. Marie, ON",             "emoji": "🌊"},
-    {"km": 3040, "name": "Sudbury, ON",                      "emoji": "🪨"},
-    {"km": 3380, "name": "Ottawa, ON",                       "emoji": "🏛️"},
-    {"km": 3560, "name": "Montreal, QC",                     "emoji": "🥐"},
-    {"km": 3820, "name": "Quebec City, QC",                  "emoji": "⚜️"},
-    {"km": 4280, "name": "Fredericton, NB",                  "emoji": "🍁"},
-    {"km": 4450, "name": "Moncton, NB",                      "emoji": "🌊"},
-    {"km": 4660, "name": "Halifax, NS",                      "emoji": "⚓"},
-    {"km": 4900, "name": "North Sydney, NS (ferry to NL)",   "emoji": "⛴️"},
-    {"km": 5400, "name": "Corner Brook, NL",                 "emoji": "🌲"},
-    {"km": 5900, "name": "Gander, NL",                       "emoji": "✈️"},
-    {"km": 6300, "name": "Terra Nova National Park",         "emoji": "🦦"},
-    {"km": 7821, "name": "St. John's, NL — Journey's End",  "emoji": "🏁"},
-]
-
-# Map coordinates — 900×220 viewBox, index-aligned with TRANSCAN_WAYPOINTS.
-TRANSCAN_PATH_POINTS = [
-    (18,  165), (27,  155), (38,  148), (62,  130), (98,  108), (116, 118),
-    (162, 128), (198, 130), (244, 130), (270, 128), (348, 125), (413, 120),
-    (457, 118), (508, 115), (533, 112), (573, 108), (638, 112), (662, 115),
-    (693, 118), (720, 116), (755, 122), (790, 128), (818, 132), (876, 148),
+    {"km":    0, "name": "Victoria, BC — Mile Zero",         "emoji": "🇨🇦", "lat": 48.4284, "lon": -123.3656},
+    {"km":   99, "name": "Nanaimo, BC (ferry to mainland)",  "emoji": "⛴️", "lat": 49.1659, "lon": -123.9401},
+    {"km":  200, "name": "Vancouver, BC",                    "emoji": "🌁", "lat": 49.2827, "lon": -123.1207},
+    {"km":  380, "name": "Kamloops, BC",                     "emoji": "🏔️", "lat": 50.6745, "lon": -120.3273},
+    {"km":  610, "name": "Banff, AB",                        "emoji": "🦌", "lat": 51.1784, "lon": -115.5708},
+    {"km":  730, "name": "Calgary, AB",                      "emoji": "🤠", "lat": 51.0447, "lon": -114.0719},
+    {"km": 1100, "name": "Medicine Hat, AB",                 "emoji": "🎩", "lat": 50.0405, "lon": -110.6764},
+    {"km": 1300, "name": "Regina, SK",                       "emoji": "🌾", "lat": 50.4452, "lon": -104.6189},
+    {"km": 1600, "name": "Brandon, MB",                      "emoji": "🌻", "lat": 49.8483, "lon": -99.9501},
+    {"km": 1780, "name": "Winnipeg, MB",                     "emoji": "🦬", "lat": 49.8951, "lon": -97.1384},
+    {"km": 2300, "name": "Thunder Bay, ON",                  "emoji": "⛈️", "lat": 48.3809, "lon": -89.2477},
+    {"km": 2750, "name": "Sault Ste. Marie, ON",             "emoji": "🌊", "lat": 46.5136, "lon": -84.3358},
+    {"km": 3040, "name": "Sudbury, ON",                      "emoji": "🪨", "lat": 46.4917, "lon": -80.9930},
+    {"km": 3380, "name": "Ottawa, ON",                       "emoji": "🏛️", "lat": 45.4215, "lon": -75.6972},
+    {"km": 3560, "name": "Montreal, QC",                     "emoji": "🥐", "lat": 45.5017, "lon": -73.5673},
+    {"km": 3820, "name": "Quebec City, QC",                  "emoji": "⚜️", "lat": 46.8139, "lon": -71.2080},
+    {"km": 4280, "name": "Fredericton, NB",                  "emoji": "🍁", "lat": 45.9636, "lon": -66.6431},
+    {"km": 4450, "name": "Moncton, NB",                      "emoji": "🌊", "lat": 46.0878, "lon": -64.7782},
+    {"km": 4660, "name": "Halifax, NS",                      "emoji": "⚓", "lat": 44.6488, "lon": -63.5752},
+    {"km": 4900, "name": "North Sydney, NS (ferry to NL)",   "emoji": "⛴️", "lat": 46.2151, "lon": -60.2517},
+    {"km": 5400, "name": "Corner Brook, NL",                 "emoji": "🌲", "lat": 48.9500, "lon": -57.9522},
+    {"km": 5900, "name": "Gander, NL",                       "emoji": "✈️", "lat": 48.9564, "lon": -54.6089},
+    {"km": 6300, "name": "Terra Nova National Park",         "emoji": "🦦", "lat": 48.5000, "lon": -53.9667},
+    {"km": 7821, "name": "St. John's, NL — Journey's End",  "emoji": "🏁", "lat": 47.5615, "lon": -52.7126},
 ]
 
 
@@ -560,8 +429,8 @@ def _get_transcan_data():
     )
 
     if not journey:
-        empty_waypoints, empty_marker = _layout_horizontal_route(
-            TRANSCAN_PATH_POINTS, [{**wp, "passed": False} for wp in TRANSCAN_WAYPOINTS], pct=0,
+        empty_waypoints, empty_marker = _layout_geo_route(
+            [{**wp, "passed": False} for wp in TRANSCAN_WAYPOINTS], pct=0,
         )
         return {
             "active": False, "complete": False, "start_date": None,
@@ -592,7 +461,7 @@ def _get_transcan_data():
         elif next_wp is None: next_wp = wp
         waypoints.append({**wp, "passed": passed})
 
-    waypoints, marker = _layout_horizontal_route(TRANSCAN_PATH_POINTS, waypoints, pct)
+    waypoints, marker = _layout_geo_route(waypoints, pct)
 
     weekly_avg_m = weekly_avg_meters()
     remaining_m = max(TRANSCAN_TOTAL_M - journey_m, 0)

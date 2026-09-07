@@ -150,11 +150,14 @@ Yes — set any of `NOTIFY_NTFY_TOPIC`, `NOTIFY_DISCORD_WEBHOOK_URL`, or `NOTIFY
 ### Virtual Journeys
 
 **What are the virtual journeys?**
-Four independent routes you can row your way along using real workout metres:
+Four independent routes you can row your way along using real workout metres, plotted on a real map (Leaflet + OpenStreetMap) with every waypoint at its actual real-world coordinates:
 - **Rhine River** — Basel to Rotterdam, 820 km, 14 waypoints
 - **Holland Tour** — Amsterdam scenic loop, 550 km, 17 waypoints
-- **Trans-Canada Highway** — Victoria BC to St. John's NL, 7,821 km, 23 waypoints
-- **Route 66** — Chicago, IL to Santa Monica, CA, 3,940 km
+- **Trans-Canada Highway** — Victoria BC to St. John's NL, 7,821 km, 24 waypoints
+- **Route 66** — Chicago, IL to Santa Monica, CA, 3,940 km, 24 waypoints
+
+**Does the journey map need an internet connection?**
+Yes, for the map tiles specifically — they're fetched live from OpenStreetMap on every view, unlike the rest of the app, which works fully offline. If tiles can't load (no network, air-gapped homelab), the map area will just appear blank; your progress, stats, and the waypoint list below it are unaffected either way, since those come from your own server.
 
 **How do I start a journey?**
 Go to Journeys in the navigation and click Start on any route. Metres from workouts completed after that date count toward your progress. Multiple journeys can run at the same time.

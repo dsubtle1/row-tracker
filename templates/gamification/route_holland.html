@@ -85,139 +85,11 @@
   </div>
 </div>
 
-{# SVG map #}
+{# Real map — waypoint lat/lon and the interpolated "you are here" marker
+   are computed in blueprints/gamification.py, see _layout_geo_route. #}
 <div class="card mb-4">
   <div class="card-body">
-    {#
-      Holland Tour — geographic loop SVG map
-      Coordinate system: 700×560 viewBox
-      The route traces a clockwise loop around Holland:
-        Amsterdam (centre-top) → north to Volendam/Edam/Alkmaar
-        → west to Zandvoort coast → south through Haarlem/Keukenhof/Leiden/Delft/The Hague/Rotterdam
-        → east to Kinderdijk/Gouda/Utrecht → northeast back to Amsterdam
-      Map coordinates and label side are computed in blueprints/gamification.py
-      (HOLLAND_PATH_POINTS / _holland_waypoint_side); only the marker's
-      clearance is dynamic (_layout_side_alternating_route).
-    #}
-    {% from "gamification/_position_marker.html" import position_marker_side %}
-    <div class="map-scroll-wrap">
-    <svg class="rhine-map" viewBox="0 0 700 400" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="hollandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stop-color="var(--color-teal,#00829b)" stop-opacity="0.9"/>
-          <stop offset="100%" stop-color="var(--color-teal,#00829b)" stop-opacity="0.45"/>
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <marker id="arrowTip" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L6,3 z" fill="var(--color-teal,#00829b)" opacity="0.6"/>
-        </marker>
-      </defs>
-      <rect width="700" height="400" fill="transparent"/>
-
-      {# Background shadow track #}
-      <path class="rhine-river-bg"
-        d="M 360,120
-           C 375,105 390,90 400,85
-           C 410,78 418,72 420,68
-           C 428,55 432,48 435,42
-           C 395,42 355,42 320,42
-           C 295,42 272,60 255,85
-           C 238,110 225,140 210,135
-           C 218,158 222,172 225,185
-           C 228,198 232,215 235,230
-           C 228,248 222,258 220,268
-           C 235,290 250,308 265,318
-           C 290,332 312,336 330,330
-           C 348,324 362,310 370,295
-           C 390,272 405,258 415,250
-           C 440,248 452,246 460,245
-           C 448,212 438,196 430,180
-           C 420,162 394,140 370,120
-           C 365,120 362,120 360,120"
-        fill="none" stroke="var(--color-border,#2e3350)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-
-      {# Filled loop interior (subtle) #}
-      <path
-        d="M 360,120
-           C 375,105 390,90 400,85
-           C 410,78 418,72 420,68
-           C 428,55 432,48 435,42
-           C 395,42 355,42 320,42
-           C 295,42 272,60 255,85
-           C 238,110 225,140 210,135
-           C 218,158 222,172 225,185
-           C 228,198 232,215 235,230
-           C 228,248 222,258 220,268
-           C 235,290 250,308 265,318
-           C 290,332 312,336 330,330
-           C 348,324 362,310 370,295
-           C 390,272 405,258 415,250
-           C 440,248 452,246 460,245
-           C 448,212 438,196 430,180
-           C 420,162 394,140 370,120
-           Z"
-        fill="var(--color-teal,#00829b)" fill-opacity="0.04" stroke="none"/>
-
-      {# Animated route line — dashes reveal progress #}
-      <path class="rhine-river"
-        d="M 360,120
-           C 375,105 390,90 400,85
-           C 410,78 418,72 420,68
-           C 428,55 432,48 435,42
-           C 395,42 355,42 320,42
-           C 295,42 272,60 255,85
-           C 238,110 225,140 210,135
-           C 218,158 222,172 225,185
-           C 228,198 232,215 235,230
-           C 228,248 222,258 220,268
-           C 235,290 250,308 265,318
-           C 290,332 312,336 330,330
-           C 348,324 362,310 370,295
-           C 390,272 405,258 415,250
-           C 440,248 452,246 460,245
-           C 448,212 438,196 430,180
-           C 420,162 394,140 370,120
-           C 365,120 362,120 360,120"
-        fill="none" stroke="url(#hollandGrad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"
-        stroke-dasharray="{{ holland.pct * 12 }}, 1200"
-        marker-end="url(#arrowTip)"/>
-
-      {# Waypoint dots #}
-      {% for wp in holland.waypoints %}
-        {% set passed = wp.passed %}
-        <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="{{ 'true' if passed else 'false' }}">
-          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="11" fill="transparent"/>
-          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="6"
-            fill="{% if passed %}var(--color-teal,#00829b){% else %}var(--color-border,#2e3350){% endif %}"
-            stroke="var(--color-surface,#1e2130)" stroke-width="2"
-            {% if passed %}filter="url(#glow)"{% endif %}/>
-          {% if wp.label_right %}
-            <text x="{{ wp.x + 12 }}" y="{{ wp.y + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" font-size="10">{{ wp.emoji }} {{ wp.name }}</text>
-          {% else %}
-            <text x="{{ wp.x - 12 }}" y="{{ wp.y + 4 }}" class="wp-label {% if passed %}wp-passed{% endif %}" text-anchor="end" font-size="10">{{ wp.emoji }} {{ wp.name }}</text>
-          {% endif %}
-        </g>
-      {% endfor %}
-
-      {# Current position marker #}
-      {% if holland.active %}
-        {{ position_marker_side(holland.marker) }}
-      {% endif %}
-
-      {# North arrow #}
-      <g transform="translate(650,50)">
-        <line x1="0" y1="20" x2="0" y2="-2" stroke="var(--color-teal,#00829b)" stroke-width="1.5" stroke-opacity="0.6"/>
-        <polygon points="0,-8 -4,4 0,0 4,4" fill="var(--color-teal,#00829b)" fill-opacity="0.6"/>
-        <text x="0" y="32" text-anchor="middle" font-size="9" fill="var(--color-teal,#00829b)" fill-opacity="0.6" font-family="inherit">N</text>
-      </g>
-
-      {# North Sea label #}
-      <text x="140" y="80" text-anchor="middle" font-size="9" fill="var(--color-teal,#00829b)" fill-opacity="0.45" font-style="italic" font-family="inherit">North Sea</text>
-    </svg>
-    </div>
+    <div id="hollandMap" class="journey-map"></div>
   </div>
 </div>
 
@@ -256,4 +128,16 @@
 
 {% include "gamification/_waypoint_modal.html" %}
 
+{% endblock %}
+
+{% block extra_js %}
+{% if holland.active %}
+{% include "gamification/_leaflet_cdn.html" %}
+<script src="{{ url_for('static', filename='js/journey-map.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    initJourneyMap("hollandMap", {{ holland.waypoints | tojson }}, {{ holland.marker | tojson }});
+  });
+</script>
+{% endif %}
 {% endblock %}

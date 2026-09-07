@@ -51,134 +51,8 @@
 {# Completed map #}
 <div class="card mb-4">
   <div class="card-body">
-   <div class="map-scroll-wrap">
-    <svg class="rhine-map" viewBox="0 -10 900 260" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="r66Grad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stop-color="#c0392b" stop-opacity="0.7"/>
-          <stop offset="50%"  stop-color="#e67e22" stop-opacity="0.85"/>
-          <stop offset="100%" stop-color="#f39c12" stop-opacity="1.0"/>
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      <rect width="900" height="250" y="-10" fill="transparent"/>
-
-      {# State labels #}
-      {% set state_labels = [
-        (60,  "IL"), (190, "MO"), (310, "OK"),
-        (480, "TX"), (590, "NM"), (680, "AZ"), (810, "CA")
-      ] %}
-      {% for sl in state_labels %}
-      <text x="{{ sl[0] }}" y="230" text-anchor="middle" font-size="9"
-        fill="var(--color-teal,#00829b)" fill-opacity="0.3" font-family="inherit">{{ sl[1] }}</text>
-      {% endfor %}
-
-      {# State divider lines #}
-      {% set dividers = [115, 240, 420, 540, 635, 760] %}
-      {% for dv in dividers %}
-      <line x1="{{ dv }}" y1="60" x2="{{ dv }}" y2="220"
-        stroke="var(--color-teal,#00829b)" stroke-width="0.5" stroke-opacity="0.15" stroke-dasharray="3,5"/>
-      {% endfor %}
-
-      {# Terrain silhouette — flat midwest, dip south through OK/TX, rise through NM/AZ highlands, drop to CA coast #}
-      <path d="
-        M 0,220 L 28,220 C 60,220 100,215 140,212 C 180,209 220,210 265,215
-        C 300,219 340,225 402,230 C 450,234 490,232 540,225
-        C 570,220 590,212 620,208 C 650,204 668,202 690,200
-        C 712,198 728,196 750,192 C 772,188 800,182 840,178 C 860,176 880,175 900,175
-        L 900,220 Z"
-        fill="var(--color-teal,#00829b)" fill-opacity="0.045" stroke="none"/>
-
-      {# Shadow track #}
-      <path
-        d="M 28,90
-           C 48,92 58,93 68,94
-           C 98,95 114,96 130,96
-           C 158,96 174,96 190,95
-           C 220,94 242,100 265,108
-           C 282,114 300,118 318,118
-           C 336,118 350,120 364,122
-           C 378,128 390,134 402,138
-           C 416,144 428,152 440,158
-           C 452,164 464,169 476,172
-           C 492,174 506,176 518,178
-           C 532,176 544,174 555,172
-           C 564,168 572,164 578,162
-           C 586,162 592,164 598,168
-           C 608,173 616,175 622,175
-           C 632,173 640,170 646,168
-           C 654,164 660,161 664,160
-           C 674,158 682,157 690,158
-           C 696,154 702,150 706,148
-           C 714,143 720,141 724,142
-           C 734,141 742,137 748,136
-           C 758,132 766,125 774,118
-           C 784,110 792,106 800,105
-           C 828,98 848,94 870,92"
-        fill="none" stroke="var(--color-border,#2e3350)" stroke-width="10"
-        stroke-linecap="round" stroke-linejoin="round"/>
-
-      {# Route line — full (completed state) #}
-      <path
-        d="M 28,90
-           C 48,92 58,93 68,94
-           C 98,95 114,96 130,96
-           C 158,96 174,96 190,95
-           C 220,94 242,100 265,108
-           C 282,114 300,118 318,118
-           C 336,118 350,120 364,122
-           C 378,128 390,134 402,138
-           C 416,144 428,152 440,158
-           C 452,164 464,169 476,172
-           C 492,174 506,176 518,178
-           C 532,176 544,174 555,172
-           C 564,168 572,164 578,162
-           C 586,162 592,164 598,168
-           C 608,173 616,175 622,175
-           C 632,173 640,170 646,168
-           C 654,164 660,161 664,160
-           C 674,158 682,157 690,158
-           C 696,154 702,150 706,148
-           C 714,143 720,141 724,142
-           C 734,141 742,137 748,136
-           C 758,132 766,125 774,118
-           C 784,110 792,106 800,105
-           C 828,98 848,94 870,92"
-        fill="none" stroke="url(#r66Grad)" stroke-width="5"
-        stroke-linecap="round" stroke-linejoin="round"/>
-
-      {% for wp in route66.waypoints %}
-        {% set is_above = wp.label_above %}
-        <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="true">
-          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="12" fill="transparent"/>
-          <circle cx="{{ wp.x }}" cy="{{ wp.y }}"
-            r="{% if loop.index0 == 0 or loop.index0 == 23 %}7{% else %}5{% endif %}"
-            fill="var(--color-teal,#00829b)"
-            stroke="var(--color-surface,#1e2130)" stroke-width="2" filter="url(#glow)"/>
-          <line x1="{{ wp.x }}" y1="{{ wp.y }}"
-                x2="{{ wp.x }}" y2="{% if is_above %}{{ wp.y - (8 + wp.label_rank * 24) }}{% else %}{{ wp.y + (8 + wp.label_rank * 24) }}{% endif %}"
-            stroke="var(--color-teal,#00829b)" stroke-width="0.8" stroke-opacity="0.6"/>
-          <text x="{{ wp.x }}"
-                y="{% if is_above %}{{ wp.y - (12 + wp.label_rank * 24) }}{% else %}{{ wp.y + (18 + wp.label_rank * 24) }}{% endif %}"
-                text-anchor="middle" class="wp-label wp-passed" font-size="8">{{ wp.emoji }}</text>
-          <text x="{{ wp.x }}"
-                y="{% if is_above %}{{ wp.y - (22 + wp.label_rank * 24) }}{% else %}{{ wp.y + (28 + wp.label_rank * 24) }}{% endif %}"
-                text-anchor="middle" class="wp-label wp-passed" font-size="7">
-            {{ wp.name | replace(' — Start', '') | replace(' — End', '') | replace(' — Gateway Arch', '') | replace(' — Oil Capital', '') | replace(' — Big Texan', '') | replace(' — Grand Canyon', '') | replace(' — Gold Rush Town', '') | truncate(16, True, '') }}
-          </text>
-        </g>
-      {% endfor %}
-
-      <text x="449" y="25" class="position-label" text-anchor="middle">🏆 Santa Monica reached!</text>
-
-      {# Labels #}
-      <text x="18" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4" font-style="italic" font-family="inherit">🌊 Lake Michigan</text>
-      <text x="882" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4" font-style="italic" font-family="inherit" text-anchor="end">Pacific 🌊</text>
-    </svg>
-   </div>
+    <div id="route66Map" class="journey-map"></div>
+    <p class="chart-note text-center mt-2">🏆 Santa Monica reached!</p>
   </div>
 </div>
 
@@ -233,210 +107,11 @@
   </div>
 </div>
 
-{# SVG map #}
+{# Real map — waypoint lat/lon and the interpolated "you are here" marker
+   are computed in blueprints/gamification.py, see _layout_geo_route. #}
 <div class="card mb-4">
   <div class="card-body">
-    {#
-      Route 66 — geographic SVG map 900×260 viewBox
-      East-west but with authentic shape:
-        - Flat through IL/MO
-        - Curves south through OK (dip) and TX panhandle
-        - Long SW diagonal through NM highlands
-        - Jagged through AZ (Flagstaff plateau, descent to Mojave)
-        - Final push west to the Pacific
-
-      Map coordinates and label placement (side + fan-out rank) are
-      computed in blueprints/gamification.py — see _layout_horizontal_route.
-    #}
-    {% from "gamification/_position_marker.html" import position_marker_above %}
-    <div class="map-scroll-wrap">
-    <svg class="rhine-map" viewBox="0 -10 900 260" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="r66Grad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stop-color="#c0392b" stop-opacity="0.7"/>
-          <stop offset="50%"  stop-color="#e67e22" stop-opacity="0.85"/>
-          <stop offset="100%" stop-color="#f39c12" stop-opacity="1.0"/>
-        </linearGradient>
-        <linearGradient id="r66GradFull" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stop-color="#c0392b" stop-opacity="0.2"/>
-          <stop offset="100%" stop-color="#f39c12" stop-opacity="0.2"/>
-        </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      <rect width="900" height="250" y="-10" fill="transparent"/>
-
-      {# State labels #}
-      {% set state_labels = [
-        (60,  "IL"), (190, "MO"), (310, "OK"),
-        (480, "TX"), (590, "NM"), (680, "AZ"), (810, "CA")
-      ] %}
-      {% for sl in state_labels %}
-      <text x="{{ sl[0] }}" y="230" text-anchor="middle" font-size="9"
-        fill="var(--color-teal,#00829b)" fill-opacity="0.3" font-family="inherit">{{ sl[1] }}</text>
-      {% endfor %}
-
-      {# State divider lines #}
-      {% set dividers = [115, 240, 420, 540, 635, 760] %}
-      {% for dv in dividers %}
-      <line x1="{{ dv }}" y1="60" x2="{{ dv }}" y2="220"
-        stroke="var(--color-teal,#00829b)" stroke-width="0.5" stroke-opacity="0.15" stroke-dasharray="3,5"/>
-      {% endfor %}
-
-      {# Terrain silhouette #}
-      <path d="
-        M 0,220 L 28,220 C 60,220 100,215 140,212 C 180,209 220,210 265,215
-        C 300,219 340,225 402,230 C 450,234 490,232 540,225
-        C 570,220 590,212 620,208 C 650,204 668,202 690,200
-        C 712,198 728,196 750,192 C 772,188 800,182 840,178 C 860,176 880,175 900,175
-        L 900,220 Z"
-        fill="var(--color-teal,#00829b)" fill-opacity="0.045" stroke="none"/>
-
-      {# Full ghost path (undrawn portion) #}
-      <path
-        d="M 28,90
-           C 48,92 58,93 68,94
-           C 98,95 114,96 130,96
-           C 158,96 174,96 190,95
-           C 220,94 242,100 265,108
-           C 282,114 300,118 318,118
-           C 336,118 350,120 364,122
-           C 378,128 390,134 402,138
-           C 416,144 428,152 440,158
-           C 452,164 464,169 476,172
-           C 492,174 506,176 518,178
-           C 532,176 544,174 555,172
-           C 564,168 572,164 578,162
-           C 586,162 592,164 598,168
-           C 608,173 616,175 622,175
-           C 632,173 640,170 646,168
-           C 654,164 660,161 664,160
-           C 674,158 682,157 690,158
-           C 696,154 702,150 706,148
-           C 714,143 720,141 724,142
-           C 734,141 742,137 748,136
-           C 758,132 766,125 774,118
-           C 784,110 792,106 800,105
-           C 828,98 848,94 870,92"
-        fill="none" stroke="url(#r66GradFull)" stroke-width="5"
-        stroke-linecap="round" stroke-linejoin="round"/>
-
-      {# Shadow track #}
-      <path
-        d="M 28,90
-           C 48,92 58,93 68,94
-           C 98,95 114,96 130,96
-           C 158,96 174,96 190,95
-           C 220,94 242,100 265,108
-           C 282,114 300,118 318,118
-           C 336,118 350,120 364,122
-           C 378,128 390,134 402,138
-           C 416,144 428,152 440,158
-           C 452,164 464,169 476,172
-           C 492,174 506,176 518,178
-           C 532,176 544,174 555,172
-           C 564,168 572,164 578,162
-           C 586,162 592,164 598,168
-           C 608,173 616,175 622,175
-           C 632,173 640,170 646,168
-           C 654,164 660,161 664,160
-           C 674,158 682,157 690,158
-           C 696,154 702,150 706,148
-           C 714,143 720,141 724,142
-           C 734,141 742,137 748,136
-           C 758,132 766,125 774,118
-           C 784,110 792,106 800,105
-           C 828,98 848,94 870,92"
-        fill="none" stroke="var(--color-border,#2e3350)" stroke-width="10"
-        stroke-linecap="round" stroke-linejoin="round"/>
-
-      {# Progress line — reveals as pct increases. Total path length ~880px #}
-      <path class="rhine-river"
-        d="M 28,90
-           C 48,92 58,93 68,94
-           C 98,95 114,96 130,96
-           C 158,96 174,96 190,95
-           C 220,94 242,100 265,108
-           C 282,114 300,118 318,118
-           C 336,118 350,120 364,122
-           C 378,128 390,134 402,138
-           C 416,144 428,152 440,158
-           C 452,164 464,169 476,172
-           C 492,174 506,176 518,178
-           C 532,176 544,174 555,172
-           C 564,168 572,164 578,162
-           C 586,162 592,164 598,168
-           C 608,173 616,175 622,175
-           C 632,173 640,170 646,168
-           C 654,164 660,161 664,160
-           C 674,158 682,157 690,158
-           C 696,154 702,150 706,148
-           C 714,143 720,141 724,142
-           C 734,141 742,137 748,136
-           C 758,132 766,125 774,118
-           C 784,110 792,106 800,105
-           C 828,98 848,94 870,92"
-        fill="none" stroke="url(#r66Grad)" stroke-width="5"
-        stroke-linecap="round" stroke-linejoin="round"
-        stroke-dasharray="{{ route66.pct * 8.8 }}, 880"/>
-
-      {# Waypoint dots and labels — side + fan-out rank precomputed in Python #}
-      {% for wp in route66.waypoints %}
-        {% set passed = wp.passed %}
-        {% set is_above = wp.label_above %}
-        <g class="wp-hit" data-name="{{ wp.name }}" data-emoji="{{ wp.emoji }}" data-km="{{ wp.km }}" data-passed="{{ 'true' if passed else 'false' }}">
-          <circle cx="{{ wp.x }}" cy="{{ wp.y }}" r="12" fill="transparent"/>
-          <circle cx="{{ wp.x }}" cy="{{ wp.y }}"
-            r="{% if loop.index0 == 0 or loop.index0 == 23 %}7{% else %}5{% endif %}"
-            fill="{% if passed %}#e67e22{% else %}var(--color-border,#2e3350){% endif %}"
-            stroke="var(--color-surface,#1e2130)" stroke-width="2"
-            {% if passed %}filter="url(#glow)"{% endif %}/>
-          <line x1="{{ wp.x }}" y1="{{ wp.y }}"
-                x2="{{ wp.x }}" y2="{% if is_above %}{{ wp.y - (8 + wp.label_rank * 24) }}{% else %}{{ wp.y + (8 + wp.label_rank * 24) }}{% endif %}"
-            stroke="{% if passed %}#e67e22{% else %}var(--color-border,#2e3350){% endif %}"
-            stroke-width="0.8" stroke-opacity="{% if passed %}0.7{% else %}0.3{% endif %}"/>
-          <text x="{{ wp.x }}"
-                y="{% if is_above %}{{ wp.y - (12 + wp.label_rank * 24) }}{% else %}{{ wp.y + (18 + wp.label_rank * 24) }}{% endif %}"
-                text-anchor="middle" class="wp-label {% if passed %}wp-passed{% endif %}" font-size="8">{{ wp.emoji }}</text>
-          <text x="{{ wp.x }}"
-                y="{% if is_above %}{{ wp.y - (22 + wp.label_rank * 24) }}{% else %}{{ wp.y + (28 + wp.label_rank * 24) }}{% endif %}"
-                text-anchor="middle" class="wp-label {% if passed %}wp-passed{% endif %}" font-size="7">
-            {{ wp.name | replace(' — Start', '') | replace(' — End', '') | replace(' — Gateway Arch', '') | replace(' — Oil Capital', '') | replace(' — Big Texan', '') | replace(' — Grand Canyon', '') | replace(' — Gold Rush Town', '') | truncate(16, True, '') }}
-          </text>
-        </g>
-      {% endfor %}
-
-      {# Current position marker #}
-      {{ position_marker_above(route66.marker, r=10) }}
-
-      {# Historic US 66 shield badge #}
-      <g transform="translate(440, -8)">
-        <rect x="-18" y="0" width="36" height="20" rx="3"
-          fill="var(--color-border,#2e3350)" fill-opacity="0.5"/>
-        <text x="0" y="14" text-anchor="middle" font-size="10" font-weight="bold"
-          fill="var(--color-teal,#00829b)" fill-opacity="0.7" font-family="inherit">US 66</text>
-      </g>
-
-      {# Labels #}
-      <text x="18" y="-4" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4"
-        font-style="italic" font-family="inherit">🌊 Lake Michigan</text>
-      <text x="882" y="210" font-size="8" fill="var(--color-teal,#00829b)" fill-opacity="0.4"
-        font-style="italic" font-family="inherit" text-anchor="end">Pacific 🌊</text>
-
-      {# Scale bar — top margin, not bottom-left, since fanned-out labels
-         for the Chicago-area cluster (Joliet/Bloomington/Springfield) can
-         reach down that far as the journey progresses. #}
-      <g transform="translate(20, -4)">
-        <line x1="0" y1="0" x2="56" y2="0" stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
-        <line x1="0" y1="-3" x2="0" y2="3"   stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
-        <line x1="56" y1="-3" x2="56" y2="3" stroke="var(--color-teal,#00829b)" stroke-width="1" stroke-opacity="0.4"/>
-        <text x="28" y="12" text-anchor="middle" font-size="7.5"
-          fill="var(--color-teal,#00829b)" fill-opacity="0.5" font-family="inherit">~250 km</text>
-      </g>
-    </svg>
-    </div>
+    <div id="route66Map" class="journey-map"></div>
   </div>
 </div>
 
@@ -475,4 +150,16 @@
 
 {% include "gamification/_waypoint_modal.html" %}
 
+{% endblock %}
+
+{% block extra_js %}
+{% if route66.active or route66.complete %}
+{% include "gamification/_leaflet_cdn.html" %}
+<script src="{{ url_for('static', filename='js/journey-map.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    initJourneyMap("route66Map", {{ route66.waypoints | tojson }}, {{ route66.marker | tojson if route66.active else "null" }});
+  });
+</script>
+{% endif %}
 {% endblock %}

@@ -7,7 +7,53 @@ file; these confirm the routes render, journeys can be started/restarted,
 and the JSON APIs return the expected shape.
 """
 
+import pytest
+
 from models import Journey
+from blueprints.gamification import (
+    _layout_geo_route,
+    RHINE_WAYPOINTS, HOLLAND_WAYPOINTS, ROUTE66_WAYPOINTS, TRANSCAN_WAYPOINTS,
+)
+
+
+# --------------------------------------------------------------------------- #
+#  _layout_geo_route() — marker interpolation for the real Leaflet maps       #
+# --------------------------------------------------------------------------- #
+
+def test_layout_geo_route_marker_at_first_waypoint_when_pct_zero():
+    waypoints = [{"lat": 10.0, "lon": 20.0}, {"lat": 12.0, "lon": 24.0}, {"lat": 14.0, "lon": 28.0}]
+    out, marker = _layout_geo_route(waypoints, pct=0)
+    assert out is waypoints
+    assert marker == {"lat": 10.0, "lon": 20.0}
+
+
+def test_layout_geo_route_marker_at_last_waypoint_when_pct_100():
+    waypoints = [{"lat": 10.0, "lon": 20.0}, {"lat": 12.0, "lon": 24.0}, {"lat": 14.0, "lon": 28.0}]
+    _, marker = _layout_geo_route(waypoints, pct=100)
+    assert marker == {"lat": 14.0, "lon": 28.0}
+
+
+def test_layout_geo_route_marker_interpolates_between_flanking_waypoints():
+    # 3 waypoints -> 2 index-segments; 50% overall progress lands exactly on
+    # the middle waypoint (same index-based interpolation the old SVG used).
+    waypoints = [{"lat": 0.0, "lon": 0.0}, {"lat": 10.0, "lon": 10.0}, {"lat": 20.0, "lon": 20.0}]
+    _, marker = _layout_geo_route(waypoints, pct=50)
+    assert marker == {"lat": 10.0, "lon": 10.0}
+
+    _, marker = _layout_geo_route(waypoints, pct=25)
+    assert marker["lat"] == 5.0
+    assert marker["lon"] == 5.0
+
+
+@pytest.mark.parametrize("waypoints", [RHINE_WAYPOINTS, HOLLAND_WAYPOINTS, ROUTE66_WAYPOINTS, TRANSCAN_WAYPOINTS])
+def test_every_route_waypoint_has_real_coordinates(waypoints):
+    for wp in waypoints:
+        assert -90 <= wp["lat"] <= 90
+        assert -180 <= wp["lon"] <= 180
+        # A (0, 0) placeholder would pass the range check above but is never
+        # a real waypoint on any of these four routes (mid-Atlantic/Gulf of
+        # Guinea) — catches a copy-paste-left-blank mistake.
+        assert (wp["lat"], wp["lon"]) != (0.0, 0.0)
 
 
 # --------------------------------------------------------------------------- #

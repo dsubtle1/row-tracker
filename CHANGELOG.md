@@ -9,6 +9,23 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.25.0] — 2026-09-07
+
+### Added
+- **Real maps for all four virtual journeys**, replacing hand-tuned SVG route illustrations —
+  Leaflet.js + OpenStreetMap, every waypoint at its real-world latitude/longitude, a smoothed
+  curve through them (not a literal river/highway trace — see docs/feature-ideas.md), and your
+  current position as a pulsing marker. Works identically in dark and light theme.
+
+### Changed
+- Deleted ~200 lines of now-dead SVG label-collision-avoidance code (fan-out ranks, left/right
+  alternation) — real maps handle marker placement themselves. The waypoint-click-for-Wikipedia
+  feature needed zero changes; its click delegation worked immediately against the new markers.
+- README/FAQ/QUICKSTART: corrected the Trans-Canada waypoint count (24, not 23) and documented two
+  network dependencies the "nothing leaves your server" pitch didn't previously mention — map
+  tiles fetched live on every journey-map view, and the pre-existing (undocumented) Wikipedia API
+  call on waypoint click.
+
 ## [0.24.1] — 2026-09-07
 
 ### Changed

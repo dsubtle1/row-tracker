@@ -1,0 +1,29 @@
+{#
+  Leaflet, loaded from unpkg with Subresource Integrity so the fetched
+  bytes are cryptographically verified against what's expected — a
+  compromised or tampered CDN response would simply fail to execute.
+
+  Falls back to the local copy in static/{js,css}/vendor/ if the CDN is
+  unreachable (offline/air-gapped homelab, CDN outage, blocked network) —
+  keeps "no external dependencies required" true for the app shell itself.
+  Map *tiles* are a separate story (see journey-map.js): those come from
+  OpenStreetMap/CARTO over the network on every view, same as any other
+  real map — there's no offline tile cache here.
+
+  To bump the pinned version: change the version below, then regenerate
+  both integrity hashes and the local fallback from the same URLs so they
+  stay byte-identical:
+    V=X.Y.Z
+    curl -fsSL "https://unpkg.com/leaflet@$V/dist/leaflet.js" -o static/js/vendor/leaflet.js
+    curl -fsSL "https://unpkg.com/leaflet@$V/dist/leaflet.css" -o static/css/vendor/leaflet.css
+    openssl dgst -sha384 -binary static/js/vendor/leaflet.js | openssl base64 -A
+    openssl dgst -sha384 -binary static/css/vendor/leaflet.css | openssl base64 -A
+#}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      crossorigin="anonymous"
+      onerror="this.onerror=null;this.href='{{ url_for('static', filename='css/vendor/leaflet.css') }}'" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+        crossorigin="anonymous"></script>
+<script>window.L || document.write('<script src="{{ url_for("static", filename="js/vendor/leaflet.js") }}"><\/script>')</script>
