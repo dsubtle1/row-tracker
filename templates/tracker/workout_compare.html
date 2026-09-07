@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Compare Workouts — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Compare Workouts</h1>
+</div>
+
+{% if error %}
+<p class="muted">
+  {{ error }} <a href="{{ url_for('tracker.workout_list') }}">Back to Workouts</a>.
+</p>
+{% else %}
+
+<div class="wcmp-summary">
+  <div class="wcmp-card wcmp-card--a">
+    <div class="wcmp-label">Workout A</div>
+    <a href="{{ url_for('tracker.workout_detail', workout_id=workout_a.id) }}" class="wcmp-date">{{ workout_a.workout_date }}</a>
+    <div class="wcmp-stats">
+      <span>{{ "{:,}".format(workout_a.distance_meters) if workout_a.distance_meters else "—" }}m</span>
+      <span>{{ workout_a.time_formatted }}</span>
+      <span>{{ workout_a.avg_pace_formatted }}/500m</span>
+    </div>
+  </div>
+  <div class="wcmp-vs">vs</div>
+  <div class="wcmp-card wcmp-card--b">
+    <div class="wcmp-label">Workout B</div>
+    <a href="{{ url_for('tracker.workout_detail', workout_id=workout_b.id) }}" class="wcmp-date">{{ workout_b.workout_date }}</a>
+    <div class="wcmp-stats">
+      <span>{{ "{:,}".format(workout_b.distance_meters) if workout_b.distance_meters else "—" }}m</span>
+      <span>{{ workout_b.time_formatted }}</span>
+      <span>{{ workout_b.avg_pace_formatted }}/500m</span>
+    </div>
+  </div>
+</div>
+
+<div class="chart-card">
+  <div class="chart-wrap">
+    <canvas id="compareChart"></canvas>
+  </div>
+  <p class="chart-note">Pace per split, split-by-split. Lower = faster.</p>
+</div>
+
+<div class="wd-splits-wrap">
+  <table class="wd-splits-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>A dist</th>
+        <th>A pace</th>
+        <th>B dist</th>
+        <th>B pace</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in range([splits_a | length, splits_b | length] | max) %}
+      <tr>
+        <td class="wd-split-num">{{ i + 1 }}</td>
+        {% if i < splits_a | length %}
+          <td>{{ "{:,}".format(splits_a[i].distance) if splits_a[i].distance else "—" }}m</td>
+          <td class="mono wd-split-pace">{{ splits_a[i].pace_str }}/500m</td>
+        {% else %}
+          <td>—</td><td>—</td>
+        {% endif %}
+        {% if i < splits_b | length %}
+          <td>{{ "{:,}".format(splits_b[i].distance) if splits_b[i].distance else "—" }}m</td>
+          <td class="mono wd-split-pace">{{ splits_b[i].pace_str }}/500m</td>
+        {% else %}
+          <td>—</td><td>—</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  body { --compare-b: #38bdf8; }
+  [data-theme="light"] body { --compare-b: #0ea5e9; }
+
+  .wcmp-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .wcmp-card {
+    flex: 1;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+  .wcmp-card--a { border-left: 3px solid var(--color-accent); }
+  .wcmp-card--b { border-left: 3px solid var(--compare-b); }
+  .wcmp-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    margin-bottom: 0.3rem;
+  }
+  .wcmp-date { font-size: 1.1rem; font-weight: 650; }
+  .wcmp-stats {
+    display: flex;
+    gap: 0.9rem;
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .wcmp-vs {
+    flex: none;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{% if not error %}
+{% include "tracker/_chart_cdn.html" %}
+<script>
+(function () {
+  const splitsA = {{ splits_a | tojson }};
+  const splitsB = {{ splits_b | tojson }};
+
+  const accent   = getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim() || "#cdfa3f";
+  const compareB = getComputedStyle(document.body).getPropertyValue("--compare-b").trim() || "#38bdf8";
+  const gridColor = getComputedStyle(document.documentElement).getPropertyValue("--color-border").trim() || "#262a35";
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue("--color-text-muted").trim() || "#7a8399";
+
+  const maxLen = Math.max(splitsA.length, splitsB.length);
+  const labels = Array.from({ length: maxLen }, (_, i) => "Split " + (i + 1));
+
+  new Chart(document.getElementById("compareChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Workout A",
+          data: splitsA.map(s => s.pace_seconds),
+          borderColor: accent,
+          backgroundColor: accent,
+          tension: 0.15,
+          pointRadius: 3,
+        },
+        {
+          label: "Workout B",
+          data: splitsB.map(s => s.pace_seconds),
+          borderColor: compareB,
+          backgroundColor: compareB,
+          tension: 0.15,
+          pointRadius: 3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { grid: { color: gridColor }, ticks: { color: textColor } },
+        y: {
+          reverse: true,   // lower pace = faster, climbing upward reads as "better"
+          grid: { color: gridColor },
+          ticks: {
+            color: textColor,
+            callback: function (val) {
+              const m = Math.floor(val / 60), s = Math.round(val % 60);
+              return m + ":" + s.toString().padStart(2, "0");
+            },
+          },
+        },
+      },
+      plugins: {
+        legend: { labels: { color: textColor } },
+      },
+    },
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

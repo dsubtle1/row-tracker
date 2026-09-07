@@ -9,6 +9,17 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.23.0] — 2026-09-07
+
+### Added
+- **Head-to-head workout comparison.** Tick the checkbox next to any two workouts on the Workouts
+  page and click Compare for a split-by-split pace chart overlaying both, plus a side-by-side
+  split table. Different granularity from the existing "You vs Past You" (monthly aggregates) —
+  this is workout-vs-workout. The split-parsing logic already used by the workout detail page was
+  extracted into a shared `_compute_splits()` helper rather than duplicated. Same limitation the
+  detail page already has: workouts with no per-split data (a single continuous piece, or a
+  CSV-imported workout) can't be compared — surfaced as a clear message, not a silent failure.
+
 ## [0.22.0] — 2026-09-07
 
 ### Added

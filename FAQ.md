@@ -60,6 +60,9 @@ Yes — the Workouts page has a filter bar for date range and distance range (e.
 **Can I add a note to a workout?**
 Yes — every workout detail page has a Notes field near the top. Free text, up to 2,000 characters, saved with its own button. Good for things Concept2 doesn't track: how you felt, equipment changes, why a session got cut short.
 
+**Can I compare two workouts side by side?**
+Yes — tick the checkbox next to any two workouts on the Workouts page and click Compare. You'll get a split-by-split pace chart overlaying both, plus a table of every split from each. This needs per-split detail from Concept2, so it won't work for a single continuous piece with no intervals, or a CSV-imported workout (no split data comes with a CSV import).
+
 **My lifetime metres don't match the Concept2 website — why?**
 If you do interval workouts, Concept2 tracks the light rowing between intervals as separate "rest" meters, apart from each interval's own distance. Row Tracker includes those rest meters in lifetime and volume totals (the Dashboard total, volume badges, virtual journeys, and Season Challenges) — matching what Concept2's own site counts — but never in pace, personal bests, or single-piece test results, which stay based on work-interval meters only so a slower recovery split can't inflate your times. A small remaining gap usually means a manually-entered starting/legacy total on your Concept2 profile that predates connected-device logging, since that number isn't exposed by Concept2's results API at all.
 

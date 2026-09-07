@@ -58,6 +58,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Editable free-text notes on any workout — a place for "felt strong today" or "new shoes, different footplate setting"
 - Per-stroke pace & stroke-rate chart on the workout detail page, fetched from Concept2 on first view and cached
 - 52-week volume heatmap — click any day to see that session's details
+- Head-to-head comparison — pick any two workouts from the list for a split-by-split pace chart side by side
 
 **Personal Bests**
 - 8 categories: 100m, 500m, 1000m, 2000m, 5000m, 10000m, 30min, 60min

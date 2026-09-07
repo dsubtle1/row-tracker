@@ -321,6 +321,50 @@ def workout_save_notes(workout_id):
     return redirect(url_for("tracker.workout_detail", workout_id=workout_id))
 
 
+def _compute_splits(workout: Workout) -> list[dict]:
+    """
+    Per-split breakdown from raw_json, shared by the workout detail page and
+    the head-to-head comparison page. raw_json is NULL for CSV-imported
+    workouts, so this returns [] for those — same limitation the detail
+    page already has today.
+    """
+    raw = workout.raw_json or {}
+    raw_splits = (raw.get("workout") or {}).get("splits") or []
+    splits = []
+    for i, s in enumerate(raw_splits, 1):
+        t    = s.get("time")          # tenths of a second (same as top-level)
+        dist = s.get("distance")
+        pace_seconds = None
+        pace_str = "—"
+        if t and dist:
+            t_sec = t / 10
+            pace_seconds = (t_sec / dist) * 500
+            pm, ps = divmod(int(pace_seconds), 60)
+            pace_str = f"{pm}:{ps:02d}"
+        time_str = "—"
+        if t:
+            t_sec = int(t / 10)
+            tm, ts = divmod(t_sec, 60)
+            time_str = f"{tm}:{ts:02d}.{(t % 10)}"
+
+        shr = s.get("heart_rate") or {}
+        splits.append({
+            "num":             i,
+            "distance":        dist,
+            "time_str":        time_str,
+            "pace_str":        pace_str,
+            "pace_seconds":    pace_seconds,
+            "stroke_rate":     s.get("stroke_rate"),
+            "calories":        s.get("calories_total"),
+            "wattminutes":     s.get("wattminutes_total"),
+            "hr_min":          shr.get("min"),
+            "hr_avg":          shr.get("average"),
+            "hr_max":          shr.get("max"),
+            "hr_ending":       shr.get("ending"),
+        })
+    return splits
+
+
 @tracker_bp.route("/workouts/<int:workout_id>")
 def workout_detail(workout_id):
     workout = db.get_or_404(Workout, workout_id)
@@ -380,39 +424,7 @@ def workout_detail(workout_id):
                 stroke_data = fetched
 
     # ── Splits ────────────────────────────────────────────────────────────
-    raw_splits = (raw.get("workout") or {}).get("splits") or []
-    splits = []
-    for i, s in enumerate(raw_splits, 1):
-        t   = s.get("time")          # tenths of a second (same as top-level)
-        dist = s.get("distance")
-        # pace: (time_seconds / distance) * 500
-        pace_str = "—"
-        if t and dist:
-            t_sec = t / 10
-            pace_sec = (t_sec / dist) * 500
-            pm, ps = divmod(int(pace_sec), 60)
-            pace_str = f"{pm}:{ps:02d}"
-        # time formatted
-        time_str = "—"
-        if t:
-            t_sec = int(t / 10)
-            tm, ts = divmod(t_sec, 60)
-            time_str = f"{tm}:{ts:02d}.{(t % 10)}"
-
-        shr = s.get("heart_rate") or {}
-        splits.append({
-            "num":             i,
-            "distance":        dist,
-            "time_str":        time_str,
-            "pace_str":        pace_str,
-            "stroke_rate":     s.get("stroke_rate"),
-            "calories":        s.get("calories_total"),
-            "wattminutes":     s.get("wattminutes_total"),
-            "hr_min":          shr.get("min"),
-            "hr_avg":          shr.get("average"),
-            "hr_max":          shr.get("max"),
-            "hr_ending":       shr.get("ending"),
-        })
+    splits = _compute_splits(workout)
 
     return render_template(
         "tracker/workout_detail.html",
@@ -421,6 +433,45 @@ def workout_detail(workout_id):
         extras=extras,
         splits=splits,
         stroke_data=stroke_data,
+    )
+
+
+@tracker_bp.route("/workouts/compare")
+def workout_compare():
+    """
+    Head-to-head split-by-split comparison of two workouts — pick any two
+    from the Workouts list. Different granularity from the existing "You vs
+    Past You" (monthly aggregates): this is workout-vs-workout.
+    """
+    a_id = request.args.get("a", type=int)
+    b_id = request.args.get("b", type=int)
+
+    error = None
+    workout_a = workout_b = None
+    splits_a = splits_b = []
+
+    if not a_id or not b_id:
+        error = "Pick two workouts from the Workouts list to compare."
+    elif a_id == b_id:
+        error = "Pick two different workouts to compare."
+    else:
+        workout_a = Workout.query.filter_by(id=a_id, workout_type="rower").first()
+        workout_b = Workout.query.filter_by(id=b_id, workout_type="rower").first()
+        if not workout_a or not workout_b:
+            error = "One or both workouts couldn't be found."
+        else:
+            splits_a = _compute_splits(workout_a)
+            splits_b = _compute_splits(workout_b)
+            if not splits_a or not splits_b:
+                error = ("One or both workouts have no split data to compare — this can happen "
+                         "for a single continuous piece with no intervals, or a CSV-imported "
+                         "workout (no per-split detail is available from a CSV import).")
+
+    return render_template(
+        "tracker/workout_compare.html",
+        error=error,
+        workout_a=workout_a, workout_b=workout_b,
+        splits_a=splits_a, splits_b=splits_b,
     )
 
 

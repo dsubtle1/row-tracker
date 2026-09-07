@@ -187,6 +187,69 @@ def test_save_notes_missing_workout_is_404(client):
 
 
 # --------------------------------------------------------------------------- #
+#  Head-to-head workout comparison                                            #
+# --------------------------------------------------------------------------- #
+
+def _raw_json_with_splits(n, base_pace_tenths=1200):
+    """A raw_json blob shaped like a real C2 result, with n even 500m splits."""
+    return {"workout": {"splits": [
+        {"time": base_pace_tenths, "distance": 500, "stroke_rate": 24, "calories_total": 12}
+        for _ in range(n)
+    ]}}
+
+
+def test_workout_compare_missing_params_shows_prompt(client):
+    resp = client.get("/workouts/compare")
+    assert resp.status_code == 200
+    assert b"Pick two workouts" in resp.data
+
+
+def test_workout_compare_same_id_is_rejected(client, full_app_ctx, full_make_workout):
+    w = full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    w.raw_json = _raw_json_with_splits(4)
+    from models import db
+    db.session.commit()
+
+    resp = client.get(f"/workouts/compare?a={w.id}&b={w.id}")
+    assert resp.status_code == 200
+    assert b"two different workouts" in resp.data
+
+
+def test_workout_compare_missing_workout_is_reported(client, full_app_ctx, full_make_workout):
+    w = full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    w.raw_json = _raw_json_with_splits(4)
+    from models import db
+    db.session.commit()
+
+    resp = client.get(f"/workouts/compare?a={w.id}&b=999999")
+    assert resp.status_code == 200
+    assert b"couldn&#39;t be found" in resp.data
+
+
+def test_workout_compare_no_splits_shows_explanation(client, full_app_ctx, full_make_workout):
+    # Neither workout has raw_json — e.g. both CSV-imported.
+    w1 = full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    w2 = full_make_workout(id=2, distance_meters=2000, time_seconds=470)
+
+    resp = client.get(f"/workouts/compare?a={w1.id}&b={w2.id}")
+    assert resp.status_code == 200
+    assert b"no split data to compare" in resp.data
+
+
+def test_workout_compare_renders_chart_data_for_two_valid_workouts(client, full_app_ctx, full_make_workout):
+    from models import db
+    w1 = full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    w1.raw_json = _raw_json_with_splits(4, base_pace_tenths=1200)
+    w2 = full_make_workout(id=2, distance_meters=2000, time_seconds=460)
+    w2.raw_json = _raw_json_with_splits(4, base_pace_tenths=1150)
+    db.session.commit()
+
+    resp = client.get(f"/workouts/compare?a={w1.id}&b={w2.id}")
+    assert resp.status_code == 200
+    assert resp.data.count(b"pace_seconds") >= 8   # 4 splits each, in the JSON fed to Chart.js
+
+
+# --------------------------------------------------------------------------- #
 #  Personal bests                                                             #
 # --------------------------------------------------------------------------- #
 
