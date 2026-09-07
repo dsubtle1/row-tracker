@@ -9,6 +9,16 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.24.0] — 2026-09-07
+
+### Added
+- **WOD actual-vs-planned feedback.** `actual_workout_id` on a completed WOD was never actually
+  reachable — no template ever submitted a `workout_id` when marking a WOD complete. Marking one
+  complete now auto-links the workout you synced that day, but only when there's exactly one
+  same-day candidate; more than one is left unlinked rather than guessing wrong. Once linked, the
+  WOD card shows whether you hit target pace within 2%, or how far off you were — same treatment
+  on both the periodization WOD page and the Random WOD Generator result page.
+
 ## [0.23.0] — 2026-09-07
 
 ### Added

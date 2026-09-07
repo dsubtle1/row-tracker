@@ -74,6 +74,104 @@ def test_wod_complete_missing_id_is_404(client):
     assert resp.status_code == 404
 
 
+# --------------------------------------------------------------------------- #
+#  Auto-link on completion + actual-vs-planned comparison                    #
+#                                                                              #
+#  The UI has never had a manual workout picker (only the wod_id form field  #
+#  is ever submitted), so auto-linking the one same-day workout is what      #
+#  makes actual_workout_id — and the comparison it powers — reachable at     #
+#  all in normal use.                                                        #
+# --------------------------------------------------------------------------- #
+
+def test_wod_complete_auto_links_the_one_same_day_workout(client, full_make_workout):
+    client.get("/wod")
+    row = WodHistory.query.filter_by(generated_date=date.today()).first()
+    workout = full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+
+    client.post("/wod/complete", data={"wod_id": row.id})   # no workout_id given
+
+    updated = db.session.get(WodHistory, row.id)
+    assert updated.actual_workout_id == workout.id
+
+
+def test_wod_complete_does_not_auto_link_when_ambiguous(client, full_make_workout):
+    client.get("/wod")
+    row = WodHistory.query.filter_by(generated_date=date.today()).first()
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    full_make_workout(id=2, distance_meters=6000, time_seconds=1500)
+
+    client.post("/wod/complete", data={"wod_id": row.id})
+
+    updated = db.session.get(WodHistory, row.id)
+    assert updated.actual_workout_id is None
+
+
+def test_wod_complete_does_not_auto_link_a_workout_already_linked_elsewhere(client, full_make_workout):
+    client.get("/wod")
+    row1 = WodHistory.query.filter_by(generated_date=date.today()).first()
+    workout = full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    row1.actual_workout_id = workout.id
+    db.session.commit()
+
+    # A second WOD row for the same date (e.g. after a Force Regenerate) must
+    # not steal the workout that's already linked to the first.
+    row2 = WodHistory(generated_date=date.today(), wod_type="steady_state", wod_json={}, completed=False)
+    db.session.add(row2)
+    db.session.commit()
+
+    client.post("/wod/complete", data={"wod_id": row2.id})
+
+    assert db.session.get(WodHistory, row2.id).actual_workout_id is None
+
+
+def test_wod_complete_explicit_workout_id_skips_auto_link(client, full_make_workout):
+    client.get("/wod")
+    row = WodHistory.query.filter_by(generated_date=date.today()).first()
+    # Two same-day candidates would make auto-link ambiguous — an explicit
+    # choice must still work regardless.
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480, workout_date=date.today())
+    chosen = full_make_workout(id=2, distance_meters=6000, time_seconds=1500, workout_date=date.today())
+
+    client.post("/wod/complete", data={"wod_id": row.id, "workout_id": chosen.id})
+
+    assert db.session.get(WodHistory, row.id).actual_workout_id == chosen.id
+
+
+def test_wod_page_shows_hit_target_comparison(client, full_app_ctx, full_make_workout):
+    from wod_engine import generate_wod
+    from wod_engine import save_wod
+
+    spec = generate_wod()
+    row = save_wod(spec)
+    # Match the actual workout's pace to the generated target almost exactly.
+    workout = full_make_workout(id=1, avg_pace_seconds=spec.target_pace_seconds,
+                                 distance_meters=2000, time_seconds=spec.target_pace_seconds * 4,
+                                 workout_date=row.generated_date)
+    row.actual_workout_id = workout.id
+    row.completed = True
+    db.session.commit()
+
+    resp = client.get("/wod")
+    assert b"Hit target pace within" in resp.data
+
+
+def test_wod_page_shows_miss_when_pace_is_far_off(client, full_app_ctx, full_make_workout):
+    from wod_engine import generate_wod, save_wod
+
+    spec = generate_wod()
+    row = save_wod(spec)
+    slow_pace = spec.target_pace_seconds + 20   # well outside a 2% margin
+    workout = full_make_workout(id=1, avg_pace_seconds=slow_pace,
+                                 distance_meters=2000, time_seconds=slow_pace * 4,
+                                 workout_date=row.generated_date)
+    row.actual_workout_id = workout.id
+    row.completed = True
+    db.session.commit()
+
+    resp = client.get("/wod")
+    assert b"off target" in resp.data
+
+
 def test_wod_history_current_month(client):
     resp = client.get("/wod/history")
     assert resp.status_code == 200

@@ -95,6 +95,9 @@ It lets you generate a one-off workout by specifying intensity (light / medium /
 **What does the WOD History calendar show?**
 Click View all under History on the WOD page to open a month-by-month calendar of every day a WOD was generated. Days are colour-coded for pending vs. completed, and clicking any day opens its workout title, target pace, zone, and status. Use Prev/Next to browse other months, including previous years.
 
+**When I mark a WOD complete, does it check how I actually did?**
+When it can. Clicking Mark Complete automatically links the workout you synced that day — but only when there's exactly one candidate for that date, since guessing between two same-day sessions would risk linking the wrong one. Once linked, the WOD card shows whether you hit target pace within 2%, or how far off you were. If sync hasn't picked up that day's workout yet, or more than one workout landed on the same date, no automatic comparison appears — same rule-based logic behind it either way, just nothing to compare against yet.
+
 **Why does my WOD sometimes say "training load elevated" or "training load is low"?**
 The engine tracks your CAWR (acute:chronic workload ratio — your last 7 days of volume vs. your last 42 days) and quietly uses it to steer today's session: a high ratio forces an easy steady-state day so you can recover, a low ratio biases toward interval or threshold work to rebuild fitness. The note on the WOD card just makes that visible — same logic as always, it used to happen with no explanation. It only appears once you have 42+ days of workout history for the ratio to be computed.
 

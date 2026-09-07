@@ -85,6 +85,15 @@
     </form>
     {% else %}
     <div class="wod-completed-badge">✓ Completed</div>
+    {% if wod.comparison %}
+    <div class="wod-comparison {{ 'wod-comparison--hit' if wod.comparison.hit_target else 'wod-comparison--miss' }}">
+      {% if wod.comparison.hit_target %}
+        ✓ Hit target pace within {{ wod.comparison.pct }}%
+      {% else %}
+        {{ wod.comparison.pct }}% off target ({{ "+" if wod.comparison.diff_seconds > 0 else "" }}{{ wod.comparison.diff_seconds }}s/500m)
+      {% endif %}
+    </div>
+    {% endif %}
     {% endif %}
     <form method="POST" action="{{ url_for('wod.wod_generate') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />

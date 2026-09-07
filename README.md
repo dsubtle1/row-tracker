@@ -89,6 +89,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Random WOD generator — choose intensity, effort level, and workout type; your free-text notes are passed to the AI coach when enabled
 - 27 distinct workout templates
 - WOD history calendar — browse past months day by day, colour-coded for pending vs. completed, click any day for the full workout detail
+- Actual-vs-planned feedback — marking a WOD complete auto-links the one workout you synced that day (when it's unambiguous) and shows whether you hit target pace within 2%
 
 **Gamification**
 - 17 badges across Performance, Volume, Consistency, and Efficiency categories — the four

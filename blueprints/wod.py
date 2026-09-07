@@ -23,6 +23,24 @@ wod_bp = Blueprint("wod", __name__)
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
+def _actual_vs_planned(row: WodHistory, target_pace_seconds) -> dict | None:
+    """
+    "You hit target pace within X%" comparison, once a WOD is linked to the
+    workout that actually happened. None if not linked, or either side is
+    missing the pace data needed to compare.
+    """
+    actual = row.actual_workout
+    if not actual or not actual.avg_pace_seconds or not target_pace_seconds:
+        return None
+    diff_seconds = actual.avg_pace_seconds - target_pace_seconds   # positive = slower than target
+    pct = abs(diff_seconds) / target_pace_seconds * 100
+    return {
+        "diff_seconds": diff_seconds,
+        "pct": round(pct, 1),
+        "hit_target": pct <= 2,   # within 2%, matching the backlog's own "within 2%" framing
+    }
+
+
 def _enrich(row: WodHistory) -> dict:
     """Merge WodHistory row with its wod_json into a flat display dict."""
     j = row.wod_json or {}
@@ -44,7 +62,24 @@ def _enrich(row: WodHistory) -> dict:
         "cawr":          j.get("cawr"),
         "cawr_note":     j.get("cawr_note", ""),
         "actual_workout": row.actual_workout,
+        "comparison":    _actual_vs_planned(row, j.get("target_pace_seconds")),
     }
+
+
+def _auto_link_workout(wod_date):
+    """
+    Find an unlinked workout from the same calendar date as a completed WOD,
+    for the common case where nobody explicitly picked one. Ambiguous (more
+    than one same-day candidate) or no match at all -> None, leaving the
+    existing manual workout_id form param as the fallback.
+    """
+    already_linked = {
+        wid for (wid,) in db.session.query(WodHistory.actual_workout_id)
+        .filter(WodHistory.actual_workout_id.isnot(None))
+    }
+    candidates = Workout.query.filter_by(workout_type="rower", workout_date=wod_date).all()
+    candidates = [w for w in candidates if w.id not in already_linked]
+    return candidates[0] if len(candidates) == 1 else None
 
 
 def _fmt_duration(seconds: int) -> str:
@@ -116,7 +151,13 @@ def wod_generate():
 
 @wod_bp.route("/wod/complete", methods=["POST"])
 def wod_complete():
-    """Mark a WOD as completed, optionally linking to an actual synced workout."""
+    """
+    Mark a WOD as completed, optionally linking to an actual synced workout.
+    If nothing was explicitly picked, try to auto-link the one same-day
+    synced workout — the UI has never had a manual picker, so this is what
+    makes actual_workout_id (and the actual-vs-planned comparison it powers)
+    reachable at all in the common case.
+    """
     wod_id = request.form.get("wod_id", type=int)
     workout_id = request.form.get("workout_id", type=int)
 
@@ -126,6 +167,10 @@ def wod_complete():
         workout = Workout.query.get(workout_id)
         if workout:
             row.actual_workout_id = workout_id
+    elif row.actual_workout_id is None:
+        auto = _auto_link_workout(row.generated_date)
+        if auto:
+            row.actual_workout_id = auto.id
     db.session.commit()
     return redirect(url_for("wod.wod"))
 

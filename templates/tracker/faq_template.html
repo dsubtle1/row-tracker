@@ -207,6 +207,13 @@
       </details>
 
       <details class="faq-item">
+        <summary class="faq-question">When I mark a WOD complete, does it check how I actually did?</summary>
+        <div class="faq-answer">
+          When it can. Clicking Mark Complete automatically links the workout you synced that day — but only when there's exactly one candidate for that date, since guessing between two same-day sessions would risk linking the wrong one. Once linked, the WOD card shows whether you hit target pace within 2%, or how far off you were. If sync hasn't picked up that day's workout yet, or more than one workout landed on the same date, no automatic comparison appears — same rule-based logic behind it either way, just nothing to compare against yet.
+        </div>
+      </details>
+
+      <details class="faq-item">
         <summary class="faq-question">Can Claude write my coaching notes?</summary>
         <div class="faq-answer">
           Optionally. Set <code>USE_AI_WOD=true</code> and add an <code>ANTHROPIC_API_KEY</code> in your <code>.env</code> and Claude Haiku will write the warm-up, cool-down, and coaching notes for each WOD, tailored to your recent training load, effort request, or any notes you type into the Random WOD Generator. The workout structure itself (intervals, pace targets) is always rule-based and unaffected. If the API key isn't set, or the request fails for any reason, Row Tracker silently falls back to the built-in static coaching text — this feature is off by default and never blocks WOD generation.

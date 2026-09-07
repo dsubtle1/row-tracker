@@ -1129,6 +1129,16 @@ code {
   border-radius: var(--radius);
 }
 
+.wod-comparison {
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  font-variant-numeric: tabular-nums;
+}
+.wod-comparison--hit  { color: var(--color-green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); }
+.wod-comparison--miss { color: var(--color-text-muted); background: var(--color-surface-2); border: 1px solid var(--color-border); }
+
 /* ---- Buttons ---- */
 .btn {
   display: inline-block;
