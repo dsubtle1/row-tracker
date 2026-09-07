@@ -62,6 +62,26 @@ class Insight:
         return self.confidence == "strong"
 
 
+@dataclass
+class GateStatus:
+    """
+    Why a rule didn't fire, for the small set of rules that report this
+    (see _best_day_of_week / _rest_gap_effect). Deliberately distinguishes
+    two different situations rather than treating every non-firing rule as
+    "just needs more data":
+
+      insufficient_sample — a pure sample-size gate. More workouts (or more
+        of a specific weekday/bucket) may resolve this.
+      no_effect — checked, and the signal is genuinely flat right now. More
+        data does not necessarily fix this — never render this with a
+        countdown, since that would promise an unlock that may not come.
+    """
+    key:      str
+    category: str
+    reason:   str    # "insufficient_sample" | "no_effect"
+    message:  str    # ready-to-render sentence
+
+
 # --------------------------------------------------------------------------- #
 #  Gating thresholds (tuned to stay quiet until a pattern is real)             #
 # --------------------------------------------------------------------------- #
@@ -165,12 +185,16 @@ def _sparkline(points, lower_is_better, accent):
 #  Rules — each returns an Insight or None                                     #
 # --------------------------------------------------------------------------- #
 
-def _best_day_of_week(rows) -> Optional[Insight]:
+def _best_day_of_week(rows):
     """Which weekday your splits come in fastest. Median pace resists the
     sprint-vs-long-piece spread, so a fast 100m doesn't skew a day."""
     paced = [w for w in rows if w.avg_pace_seconds]
     if len(paced) < MIN_TOTAL:
-        return None
+        return None, GateStatus(
+            key="best_day_of_week", category="timing", reason="insufficient_sample",
+            message=f"Needs {MIN_TOTAL} workouts with a pace logged to check for a day-of-week "
+                    f"pattern — you're at {len(paced)}.",
+        )
 
     by_dow: dict[int, list[int]] = {i: [] for i in range(7)}
     for w in paced:
@@ -178,14 +202,21 @@ def _best_day_of_week(rows) -> Optional[Insight]:
 
     # Every weekday needs a real sample before we compare them.
     if any(len(v) < 6 for v in by_dow.values()):
-        return None
+        return None, GateStatus(
+            key="best_day_of_week", category="timing", reason="insufficient_sample",
+            message="Needs at least 6 workouts on every day of the week to compare fairly — "
+                    "some days don't have enough yet.",
+        )
 
     medians = {d: statistics.median(v) for d, v in by_dow.items()}
     overall = statistics.median([p for v in by_dow.values() for p in v])
     best_dow = min(medians, key=medians.get)
     delta = overall - medians[best_dow]          # positive = faster than typical
     if delta < PACE_DELTA_MIN:
-        return None
+        return None, GateStatus(
+            key="best_day_of_week", category="timing", reason="no_effect",
+            message="Checked — no day of the week stands out in your pace right now.",
+        )
 
     best_n = len(by_dow[best_dow])
     day = calendar.day_name[best_dow]
@@ -218,15 +249,19 @@ def _best_day_of_week(rows) -> Optional[Insight]:
             best_index=best_dow,
             lower_is_better=True,      # lower pace = faster = the highlighted bar
         ),
-    )
+    ), None
 
 
-def _rest_gap_effect(rows) -> Optional[Insight]:
+def _rest_gap_effect(rows):
     """Does a rest day sharpen the next session? Bucket each workout by the
     gap since the previous rowing day and compare median pace."""
     dates = sorted({w.workout_date for w in rows})
     if len(dates) < MIN_TOTAL:
-        return None
+        return None, GateStatus(
+            key="rest_gap_effect", category="timing", reason="insufficient_sample",
+            message=f"Needs {MIN_TOTAL} days of history to check whether rest days change your "
+                    f"pace — you're at {len(dates)}.",
+        )
     prev_of = {dates[i]: dates[i - 1] for i in range(1, len(dates))}
 
     # gap bucket -> list of paces for the first session after that gap
@@ -244,14 +279,21 @@ def _rest_gap_effect(rows) -> Optional[Insight]:
         buckets[key].append(w.avg_pace_seconds)
 
     if any(len(buckets[k]) < 10 for k in ("1", "2")):
-        return None
+        return None, GateStatus(
+            key="rest_gap_effect", category="timing", reason="insufficient_sample",
+            message="Needs at least 10 sessions each after a 1-day and a 2-day gap to compare "
+                    "fairly — not quite there yet.",
+        )
 
     med = {k: statistics.median(v) for k, v in buckets.items() if v}
     baseline = med["1"]                                  # rowed again next day
     peak_key = min(med, key=med.get)
     gain = baseline - med.get(peak_key, baseline)        # positive = faster after rest
     if peak_key == "1" or gain < PACE_DELTA_MIN:
-        return None
+        return None, GateStatus(
+            key="rest_gap_effect", category="timing", reason="no_effect",
+            message="Checked — rest days don't currently show a clear effect on your next pace.",
+        )
 
     peak_label = {"2": "2-day", "3+": "3-day+"}.get(peak_key, peak_key)
     confidence = "strong" if gain >= PACE_DELTA_STRONG else "early"
@@ -291,7 +333,7 @@ def _rest_gap_effect(rows) -> Optional[Insight]:
                 {"label": "3+ days","key": "long",     "peak": peak_key == "3+"},
             ],
         },
-    )
+    ), None
 
 
 def _pace_trend(rows, window_days=90) -> Optional[Insight]:
@@ -871,24 +913,41 @@ RULES = [
 #  Public API                                                                  #
 # --------------------------------------------------------------------------- #
 
-def generate_insights() -> list[Insight]:
-    """Run every rule and return the insights that cleared their checks,
-    strong patterns first, then grouped-friendly by category order."""
-    rows = _rows()
+def _run_rules(rows) -> tuple[list[Insight], list[GateStatus]]:
+    """Run every rule, sorting fired insights strong-first within category
+    order, and collecting a GateStatus for whichever rules reported one
+    (see _best_day_of_week / _rest_gap_effect) instead of firing."""
     found: list[Insight] = []
+    gated: list[GateStatus] = []
     for rule in RULES:
         try:
-            ins = rule(rows)
+            result = rule(rows)
         except Exception:                   # a broken rule must never break the page
             import logging
             logging.getLogger(__name__).exception("Insight rule %s failed", rule.__name__)
-            ins = None
+            result = None
+        ins, status = result if isinstance(result, tuple) else (result, None)
         if ins is not None:
             found.append(ins)
+        elif status is not None:
+            gated.append(status)
 
     cat_order = {key: i for i, (key, _) in enumerate(CATEGORIES)}
     found.sort(key=lambda i: (cat_order.get(i.category, 99), 0 if i.is_strong else 1))
+    return found, gated
+
+
+def generate_insights() -> list[Insight]:
+    """Run every rule and return the insights that cleared their checks,
+    strong patterns first, then grouped-friendly by category order."""
+    found, _ = _run_rules(_rows())
     return found
+
+
+def generate_insights_and_gates() -> tuple[list[Insight], list[GateStatus]]:
+    """Same as generate_insights(), but also returns why currently-gated
+    rules didn't fire — powers the Insights page's transparency notices."""
+    return _run_rules(_rows())
 
 
 def group_insights(found: list[Insight]) -> list[dict]:
@@ -900,6 +959,25 @@ def group_insights(found: list[Insight]) -> list[dict]:
         {"key": key, "label": label, "insights": by_cat[key]}
         for key, label in CATEGORIES if key in by_cat
     ]
+
+
+def group_insights_and_gates(found: list[Insight], gated: list[GateStatus]) -> list[dict]:
+    """Like group_insights(), but a category also gets a section if it has
+    no fired insights yet — as long as it has a gate notice to explain why."""
+    by_cat_insights: dict[str, list[Insight]] = {}
+    for ins in found:
+        by_cat_insights.setdefault(ins.category, []).append(ins)
+    by_cat_gated: dict[str, list[GateStatus]] = {}
+    for g in gated:
+        by_cat_gated.setdefault(g.category, []).append(g)
+
+    sections = []
+    for key, label in CATEGORIES:
+        insights = by_cat_insights.get(key, [])
+        notices = by_cat_gated.get(key, [])
+        if insights or notices:
+            sections.append({"key": key, "label": label, "insights": insights, "notices": notices})
+    return sections
 
 
 def grouped_insights() -> list[dict]:

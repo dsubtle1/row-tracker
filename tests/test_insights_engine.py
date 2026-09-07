@@ -15,6 +15,10 @@ from models import Workout
 import insights_engine as ie
 from insights_engine import (
     generate_insights,
+    generate_insights_and_gates,
+    group_insights_and_gates,
+    GateStatus,
+    MIN_TOTAL,
     _bar_chart,
     _sparkline,
     _linfit_slope,
@@ -22,6 +26,8 @@ from insights_engine import (
     _consistency,
     _fastest_rate_steady,
     _year_over_year_volume,
+    _best_day_of_week,
+    _rest_gap_effect,
     _milestone_longevity,
     _milestone_biggest_day,
     _milestone_time_on_erg,
@@ -144,11 +150,154 @@ def test_generate_insights_is_silent_on_an_empty_history(app_ctx):
     assert generate_insights() == []
 
 
+def test_generate_insights_and_gates_matches_generate_insights_for_found(app_ctx):
+    """The new wrapper must not change which insights fire, only add gate info."""
+    found, gated = generate_insights_and_gates()
+    assert found == generate_insights() == []
+    # Empty history: best_day_of_week and rest_gap_effect both report their
+    # own insufficient-sample status; every other rule still returns bare None.
+    assert {g.key for g in gated} == {"best_day_of_week", "rest_gap_effect"}
+    assert all(g.reason == "insufficient_sample" for g in gated)
+
+
+# --------------------------------------------------------------------------- #
+#  Rule: best day of week — sample-size vs. no-effect gating                   #
+# --------------------------------------------------------------------------- #
+
+def _rows_on_weekdays(weekdays, count_per_day, pace=120):
+    """count_per_day rows on each given weekday index (0=Mon..6=Sun), one per
+    distinct week so every row lands on a different calendar date."""
+    base = date(2026, 1, 5)   # a Monday
+    rows = []
+    for wd in weekdays:
+        d = base + timedelta(days=wd)
+        for i in range(count_per_day):
+            rows.append(W(workout_date=d + timedelta(weeks=i), avg_pace_seconds=pace))
+    return rows
+
+
+def test_best_day_of_week_insufficient_total_sample():
+    rows = _rows_on_weekdays(range(7), 5)   # 35 paced rows, under MIN_TOTAL
+    ins, status = _best_day_of_week(rows)
+    assert ins is None
+    assert status.reason == "insufficient_sample"
+    assert str(len(rows)) in status.message
+
+
+def test_best_day_of_week_insufficient_per_weekday_sample():
+    rows = _rows_on_weekdays([0, 2, 4], 22)   # 66 total, but 4 weekdays have zero
+    assert len(rows) >= MIN_TOTAL
+    ins, status = _best_day_of_week(rows)
+    assert ins is None
+    assert status.reason == "insufficient_sample"
+
+
+def test_best_day_of_week_no_effect_when_pace_is_flat():
+    rows = _rows_on_weekdays(range(7), 9, pace=120)   # 63 rows, identical pace everywhere
+    ins, status = _best_day_of_week(rows)
+    assert ins is None
+    assert status.reason == "no_effect"
+    assert status.category == "timing"
+
+
+def test_best_day_of_week_fires_when_one_day_is_clearly_faster():
+    rows = _rows_on_weekdays(range(1, 7), 9, pace=120)
+    rows += _rows_on_weekdays([0], 9, pace=100)   # Monday well ahead of the rest
+    ins, status = _best_day_of_week(rows)
+    assert status is None
+    assert ins is not None
+    assert ins.key == "best_day_of_week"
+
+
+# --------------------------------------------------------------------------- #
+#  Rule: rest-gap effect — sample-size vs. no-effect gating                    #
+# --------------------------------------------------------------------------- #
+
+def _rest_gap_rows(gaps_and_paces):
+    """Build rows from a list of (gap_from_previous, avg_pace_seconds); the
+    first entry's gap is ignored since there's no previous date yet."""
+    rows = []
+    d = date(2026, 1, 1)
+    for i, (gap, pace) in enumerate(gaps_and_paces):
+        if i > 0:
+            d = d + timedelta(days=gap)
+        rows.append(W(workout_date=d, avg_pace_seconds=pace))
+    return rows
+
+
+def test_rest_gap_effect_insufficient_total_sample():
+    rows = _rest_gap_rows([(1, 120)] * 20)   # 20 distinct dates, under MIN_TOTAL
+    ins, status = _rest_gap_effect(rows)
+    assert ins is None
+    assert status.reason == "insufficient_sample"
+
+
+def test_rest_gap_effect_insufficient_bucket_sample():
+    # 61 distinct dates all 3+ days apart — buckets "1" and "2" never populate.
+    rows = _rest_gap_rows([(3, 120)] * 61)
+    ins, status = _rest_gap_effect(rows)
+    assert ins is None
+    assert status.reason == "insufficient_sample"
+
+
+def test_rest_gap_effect_no_effect_when_pace_is_flat():
+    # One continuous sequence of dates (each group's gap chains onto the last
+    # date of the previous group) — same uniform pace throughout.
+    rows = _rest_gap_rows([(1, 120)] * 20 + [(2, 120)] * 20 + [(3, 120)] * 20)
+    ins, status = _rest_gap_effect(rows)
+    assert ins is None
+    assert status.reason == "no_effect"
+    assert status.category == "timing"
+
+
+def test_rest_gap_effect_fires_when_rest_clearly_helps():
+    rows = _rest_gap_rows(
+        [(1, 130)] * 20     # back-to-back days: slower
+        + [(2, 110)] * 20   # a rest day: notably faster
+        + [(3, 120)] * 20   # padding to keep dates well past MIN_TOTAL
+    )
+    ins, status = _rest_gap_effect(rows)
+    assert status is None
+    assert ins is not None
+    assert ins.key == "rest_gap_effect"
+
+
+# --------------------------------------------------------------------------- #
+#  group_insights_and_gates()                                                 #
+# --------------------------------------------------------------------------- #
+
+def test_group_insights_and_gates_includes_a_category_with_only_notices():
+    gated = [GateStatus(key="best_day_of_week", category="timing",
+                         reason="no_effect", message="Checked — nothing here.")]
+    sections = group_insights_and_gates([], gated)
+    assert len(sections) == 1
+    assert sections[0]["key"] == "timing"
+    assert sections[0]["insights"] == []
+    assert sections[0]["notices"] == gated
+
+
+def test_group_insights_and_gates_omits_categories_with_neither():
+    assert group_insights_and_gates([], []) == []
+
+
 def test_insights_page_renders(client):
     resp = client.get("/insights")
     assert resp.status_code == 200
     assert b"What your rowing" in resp.data       # header copy
     assert b"Sessions analyzed" in resp.data      # stat strip
+
+
+def test_insights_page_shows_progress_banner_below_sample_floor(client):
+    resp = client.get("/insights")   # empty db — 0 workouts, well under MIN_TOTAL
+    assert f"0/{MIN_TOTAL} workouts".encode() in resp.data
+
+
+def test_insights_page_hides_progress_banner_at_or_above_sample_floor(client, full_app_ctx, full_make_workout):
+    from datetime import date as _date
+    for i in range(MIN_TOTAL):
+        full_make_workout(id=i + 1, workout_date=_date.today() - timedelta(days=i))
+    resp = client.get("/insights")
+    assert b"workouts \xe2\x80\x94 most patterns need" not in resp.data
 
 
 # --------------------------------------------------------------------------- #

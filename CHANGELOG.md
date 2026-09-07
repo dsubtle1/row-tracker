@@ -9,6 +9,18 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.20.0] — 2026-09-07
+
+### Added
+- **Insights page transparency for gated insight types.** Below the 60-workout sample floor, a
+  banner now shows progress toward it. Separately, the day-of-week and rest-gap-effect checks —
+  which the v0.9.6 release already found are gated because the signal is genuinely flat for some
+  accounts, not just short on data — now say so explicitly ("Checked — no day of the week stands
+  out in your pace right now") instead of staying silently absent. Deliberately no countdown for
+  that second case, since more workouts logged doesn't guarantee a pattern will appear.
+  `generate_insights()`'s existing signature is unchanged; a new `generate_insights_and_gates()`
+  powers this without touching any other rule or caller.
+
 ## [0.19.0] — 2026-09-07
 
 ### Added

@@ -439,12 +439,12 @@ def personal_bests():
 def insights():
     """Deterministic pattern-spotting across the whole history, plus an optional
     AI 'coach's read' that only ever rephrases those same computed facts."""
-    from insights_engine import generate_insights, group_insights, dataset_overview
+    from insights_engine import generate_insights_and_gates, group_insights_and_gates, dataset_overview, MIN_TOTAL
     from insights_ai import generate_coach_read
 
-    found       = generate_insights()
+    found, gated = generate_insights_and_gates()
     overview    = dataset_overview()
-    groups      = group_insights(found)
+    groups      = group_insights_and_gates(found, gated)
     coach_read  = generate_coach_read(found, overview)   # None unless USE_AI_INSIGHTS
 
     return render_template(
@@ -453,6 +453,7 @@ def insights():
         overview=overview,
         active_count=len(found),
         coach_read=coach_read,
+        min_total=MIN_TOTAL,
     )
 
 
