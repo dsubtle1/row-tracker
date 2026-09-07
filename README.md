@@ -53,7 +53,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Automatic sync from the Concept2 Logbook API — nightly at 3:00 AM, or on demand
 - CSV import for seasons rowed before API access existed — upload a Concept2 Logbook export, duplicates skipped automatically
 - Export workout history and personal bests as CSV or JSON, for use outside the app or as a portable backup
-- Full workout history with paginated list and enriched detail view
+- Full workout history with a paginated, filterable list (date range, distance range) and an enriched detail view
 - Enriched workout detail — heart rate (min/avg/max/ending with zone classification), per-split breakdown, avg watts, drag factor, stroke count
 - Per-stroke pace & stroke-rate chart on the workout detail page, fetched from Concept2 on first view and cached
 - 52-week volume heatmap — click any day to see that session's details

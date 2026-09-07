@@ -9,6 +9,16 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.18.0] — 2026-09-07
+
+### Added
+- **Date-range and distance-range filters on the Workouts page.** `workout_list()` previously took
+  only a `page` parameter. Filters are plain GET query params (bookmarkable/shareable), combine
+  together, and are validated leniently — a bad hand-edited date is ignored rather than 400ing.
+- **Pagination controls on the Workouts page.** Found while building the filters: the page had no
+  prev/next links at all before this, so anything past page 1 was only reachable by hand-editing
+  the URL. New pagination carries the active filters across pages.
+
 ## [0.17.0] — 2026-09-07
 
 ### Added

@@ -91,6 +91,50 @@ def test_workout_list_with_data(client, full_make_workout):
     assert resp.status_code == 200
 
 
+def test_workout_list_filters_by_date_range(client, full_make_workout):
+    from datetime import date
+    full_make_workout(id=1, workout_date=date(2026, 1, 1), distance_meters=2000, time_seconds=480)
+    full_make_workout(id=2, workout_date=date(2026, 6, 1), distance_meters=2000, time_seconds=480)
+
+    resp = client.get("/workouts?date_from=2026-05-01&date_to=2026-07-01")
+    assert resp.status_code == 200
+    assert b"2026-06-01" in resp.data
+    assert b"2026-01-01" not in resp.data
+
+
+def test_workout_list_filters_by_distance_range(client, full_make_workout):
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    full_make_workout(id=2, distance_meters=10000, time_seconds=2400)
+
+    resp = client.get("/workouts?min_distance=5000")
+    assert resp.status_code == 200
+    assert b"10,000" in resp.data
+    assert b">2,000m<" not in resp.data
+
+
+def test_workout_list_invalid_date_is_ignored_not_400(client, full_make_workout):
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    resp = client.get("/workouts?date_from=not-a-date")
+    assert resp.status_code == 200
+
+
+def test_workout_list_no_matches_shows_clear_filters_message(client, full_make_workout):
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    resp = client.get("/workouts?min_distance=999999")
+    assert resp.status_code == 200
+    assert b"No workouts match these filters" in resp.data
+
+
+def test_workout_list_pagination_links_preserve_filters(client, full_make_workout):
+    for i in range(1, 61):   # 60 rows > per_page=50, forces a second page
+        full_make_workout(id=i, distance_meters=5000, time_seconds=1200)
+
+    resp = client.get("/workouts?min_distance=1000")
+    assert resp.status_code == 200
+    assert b"min_distance=1000" in resp.data   # carried into the Next link
+    assert b"Page 1 of 2" in resp.data
+
+
 def test_workout_detail_found(client, full_make_workout):
     full_make_workout(id=42, distance_meters=2000, time_seconds=480)
     resp = client.get("/workouts/42")

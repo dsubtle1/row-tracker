@@ -15,6 +15,7 @@ import os
 import sqlite3
 from datetime import date, datetime, timedelta
 from collections import defaultdict
+from urllib.parse import urlencode
 
 from flask import Blueprint, Response, current_app, jsonify, render_template, request
 from sqlalchemy import func
@@ -274,12 +275,41 @@ def dashboard():
 @tracker_bp.route("/workouts")
 def workout_list():
     page = request.args.get("page", 1, type=int)
-    workouts = (
-        _rower()
-        .order_by(Workout.workout_date.desc())
-        .paginate(page=page, per_page=50, error_out=False)
+    date_from = request.args.get("date_from", "")
+    date_to = request.args.get("date_to", "")
+    min_distance = request.args.get("min_distance", type=int)
+    max_distance = request.args.get("max_distance", type=int)
+
+    query = _rower()
+    if date_from:
+        try:
+            query = query.filter(Workout.workout_date >= date.fromisoformat(date_from))
+        except ValueError:
+            date_from = ""   # bad input from a hand-edited URL — ignore rather than 400
+    if date_to:
+        try:
+            query = query.filter(Workout.workout_date <= date.fromisoformat(date_to))
+        except ValueError:
+            date_to = ""
+    if min_distance is not None:
+        query = query.filter(Workout.distance_meters >= min_distance)
+    if max_distance is not None:
+        query = query.filter(Workout.distance_meters <= max_distance)
+
+    workouts = query.order_by(Workout.workout_date.desc()).paginate(page=page, per_page=50, error_out=False)
+
+    # Precomputed so prev/next links and the filter form carry filters across
+    # pages without needing Jinja's `do` extension (not enabled in app.py).
+    filter_qs = urlencode({k: v for k, v in {
+        "date_from": date_from, "date_to": date_to,
+        "min_distance": min_distance, "max_distance": max_distance,
+    }.items() if v not in (None, "")})
+
+    return render_template(
+        "tracker/workouts.html", workouts=workouts, filter_qs=filter_qs,
+        date_from=date_from, date_to=date_to,
+        min_distance=min_distance, max_distance=max_distance,
     )
-    return render_template("tracker/workouts.html", workouts=workouts)
 
 
 @tracker_bp.route("/workouts/<int:workout_id>")
