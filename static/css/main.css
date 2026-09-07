@@ -264,6 +264,9 @@ code {
 .pb-delta { font-size: 0.8rem; margin-top: 0.25rem; }
 .pb-delta.positive { color: var(--color-green); }
 
+.pb-progression-btn { margin-top: 0.75rem; width: 100%; }
+.chart-wrap.pb-progression-chart-wrap { height: 280px; }
+
 .pb-stale-badge {
   font-size: 0.75rem;
   color: var(--color-amber);
@@ -2110,6 +2113,10 @@ code {
   transition: opacity 0.15s;
 }
 .day-modal--open { display: block; }
+
+/* Wider variant for content that needs more room than the compact WOD-day
+   detail this modal shell was originally built for (e.g. a line chart). */
+.day-modal--wide { width: min(700px, 92vw); }
 
 .day-modal-header {
   display: flex;

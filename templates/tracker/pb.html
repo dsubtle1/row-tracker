@@ -19,10 +19,128 @@
     {% if pb.is_stale %}
       <div class="pb-stale-badge">{{ pb.days_since_achieved }}d old — time to test</div>
     {% endif %}
+    <button type="button" class="btn btn-ghost btn-sm pb-progression-btn"
+            onclick="openPbProgressionModal('{{ pb.category }}')">
+      View progression →
+    </button>
   </div>
   {% endfor %}
 </div>
 {% else %}
 <p class="muted">No personal bests recorded yet.</p>
 {% endif %}
+
+<div class="day-modal-backdrop" id="pbProgressionBackdrop" onclick="closePbProgressionModal()"></div>
+<div class="day-modal day-modal--wide" id="pbProgressionModal">
+  <div class="day-modal-header">
+    <span class="day-modal-date" id="pbProgressionTitle"></span>
+    <button class="day-modal-close" onclick="closePbProgressionModal()">✕</button>
+  </div>
+  <div class="day-modal-body" id="pbProgressionBody">
+    <div class="day-modal-loading">Loading…</div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% include "tracker/_chart_cdn.html" %}
+<script>
+let pbProgressionChart = null;
+
+function fmtPbDate(iso) {
+  return new Date(iso + "T00:00:00").toLocaleDateString("default", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function openPbProgressionModal(category) {
+  const backdrop = document.getElementById("pbProgressionBackdrop");
+  const modal    = document.getElementById("pbProgressionModal");
+  const title    = document.getElementById("pbProgressionTitle");
+  const body     = document.getElementById("pbProgressionBody");
+
+  title.textContent = category + " progression";
+  body.innerHTML = '<div class="day-modal-loading">Loading…</div>';
+  backdrop.classList.add("day-modal-backdrop--open");
+  modal.classList.add("day-modal--open");
+
+  fetch("/api/data/pb_progression/" + encodeURIComponent(category))
+    .then(r => {
+      if (!r.ok) throw new Error("Request failed");
+      return r.json();
+    })
+    .then(points => {
+      if (!points.length || points.length < 2) {
+        body.innerHTML = '<p class="day-modal-empty">Not enough recorded improvements yet to chart a progression.</p>';
+        return;
+      }
+
+      body.innerHTML = '<div class="chart-wrap pb-progression-chart-wrap"><canvas id="pbProgressionCanvas"></canvas></div>';
+
+      const isDistance = points[0].value_meters !== undefined;
+      const labels = points.map(p => fmtPbDate(p.date));
+      const values = points.map(p => isDistance ? p.value_meters : p.value_seconds);
+
+      const accent = getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim() || "#cdfa3f";
+      const gridColor = getComputedStyle(document.documentElement).getPropertyValue("--color-border").trim() || "#262a35";
+      const textColor = getComputedStyle(document.documentElement).getPropertyValue("--color-text-muted").trim() || "#7a8399";
+
+      if (pbProgressionChart) pbProgressionChart.destroy();
+      const ctx = document.getElementById("pbProgressionCanvas").getContext("2d");
+      pbProgressionChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: category,
+            data: values,
+            borderColor: accent,
+            backgroundColor: accent,
+            stepped: "before",
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            tension: 0,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { grid: { color: gridColor }, ticks: { color: textColor } },
+            y: {
+              reverse: !isDistance,   // lower time = better, so plot it climbing upward
+              grid: { color: gridColor },
+              ticks: {
+                color: textColor,
+                callback: function (val) {
+                  if (isDistance) return val.toLocaleString() + "m";
+                  const m = Math.floor(val / 60), s = Math.round(val % 60);
+                  return m + ":" + s.toString().padStart(2, "0");
+                },
+              },
+            },
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function (ctx) {
+                  const p = points[ctx.dataIndex];
+                  return p.value_formatted || (p.value_meters.toLocaleString() + "m");
+                },
+              },
+            },
+          },
+        },
+      });
+    })
+    .catch(function () {
+      body.innerHTML = '<p class="day-modal-empty">Failed to load progression data.</p>';
+    });
+}
+
+function closePbProgressionModal() {
+  document.getElementById("pbProgressionBackdrop").classList.remove("day-modal-backdrop--open");
+  document.getElementById("pbProgressionModal").classList.remove("day-modal--open");
+}
+</script>
 {% endblock %}

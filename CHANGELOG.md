@@ -9,6 +9,18 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.21.0] — 2026-09-07
+
+### Added
+- **PB progression chart.** Every PB card on the Personal Bests page now has a "View progression"
+  button opening a chart of every genuine record-breaking result in that category over time — not
+  just the current-vs-previous comparison the card itself already showed. `PersonalBest` only
+  ever stored the current best plus one prior value, so this is computed on request
+  (`pb_engine.progression_for_category()`) using the exact same category-matching filters
+  `recalculate_all_pbs()` already trusts, not a new history table. Reuses the already-vendored
+  Chart.js include and the existing day-detail modal shell (new `.day-modal--wide` modifier for
+  the extra width a chart needs) rather than adding new chart or modal infrastructure.
+
 ## [0.20.0] — 2026-09-07
 
 ### Added

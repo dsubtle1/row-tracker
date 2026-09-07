@@ -70,6 +70,9 @@ PBs are recalculated automatically after every sync across 8 categories: 100m, 5
 **What does the "stale PB" warning mean?**
 If a personal best hasn't been improved in 90 or more days, Row Tracker flags it as stale and shows a nudge on the Achievements hub. It's a reminder to test that category again.
 
+**Can I see how a PB improved over time, not just the current best?**
+Yes — click **View progression** on any PB card to open a chart of every genuine record-breaking result in that category, in order, not just the current-vs-previous comparison shown on the card itself. Categories with fewer than two recorded improvements show a "not enough data yet" message instead of an empty chart.
+
 ---
 
 ### Workout of the Day

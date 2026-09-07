@@ -147,3 +147,53 @@ def recalculate_all_pbs() -> None:
         PersonalBest.query.filter(PersonalBest.category.in_(stale_categories)).delete(synchronize_session=False)
 
     db.session.commit()
+
+
+def progression_for_category(category: str) -> list[dict]:
+    """
+    Full record-progression for one PB category: only the workouts that set
+    a new personal best at the time they happened, in chronological order —
+    the classic "record progression" staircase, not every matching workout.
+    Uses the exact same category-matching filters as recalculate_all_pbs()
+    above, just scanning the whole history instead of taking only the best.
+    """
+    if category in DISTANCE_CATEGORIES:
+        target = DISTANCE_CATEGORIES[category]
+        workouts = (
+            Workout.query
+            .filter(Workout.workout_type == "rower", Workout.distance_meters == target,
+                    Workout.time_seconds.isnot(None))
+            .order_by(Workout.workout_date.asc())
+            .all()
+        )
+        best, points = None, []
+        for w in workouts:
+            if best is None or w.time_seconds < best:
+                best = w.time_seconds
+                points.append({
+                    "date": w.workout_date.isoformat(),
+                    "value_seconds": w.time_seconds,
+                    "value_formatted": w.time_formatted,
+                })
+        return points
+
+    if category in TIME_CATEGORIES:
+        target = TIME_CATEGORIES[category]
+        workouts = (
+            Workout.query
+            .filter(Workout.workout_type == "rower", Workout.time_seconds == target,
+                    Workout.distance_meters.isnot(None))
+            .order_by(Workout.workout_date.asc())
+            .all()
+        )
+        best, points = None, []
+        for w in workouts:
+            if best is None or w.distance_meters > best:
+                best = w.distance_meters
+                points.append({
+                    "date": w.workout_date.isoformat(),
+                    "value_meters": w.distance_meters,
+                })
+        return points
+
+    return []

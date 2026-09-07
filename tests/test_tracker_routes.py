@@ -244,6 +244,23 @@ def test_api_pace_and_efficiency_and_load(client, full_make_workout):
     assert client.get("/api/data/load").status_code == 200
 
 
+def test_api_pb_progression_returns_the_staircase(client, full_make_workout):
+    from datetime import date, timedelta
+    today = date.today()
+    full_make_workout(id=1, distance_meters=2000, time_seconds=460, workout_date=today - timedelta(days=10))
+    full_make_workout(id=2, distance_meters=2000, time_seconds=440, workout_date=today - timedelta(days=1))
+    resp = client.get("/api/data/pb_progression/2000m")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert len(data) >= 1
+    assert data[-1]["value_seconds"] == 440
+
+
+def test_api_pb_progression_unknown_category_is_404(client):
+    resp = client.get("/api/data/pb_progression/not-a-category")
+    assert resp.status_code == 404
+
+
 def test_api_workouts_by_date_valid(client, full_make_workout):
     w = full_make_workout(id=1, distance_meters=2000, time_seconds=480)
     resp = client.get(f"/api/data/workouts_by_date?date={w.workout_date.isoformat()}")

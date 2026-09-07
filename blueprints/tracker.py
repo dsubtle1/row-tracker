@@ -516,6 +516,14 @@ def api_load():
     return jsonify(_cawr_series())
 
 
+@tracker_bp.route("/api/data/pb_progression/<category>")
+def api_pb_progression(category):
+    from pb_engine import progression_for_category, DISTANCE_CATEGORIES, TIME_CATEGORIES
+    if category not in DISTANCE_CATEGORIES and category not in TIME_CATEGORIES:
+        return jsonify([]), 404
+    return jsonify(progression_for_category(category))
+
+
 @tracker_bp.route("/sync", methods=["POST"])
 def sync():
     """Manual sync trigger — calls C2 API and runs post-sync jobs."""

@@ -64,6 +64,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Recalculated automatically after every sync
 - Improvement delta vs previous PB
 - Stale flag for PBs not tested in 90+ days
+- Full progression chart per category — every genuine record-breaking result over time, not just current-vs-previous
 
 **Charts**
 - Pace over time with 10-session rolling average

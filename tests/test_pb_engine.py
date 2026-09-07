@@ -8,8 +8,10 @@ Key business rules under test:
   - recalculate_all_pbs() is a full wipe-and-rebuild, not an incremental update.
 """
 
+from datetime import date, timedelta
+
 from models import PersonalBest
-from pb_engine import recalculate_all_pbs
+from pb_engine import recalculate_all_pbs, progression_for_category
 
 
 def test_empty_db_produces_no_pbs(app_ctx):
@@ -119,3 +121,55 @@ def test_recalculate_removes_pb_for_category_with_no_remaining_match(app_ctx, ma
     recalculate_all_pbs()
 
     assert PersonalBest.query.filter_by(category="2000m").first() is None
+
+
+# --------------------------------------------------------------------------- #
+#  progression_for_category() — record-progression staircase                  #
+# --------------------------------------------------------------------------- #
+
+def test_progression_unknown_category_returns_empty(app_ctx):
+    assert progression_for_category("not-a-real-category") == []
+
+
+def test_progression_empty_history_returns_empty(app_ctx):
+    assert progression_for_category("2000m") == []
+
+
+def test_progression_distance_category_only_includes_genuine_improvements(app_ctx, make_workout):
+    today = date.today()
+    make_workout(id=1, distance_meters=2000, time_seconds=460, workout_date=today - timedelta(days=30))
+    make_workout(id=2, distance_meters=2000, time_seconds=470, workout_date=today - timedelta(days=20))  # slower — not a new PB
+    make_workout(id=3, distance_meters=2000, time_seconds=440, workout_date=today - timedelta(days=10))  # improvement
+
+    points = progression_for_category("2000m")
+    assert [p["value_seconds"] for p in points] == [460, 440]
+    assert points[0]["date"] == (today - timedelta(days=30)).isoformat()
+    assert points[1]["date"] == (today - timedelta(days=10)).isoformat()
+    assert "value_formatted" in points[0]
+
+
+def test_progression_ignores_non_exact_distance_matches(app_ctx, make_workout):
+    make_workout(id=1, distance_meters=2001, time_seconds=440)
+    assert progression_for_category("2000m") == []
+
+
+def test_progression_time_category_only_includes_genuine_improvements(app_ctx, make_workout):
+    today = date.today()
+    make_workout(id=1, time_seconds=30 * 60, distance_meters=7400, workout_date=today - timedelta(days=20))
+    make_workout(id=2, time_seconds=30 * 60, distance_meters=7300, workout_date=today - timedelta(days=10))  # shorter — not an improvement
+    make_workout(id=3, time_seconds=30 * 60, distance_meters=7500, workout_date=today - timedelta(days=5))   # improvement
+
+    points = progression_for_category("30min")
+    assert [p["value_meters"] for p in points] == [7400, 7500]
+
+
+def test_progression_is_chronological_regardless_of_id_order(app_ctx, make_workout):
+    today = date.today()
+    make_workout(id=2, distance_meters=2000, time_seconds=450, workout_date=today - timedelta(days=5))
+    make_workout(id=1, distance_meters=2000, time_seconds=460, workout_date=today - timedelta(days=15))
+
+    points = progression_for_category("2000m")
+    assert [p["date"] for p in points] == [
+        (today - timedelta(days=15)).isoformat(),
+        (today - timedelta(days=5)).isoformat(),
+    ]
