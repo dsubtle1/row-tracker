@@ -81,6 +81,13 @@ def create_app():
     # feedback form's rowtracker@pm.me, which is for incoming support mail.
     app.config["NOTIFY_EMAIL"] = os.environ.get("NOTIFY_EMAIL") or os.environ.get("MAIL_USERNAME", "")
 
+    # Additional notification channels (notify.py) — each is independently
+    # optional; set any subset to fan the same notifications out to them
+    # alongside or instead of email.
+    app.config["NOTIFY_NTFY_TOPIC"]          = os.environ.get("NOTIFY_NTFY_TOPIC", "")
+    app.config["NOTIFY_DISCORD_WEBHOOK_URL"] = os.environ.get("NOTIFY_DISCORD_WEBHOOK_URL", "")
+    app.config["NOTIFY_WEBHOOK_URL"]         = os.environ.get("NOTIFY_WEBHOOK_URL", "")
+
     # Feature flags (read from .env via Docker)
     app.config["USE_AI_WOD"] = os.environ.get("USE_AI_WOD", "false").lower() == "true"
     # Optional AI "coach's read" synthesis on the Insights page. Off by default;

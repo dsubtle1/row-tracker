@@ -9,6 +9,17 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.15.0] — 2026-09-07
+
+### Added
+- **Multi-channel notifications: ntfy.sh, Discord, and a generic webhook, alongside email.**
+  `notify.py`'s `_send()` used to be hardcoded to Flask-Mail; it now fans out independently to any
+  combination of `NOTIFY_EMAIL` (existing), `NOTIFY_NTFY_TOPIC`, `NOTIFY_DISCORD_WEBHOOK_URL`, and
+  `NOTIFY_WEBHOOK_URL` — all optional, all blank/off by default, and each fails independently so a
+  broken webhook can't block email or vice versa. Covers all four existing notification types
+  (badges, milestones, job failures, journey completions) with no changes to their call sites.
+  `.env`-configured only, no UI, matching the existing Concept2/mail integration pattern.
+
 ## [0.14.0] — 2026-09-06
 
 ### Added

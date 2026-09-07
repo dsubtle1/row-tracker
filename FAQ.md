@@ -31,7 +31,7 @@ Yes. On iPhone/iPad, open Row Tracker in Safari, tap the Share icon, then **Add 
 Automatically every night at 3:00 AM (see `TZ` in your `.env` — defaults to Toronto time). You can also click the Sync button on the Dashboard at any time to pull in your latest workouts immediately.
 
 **How do I know if the nightly sync is actually working?**
-The Dashboard shows a "Last synced" indicator next to the Sync button, so you don't have to take it on faith. If a nightly sync, PB recalc, badge evaluation, or backup job fails, Row Tracker also emails whatever address `NOTIFY_EMAIL` (or `MAIL_USERNAME`) points to — the same address badge and milestone notifications use — so a broken sync doesn't go unnoticed.
+The Dashboard shows a "Last synced" indicator next to the Sync button, so you don't have to take it on faith. If a nightly sync, PB recalc, badge evaluation, or backup job fails, Row Tracker also sends a notification through whichever channels you've configured (email, ntfy, Discord, webhook — see the notifications question above), so a broken sync doesn't go unnoticed.
 
 **My latest workout isn't showing — what should I do?**
 First, make sure your workout has synced to the Concept2 Online Logbook via ErgData. Then click the Sync button on the Dashboard. If it still doesn't appear, wait a few minutes and try again — occasionally the Concept2 API has a short delay.
@@ -113,7 +113,10 @@ Badges with a single clear numeric target (lifetime metres, best single-session 
 Quarterly targets that reset on January 1, April 1, July 1, and October 1. They include a distance target, a PB season checklist, a consistency challenge, and a monthly volume goal.
 
 **Will I get notified when I earn a badge, hit a milestone, or finish a journey?**
-Yes — Row Tracker emails you automatically after every sync that earns a new badge, crosses a lifetime-metres milestone (100k, 250k, 500k, 1M, and so on), or completes a virtual journey. It reuses the same Flask-Mail setup as the feedback form, but sends to `NOTIFY_EMAIL` in your `.env` (defaults to `MAIL_USERNAME` — your own inbox — if left blank) rather than the feedback address.
+Yes — Row Tracker notifies you automatically after every sync that earns a new badge, crosses a lifetime-metres milestone (100k, 250k, 500k, 1M, and so on), or completes a virtual journey. By default that's email: it reuses the same Flask-Mail setup as the feedback form, but sends to `NOTIFY_EMAIL` in your `.env` (defaults to `MAIL_USERNAME` — your own inbox — if left blank) rather than the feedback address.
+
+**Can I get notifications somewhere other than email?**
+Yes — set any of `NOTIFY_NTFY_TOPIC`, `NOTIFY_DISCORD_WEBHOOK_URL`, or `NOTIFY_WEBHOOK_URL` in your `.env` and Row Tracker sends the same notifications there too (ntfy.sh, a Discord channel, or any endpoint that accepts a JSON POST). All four channels are independent — enable any combination, including none of them plus email, or drop email entirely by leaving `NOTIFY_EMAIL`/`MAIL_USERNAME` blank. Each channel fails independently, so a broken webhook never blocks the others. There's no in-app settings page for this — it's `.env`-only, like the Concept2 and mail integrations.
 
 ---
 

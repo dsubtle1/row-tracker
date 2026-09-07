@@ -1,17 +1,17 @@
 """
-Email notifications for badges, lifetime-metres milestones, and virtual
-journey completions.
+Notifications for badges, lifetime-metres milestones, and virtual journey
+completions — fanned out to whichever channels are configured: email
+(Flask-Mail, sent to NOTIFY_EMAIL, defaulting to MAIL_USERNAME), ntfy.sh,
+a Discord webhook, and/or a generic JSON webhook.
 
-Reuses the same Flask-Mail setup the feedback form already has, but sends
-to NOTIFY_EMAIL (defaults to MAIL_USERNAME) rather than the feedback
-inbox — these are personal achievement pings for the one person running
-this app, not incoming support mail.
-
-Every send is best-effort: a failed SMTP connection is logged and
-swallowed, never raised, so a flaky mail server can't break a sync.
+Every channel is independently best-effort: a failure on one (a flaky SMTP
+server, an unreachable webhook) is logged and swallowed, never raised, so
+it can't break a sync and can't stop the other configured channels from
+still delivering the same notification.
 """
 
 import logging
+import requests
 from flask import current_app
 from flask_mail import Message
 from sqlalchemy import func
@@ -19,6 +19,7 @@ from sqlalchemy import func
 from models import db, Workout, Badge
 
 logger = logging.getLogger(__name__)
+WEBHOOK_TIMEOUT_SECONDS = 5
 
 MILESTONES = [
     (100_000, "100k"), (250_000, "250k"), (500_000, "500k"),
@@ -35,20 +36,84 @@ JOURNEY_NAMES = {
 }
 
 
-def _send(subject, body):
+def _send_email(subject, body, recipient):
     from app import mail
-
-    recipient = current_app.config.get("NOTIFY_EMAIL", "")
-    if not recipient:
-        logger.warning(f"Notification skipped (no NOTIFY_EMAIL/MAIL_USERNAME configured): {subject!r}")
-        return
 
     try:
         msg = Message(subject=subject, recipients=[recipient], body=body)
         mail.send(msg)
-        logger.info(f"Notification sent: {subject!r}")
+        logger.info(f"Notification sent via email: {subject!r}")
     except Exception as e:
         logger.error(f"Notification email failed ({subject!r}): {e}")
+
+
+def _send_ntfy(subject, body, topic):
+    try:
+        requests.post(
+            f"https://ntfy.sh/{topic}",
+            data=body.encode("utf-8"),
+            headers={"Title": subject},
+            timeout=WEBHOOK_TIMEOUT_SECONDS,
+        ).raise_for_status()
+        logger.info(f"Notification sent via ntfy: {subject!r}")
+    except Exception as e:
+        logger.error(f"Notification via ntfy failed ({subject!r}): {e}")
+
+
+def _send_discord(subject, body, webhook_url):
+    try:
+        requests.post(
+            webhook_url,
+            json={"content": f"**{subject}**\n{body}"},
+            timeout=WEBHOOK_TIMEOUT_SECONDS,
+        ).raise_for_status()
+        logger.info(f"Notification sent via Discord: {subject!r}")
+    except Exception as e:
+        logger.error(f"Notification via Discord failed ({subject!r}): {e}")
+
+
+def _send_webhook(subject, body, webhook_url):
+    try:
+        requests.post(
+            webhook_url,
+            json={"subject": subject, "body": body},
+            timeout=WEBHOOK_TIMEOUT_SECONDS,
+        ).raise_for_status()
+        logger.info(f"Notification sent via webhook: {subject!r}")
+    except Exception as e:
+        logger.error(f"Notification via webhook failed ({subject!r}): {e}")
+
+
+def _send(subject, body):
+    """
+    Fan out to every configured channel. Each channel is independently
+    best-effort (see module docstring) — one failing or unconfigured
+    channel never prevents another from firing.
+    """
+    sent_any = False
+
+    recipient = current_app.config.get("NOTIFY_EMAIL", "")
+    if recipient:
+        _send_email(subject, body, recipient)
+        sent_any = True
+
+    ntfy_topic = current_app.config.get("NOTIFY_NTFY_TOPIC", "")
+    if ntfy_topic:
+        _send_ntfy(subject, body, ntfy_topic)
+        sent_any = True
+
+    discord_url = current_app.config.get("NOTIFY_DISCORD_WEBHOOK_URL", "")
+    if discord_url:
+        _send_discord(subject, body, discord_url)
+        sent_any = True
+
+    webhook_url = current_app.config.get("NOTIFY_WEBHOOK_URL", "")
+    if webhook_url:
+        _send_webhook(subject, body, webhook_url)
+        sent_any = True
+
+    if not sent_any:
+        logger.warning(f"Notification skipped (no channel configured): {subject!r}")
 
 
 def lifetime_meters():

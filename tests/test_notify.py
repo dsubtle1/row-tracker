@@ -9,6 +9,7 @@ connection.
 """
 
 from datetime import date, timedelta
+from unittest.mock import patch, MagicMock
 
 from models import db, Badge, Journey
 import notify
@@ -169,6 +170,61 @@ def test_notify_journey_complete_unknown_route_key_uses_key_itself(full_app_ctx,
     notify.notify_journey_complete("nile", journey)
 
     assert "nile" in sent_messages[0].subject
+
+
+# --------------------------------------------------------------------------- #
+#  _send() — multi-channel fan-out (ntfy / Discord / generic webhook)         #
+# --------------------------------------------------------------------------- #
+
+def test_send_skips_extra_channels_when_not_configured(full_app_ctx, sent_messages):
+    with patch("notify.requests.post") as mock_post:
+        notify.notify_job_failure("Nightly C2 sync", "boom")
+
+    assert len(sent_messages) == 1   # NOTIFY_EMAIL is configured by the full_app fixture
+    mock_post.assert_not_called()
+
+
+def test_send_fans_out_to_every_configured_channel(full_app_ctx, sent_messages):
+    full_app_ctx.config["NOTIFY_NTFY_TOPIC"] = "row-tracker-test"
+    full_app_ctx.config["NOTIFY_DISCORD_WEBHOOK_URL"] = "https://discord.example/webhook"
+    full_app_ctx.config["NOTIFY_WEBHOOK_URL"] = "https://hooks.example/generic"
+
+    with patch("notify.requests.post") as mock_post:
+        notify.notify_job_failure("Nightly C2 sync", "boom")
+
+    assert len(sent_messages) == 1
+    assert mock_post.call_count == 3
+    urls_called = [call.args[0] for call in mock_post.call_args_list]
+    assert "https://ntfy.sh/row-tracker-test" in urls_called
+    assert "https://discord.example/webhook" in urls_called
+    assert "https://hooks.example/generic" in urls_called
+
+
+def test_send_channel_failure_does_not_block_others(full_app_ctx, sent_messages):
+    """A broken webhook must not prevent ntfy/Discord/email from still firing."""
+    full_app_ctx.config["NOTIFY_NTFY_TOPIC"] = "row-tracker-test"
+    full_app_ctx.config["NOTIFY_WEBHOOK_URL"] = "https://hooks.example/generic"
+
+    def _raise_for_webhook(url, **kwargs):
+        if url == "https://hooks.example/generic":
+            raise ConnectionError("unreachable")
+        return MagicMock()   # ntfy call "succeeds" — has a no-op raise_for_status()
+
+    with patch("notify.requests.post", side_effect=_raise_for_webhook) as mock_post:
+        notify.notify_job_failure("Nightly C2 sync", "boom")
+
+    assert len(sent_messages) == 1        # email still sent
+    assert mock_post.call_count == 2      # ntfy attempted, webhook attempted (and raised)
+
+
+def test_send_warns_and_sends_nothing_when_no_channel_configured(full_app, sent_messages):
+    full_app.config["NOTIFY_EMAIL"] = ""
+    with full_app.app_context():
+        with patch("notify.requests.post") as mock_post:
+            notify.notify_job_failure("Nightly C2 sync", "boom")
+
+    assert sent_messages == []
+    mock_post.assert_not_called()
 
 
 # --------------------------------------------------------------------------- #

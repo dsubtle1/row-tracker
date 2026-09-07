@@ -91,7 +91,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Season challenges — quarterly distance, PB attempts, consistency, monthly volume
 - You vs. Past You — compare this month against last month, 3 months ago, and 12 months ago
 - Stale PB nudges on the Achievements hub
-- Email notifications when you earn a badge, cross a lifetime-metres milestone, or complete a virtual journey
+- Notifications when you earn a badge, cross a lifetime-metres milestone, or complete a virtual journey — email by default, with optional ntfy.sh, Discord, and generic-webhook channels you can enable independently (`.env`, no UI)
 
 **Virtual Journeys**
 - Row the world's great routes — metres rowed move you along the route in real time
@@ -104,8 +104,9 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Multiple journeys can run simultaneously
 
 **Other**
-- "Last synced" indicator on the Dashboard, and an email alert (to `NOTIFY_EMAIL`) if a nightly
-  sync, PB recalc, badge evaluation, or backup job fails — so a broken sync doesn't sit unnoticed
+- "Last synced" indicator on the Dashboard, and a notification (email and/or ntfy/Discord/webhook,
+  same channels as above) if a nightly sync, PB recalc, badge evaluation, or backup job fails —
+  so a broken sync doesn't sit unnoticed
 - Nightly automated database backup (30-day retention), written to `data/backups/`
 - Dark mode default with light mode toggle (persisted)
 - Fully responsive — iPhone and iPad optimised with hamburger nav drawer
@@ -240,7 +241,7 @@ Everything else — sync, PBs, badges, journeys, charts — is between your serv
 
 Every deployment's **💬 Feedback** button sends to the developer's inbox, not your own — the recipient is fixed in the code, not something your `.env` controls. It sends using *your* configured Gmail credentials (`MAIL_USERNAME`/`MAIL_PASSWORD`), but the destination is always the same regardless of who's running the instance. It sends: the category you picked, an optional name you type in (defaults to "Anonymous"), your message, and which page you were on. Nothing else — no account data, no workout history, no PBs.
 
-This is separate from badge/milestone/journey-completion emails, which use `NOTIFY_EMAIL` and go to *your own* inbox (see the Features list above) — those never leave your server's control.
+This is separate from badge/milestone/journey-completion notifications, which default to `NOTIFY_EMAIL` going to *your own* inbox (see the Features list above) — those never leave your server's control. If you opt into the additional `NOTIFY_NTFY_TOPIC`, `NOTIFY_DISCORD_WEBHOOK_URL`, or `NOTIFY_WEBHOOK_URL` channels (all blank/off by default), the same notification text is also sent to that third-party service — worth knowing before you set one, since it's the one deliberate exception to "nothing leaves your server" beyond Feedback and optional AI coaching.
 
 If you'd rather not send anything to a third party at all, don't fill in Gmail credentials — the Feedback button will just fail with an on-screen error instead of silently doing nothing, so this is a deliberate opt-out (no `.env` flag currently gates it separately from AI coaching's `USE_AI_WOD`).
 
@@ -261,7 +262,7 @@ row-tracker/
 ├── insights_ai.py          # Optional AI "coach's read" synthesis (USE_AI_INSIGHTS)
 ├── scheduler.py            # APScheduler jobs: nightly sync, PB recalc, badges, backup
 ├── backup.py               # Nightly SQLite backup with retention pruning
-├── notify.py               # Email notifications: badges, milestones, journey completions
+├── notify.py               # Notifications (email/ntfy/Discord/webhook): badges, milestones, journey completions
 ├── blueprints/
 │   ├── tracker.py          # Core routes and HR zone filters
 │   ├── wod.py              # Workout of the Day routes
