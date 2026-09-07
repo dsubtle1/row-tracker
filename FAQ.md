@@ -45,6 +45,9 @@ Yes. The first time Row Tracker syncs, it backfills your full workout history fr
 **Is my data backed up?**
 Yes — every night at 3:30 AM (right after sync, PB recalculation, and badge evaluation), Row Tracker copies the database to `data/backups/`, keeping the last 30 days. It's still worth copying that folder to another disk or machine occasionally in case the whole server goes down.
 
+**Can I restore from a backup myself?**
+Yes — the Export Data page lists every backup with a Restore button next to it. Restoring requires typing RESTORE into a confirmation dialog first, since it's destructive: it replaces all current data with the chosen snapshot. Your current data is automatically saved as its own timestamped safety copy right before the swap, so a restore is itself undoable — just restore that safety copy if you change your mind. No SSH or terminal access needed.
+
 **Can I export my data?**
 Yes — click **Export Data** next to the Sync button on the Dashboard. You can download your full workout history or personal bests as CSV (for spreadsheets) or JSON (for other tools), separately from the automatic nightly backup.
 

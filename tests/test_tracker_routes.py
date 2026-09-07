@@ -276,6 +276,71 @@ def test_export_empty_db_still_returns_valid_files(client):
 
 
 # --------------------------------------------------------------------------- #
+#  Backup restore                                                             #
+# --------------------------------------------------------------------------- #
+
+def _make_backup_file(full_app_ctx, filename, workout_id):
+    """Snapshot the live db (after inserting one workout row) to backups/<filename>."""
+    from datetime import date
+    from models import db, Workout
+    from blueprints.tracker import _db_path, _backup_dir, _sqlite_file_copy
+    import os
+
+    db.session.add(Workout(id=workout_id, workout_date=date(2026, 1, 1), workout_type="rower",
+                            distance_meters=1000, time_seconds=240))
+    db.session.commit()
+
+    backup_dir = _backup_dir()
+    os.makedirs(backup_dir, exist_ok=True)
+    dest = os.path.join(backup_dir, filename)
+    _sqlite_file_copy(_db_path(), dest)
+    return dest
+
+
+def test_export_page_lists_backups(client, full_app_ctx):
+    _make_backup_file(full_app_ctx, "row_tracker_2020-01-01.db", workout_id=1)
+    resp = client.get("/export")
+    assert resp.status_code == 200
+    assert b"row_tracker_2020-01-01.db" in resp.data or b"January 1, 2020" in resp.data
+
+
+def test_restore_rejects_invalid_filename(client, full_app_ctx):
+    resp = client.post("/restore", data={"filename": "../../etc/passwd"})
+    assert resp.status_code == 200
+    assert b"Invalid or missing backup file" in resp.data
+
+
+def test_restore_rejects_nonexistent_backup(client, full_app_ctx):
+    resp = client.post("/restore", data={"filename": "row_tracker_does-not-exist.db"})
+    assert resp.status_code == 200
+    assert b"Invalid or missing backup file" in resp.data
+
+
+def test_restore_replaces_live_data_and_creates_safety_copy(client, full_app_ctx):
+    from datetime import date
+    from models import db, Workout
+    from blueprints.tracker import _backup_dir
+    import os
+
+    # Snapshot with only workout id=1, then add id=2 to the live db afterward —
+    # restoring the snapshot should make id=2 disappear again.
+    _make_backup_file(full_app_ctx, "row_tracker_2020-01-01.db", workout_id=1)
+    db.session.add(Workout(id=2, workout_date=date(2026, 1, 2), workout_type="rower",
+                            distance_meters=2000, time_seconds=480))
+    db.session.commit()
+
+    resp = client.post("/restore", data={"filename": "row_tracker_2020-01-01.db"})
+    assert resp.status_code == 200
+    assert b"Restored from row_tracker_2020-01-01.db" in resp.data
+
+    assert db.session.get(Workout, 1) is not None
+    assert db.session.get(Workout, 2) is None
+
+    safety_copies = [f for f in os.listdir(_backup_dir()) if f.startswith("row_tracker_prerestore_")]
+    assert len(safety_copies) == 1
+
+
+# --------------------------------------------------------------------------- #
 #  Static / PWA plumbing (registered directly on the app, not the blueprint)  #
 # --------------------------------------------------------------------------- #
 

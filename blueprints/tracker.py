@@ -9,8 +9,11 @@ HR zone filters: register in app.py after blueprint import:
 """
 
 import csv
+import glob
 import io
-from datetime import date, timedelta
+import os
+import sqlite3
+from datetime import date, datetime, timedelta
 from collections import defaultdict
 
 from flask import Blueprint, Response, current_app, jsonify, render_template, request
@@ -608,9 +611,88 @@ def _json_response(filename, data):
     return response
 
 
+def _db_path():
+    return current_app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///", "", 1)
+
+
+def _backup_dir():
+    return os.path.join(os.path.dirname(_db_path()), "backups")
+
+
+def _list_backups():
+    """Restorable backups, newest first — nightly snapshots plus any pre-restore safety copies."""
+    backup_dir = _backup_dir()
+    if not os.path.isdir(backup_dir):
+        return []
+    files = sorted(glob.glob(os.path.join(backup_dir, "row_tracker_*.db")), reverse=True)
+    return [
+        {
+            "filename": os.path.basename(f),
+            "size_mb":  round(os.path.getsize(f) / (1024 * 1024), 1),
+            "mtime":    datetime.fromtimestamp(os.path.getmtime(f)),
+            "is_safety": "prerestore" in os.path.basename(f),
+        }
+        for f in files
+    ]
+
+
+def _sqlite_file_copy(src_path, dest_path):
+    """Copy one SQLite file onto another using the online backup API — safe
+    even while the destination is open elsewhere, same approach backup.py
+    already uses for nightly snapshots."""
+    source = sqlite3.connect(src_path)
+    dest = sqlite3.connect(dest_path)
+    try:
+        with dest:
+            source.backup(dest)
+    finally:
+        source.close()
+        dest.close()
+
+
 @tracker_bp.route("/export")
 def export_page():
-    return render_template("tracker/export.html")
+    return render_template("tracker/export.html", backups=_list_backups())
+
+
+@tracker_bp.route("/restore", methods=["POST"])
+def restore_backup():
+    """
+    Restore the live database from a chosen nightly backup.
+
+    Destructive, so: the filename is checked against what list_backups()
+    would actually show (never a free-text path), and the current live
+    data is snapshotted to its own timestamped safety copy first — a
+    restore is itself undoable by restoring that safety copy.
+    """
+    # basename() first so a crafted "../../etc/passwd"-style value can't escape backup_dir.
+    filename = os.path.basename(request.form.get("filename", ""))
+    backup_dir = _backup_dir()
+    src = os.path.join(backup_dir, filename)
+
+    valid = filename.startswith("row_tracker_") and filename.endswith(".db") and os.path.isfile(src)
+
+    if not valid:
+        restore_result = {"success": False, "message": "Invalid or missing backup file."}
+    else:
+        try:
+            safety_name = f"row_tracker_prerestore_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+            _sqlite_file_copy(_db_path(), os.path.join(backup_dir, safety_name))
+
+            db.session.remove()
+            db.engine.dispose()   # drop pooled connections before swapping the file under them
+            _sqlite_file_copy(src, _db_path())
+
+            restore_result = {
+                "success": True,
+                "message": f"Restored from {filename}. Your data from just before this restore "
+                           f"was saved as {safety_name}, in case you need to undo this.",
+            }
+        except Exception as e:
+            current_app.logger.error(f"Database restore failed: {e}")
+            restore_result = {"success": False, "message": f"Restore failed: {e}"}
+
+    return render_template("tracker/export.html", backups=_list_backups(), restore_result=restore_result)
 
 
 @tracker_bp.route("/export/workouts.csv")

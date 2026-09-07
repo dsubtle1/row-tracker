@@ -26,6 +26,59 @@
   </div>
 </div>
 
+<div class="chart-card" style="margin-top: 1.5rem;">
+  <h2 class="section-title" style="margin-bottom: 0.5rem;">Restore from Backup</h2>
+  <p class="muted">
+    Nightly snapshots of the whole database, most recent first. Restoring replaces
+    <strong>all</strong> current data with the chosen snapshot.
+  </p>
+
+  {% if restore_result %}
+  <div class="restore-result {{ 'restore-result--ok' if restore_result.success else 'restore-result--error' }}">
+    {{ restore_result.message }}
+  </div>
+  {% endif %}
+
+  {% if backups %}
+  <div class="backup-list">
+    {% for b in backups %}
+    <div class="backup-row">
+      <div class="backup-row-info">
+        <span class="backup-row-date">{{ b.mtime.strftime("%B %-d, %Y, %-I:%M %p") }}</span>
+        <span class="backup-row-meta">{{ "Pre-restore safety copy" if b.is_safety else "Nightly backup" }} · {{ b.size_mb }} MB</span>
+      </div>
+      <button type="button" class="btn btn-danger btn-sm" onclick="openRestoreDialog('{{ b.filename }}', '{{ b.mtime.strftime("%B %-d, %Y, %-I:%M %p") }}')">
+        Restore
+      </button>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">No backups yet — the first nightly backup runs at 3:30 AM.</p>
+  {% endif %}
+</div>
+
+<dialog id="restore-confirm-dialog">
+  <form method="POST" action="{{ url_for('tracker.restore_backup') }}" id="restore-confirm-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <input type="hidden" name="filename" id="restore-filename" value="" />
+
+    <h3>Restore this backup?</h3>
+    <p>
+      This replaces <strong>all</strong> current data with the snapshot from
+      <strong id="restore-dialog-date"></strong>. Your current data will be saved as a
+      safety copy first, but anything added since that snapshot will otherwise be lost.
+    </p>
+    <p>Type <strong>RESTORE</strong> below to confirm.</p>
+    <input type="text" id="restore-confirm-input" autocomplete="off" placeholder="RESTORE" />
+
+    <div class="restore-dialog-actions">
+      <button type="button" class="btn btn-ghost" onclick="document.getElementById('restore-confirm-dialog').close()">Cancel</button>
+      <button type="submit" class="btn btn-danger" id="restore-confirm-submit" disabled>Restore</button>
+    </div>
+  </form>
+</dialog>
+
 {% endblock %}
 
 {% block extra_css %}
@@ -35,5 +88,83 @@
     gap: 0.75rem;
     margin-top: 1rem;
   }
+
+  .restore-result {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+  }
+  .restore-result--ok    { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+  .restore-result--error { background: rgba(239,68,68,0.12); color: var(--color-red); border: 1px solid rgba(239,68,68,0.3); }
+
+  .backup-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+  .backup-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 0.9rem;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+  .backup-row-info { display: flex; flex-direction: column; gap: 0.1rem; }
+  .backup-row-date { font-weight: 600; font-size: 0.9rem; }
+  .backup-row-meta { font-size: 0.78rem; color: var(--color-text-muted); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--color-red);
+    border: 1px solid rgba(239,68,68,0.4);
+  }
+  .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.12); }
+  .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  #restore-confirm-dialog {
+    max-width: 420px;
+    width: 90%;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    padding: 1.5rem;
+  }
+  #restore-confirm-dialog::backdrop { background: rgba(0,0,0,0.6); }
+  #restore-confirm-input {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    font-size: 0.95rem;
+  }
+  .restore-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openRestoreDialog(filename, dateLabel) {
+  document.getElementById('restore-filename').value = filename;
+  document.getElementById('restore-dialog-date').textContent = dateLabel;
+  const input = document.getElementById('restore-confirm-input');
+  const submit = document.getElementById('restore-confirm-submit');
+  input.value = '';
+  submit.disabled = true;
+  document.getElementById('restore-confirm-dialog').showModal();
+  input.focus();
+}
+
+document.getElementById('restore-confirm-input').addEventListener('input', function() {
+  document.getElementById('restore-confirm-submit').disabled = this.value.trim() !== 'RESTORE';
+});
+</script>
 {% endblock %}

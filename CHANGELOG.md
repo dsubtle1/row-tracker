@@ -9,6 +9,18 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.16.0] — 2026-09-07
+
+### Added
+- **Backup restore, from the Export Data page.** `backup.py` has written nightly snapshots to
+  `data/backups/` since day one, but there was no way to restore one short of SSHing in and
+  copying a file over the live database by hand. The Export Data page now lists every backup
+  with a Restore button; restoring requires typing RESTORE into a confirmation dialog first,
+  since it replaces all current data. The live database is automatically snapshotted to its own
+  timestamped safety copy immediately before the swap, so a restore is itself undoable. Uses the
+  same SQLite online-backup API `backup.py` already relies on, just with source and destination
+  reversed — no new backup mechanism, no schema change.
+
 ## [0.15.0] — 2026-09-07
 
 ### Added
