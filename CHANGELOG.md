@@ -9,6 +9,18 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.24.1] — 2026-09-07
+
+### Changed
+- **The pre-built GHCR image is now the primary install path in the README**, not an alternative
+  buried after the build-from-source instructions. A fresh install no longer needs a `git clone`
+  at all — just a `.env` and a `docker-compose.yml` pointing at
+  `ghcr.io/dsubtle1/row-tracker:latest`, both shown inline. Verified end-to-end in a clean
+  directory with no repo present. Building from source (for unreleased changes or contributing)
+  is now the documented alternative. No code change — the repo's own `docker-compose.yml` stays on
+  `build: .` since local dev and the homelab's deploy script depend on always running the exact
+  latest committed source, not the last tagged release.
+
 ## [0.24.0] — 2026-09-07
 
 ### Added

@@ -150,20 +150,17 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 
 ### Setup
 
-**1. Clone the repo**
+No need to clone the repo for this — everything you need is two files.
+
+**1. Create a project directory**
 
 ```bash
-git clone https://github.com/dsubtle1/row-tracker.git
-cd row-tracker
+mkdir row-tracker && cd row-tracker
 ```
 
 **2. Create your `.env` file**
 
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and fill in your credentials:
+Create a file named `.env` with:
 
 ```
 SECRET_KEY=your-secret-key-here
@@ -184,12 +181,12 @@ own location, e.g. `America/New_York`, `Europe/London`.
 
 `ANTHROPIC_API_KEY` is only needed if you set `USE_AI_WOD=true` — get one at [console.anthropic.com](https://console.anthropic.com/).
 
-The repo already includes a `docker-compose.yml` — nothing to write yourself, shown here so you can see what it does before running it (or copy the service block into an existing compose stack):
+**3. Create `docker-compose.yml`**
 
 ```yaml
 services:
   row-tracker:
-    build: .
+    image: ghcr.io/dsubtle1/row-tracker:latest
     container_name: row-tracker
     ports:
       - "7376:7376"
@@ -201,13 +198,18 @@ services:
     restart: unless-stopped
 ```
 
-**3. Build and run**
+Every tagged release is published as a multi-arch image (`linux/amd64` + `linux/arm64`, so this
+covers Raspberry Pi and other ARM boards too). Pin to a specific version instead of `latest` if you
+want (e.g. `ghcr.io/dsubtle1/row-tracker:0.24.0`) — see the
+[Releases page](https://github.com/dsubtle1/row-tracker/releases) for available tags.
+
+**4. Run it**
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
-**4. Open the app**
+**5. Open the app**
 
 ```
 http://localhost:7376
@@ -215,20 +217,25 @@ http://localhost:7376
 
 Click **Sync Workouts** on the dashboard to pull in your full workout history from the Concept2 Logbook.
 
-### Using the pre-built image instead of building locally
+### Building from source instead
 
-Every tagged release is also published to GHCR as a multi-arch image (`linux/amd64` +
-`linux/arm64`, so this covers Raspberry Pi and other ARM boards too). If you'd rather pull than
-build, swap the `build: .` line in `docker-compose.yml` for:
+Want to run unreleased changes, or contribute? Clone the repo and build locally instead of
+pulling the image:
 
-```yaml
-    image: ghcr.io/dsubtle1/row-tracker:latest
+```bash
+git clone https://github.com/dsubtle1/row-tracker.git
+cd row-tracker
+cp .env.example .env   # then edit it as in step 2 above
 ```
 
-then run `docker compose up -d` instead of `docker compose up -d --build`. Pin to a specific
-version instead of `latest` if you want (e.g. `ghcr.io/dsubtle1/row-tracker:0.10.4`) — see the
-[Releases page](https://github.com/dsubtle1/row-tracker/releases) for available tags. Everything
-else (`.env`, volumes, ports) stays the same either way.
+The repo's `docker-compose.yml` already uses `build: .` in place of the `image:` line above —
+nothing to change there. Then:
+
+```bash
+docker compose up -d --build
+```
+
+Everything else (`.env`, volumes, ports) is identical either way.
 
 ---
 
