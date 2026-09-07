@@ -9,6 +9,17 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.25.1] — 2026-09-07
+
+### Fixed
+- **Waypoint detail card rendered behind the journey map instead of in front of it.** Leaflet's
+  own panes and zoom control use z-index values up to 1000, higher than the shared modal shell's
+  z-index of 100/101 — so on a journey page (the only place a modal now shares the page with a
+  map) the card and its dimming backdrop were losing the stacking order to the map underneath.
+  Raised both to 2000/2001, comfortably above Leaflet's range. Click-outside-to-close was already
+  wired (the backdrop's own click handler) and needed no change — it just couldn't be reached
+  while the map sat on top of it.
+
 ## [0.25.0] — 2026-09-07
 
 ### Added

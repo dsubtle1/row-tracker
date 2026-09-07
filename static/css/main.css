@@ -2113,7 +2113,10 @@ code {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
-  z-index: 100;
+  /* Above Leaflet's own panes/controls (journey maps go up to z-index
+     1000 — .leaflet-top/.leaflet-control), so the modal and its
+     click-outside-to-close backdrop always sit in front of a map. */
+  z-index: 2000;
 }
 .day-modal-backdrop--open { display: block; }
 
@@ -2128,7 +2131,7 @@ code {
   border: 1px solid var(--color-border, #2e3350);
   border-radius: 12px;
   box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-  z-index: 101;
+  z-index: 2001;
   overflow: hidden;
   transition: opacity 0.15s;
 }
