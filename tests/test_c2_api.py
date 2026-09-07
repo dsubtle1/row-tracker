@@ -250,6 +250,77 @@ def test_get_results_retries_transient_failure_then_succeeds(monkeypatch):
     assert calls["n"] == 2
 
 
+# --------------------------------------------------------------------------- #
+#  get_results() — non-rower exclusion warning                                #
+#                                                                              #
+#  The type=rower filter is applied server-side, so a non-rower result never  #
+#  appears in the paginated response at all — these confirm the follow-up    #
+#  "total across every machine type" check surfaces that gap in the logs.    #
+# --------------------------------------------------------------------------- #
+
+def _dispatch_by_type_param(rower_total, all_total):
+    """A fake requests.get that distinguishes the main (type=rower) fetch
+    from the follow-up unfiltered total-count check by the 'type' param."""
+    def _get(*a, **k):
+        params = k["params"]
+        if "type" in params:
+            return _FakeResponse(200, {"data": [], "meta": {"pagination": {
+                "total_pages": 1, "total": rower_total,
+            }}})
+        return _FakeResponse(200, {"meta": {"pagination": {"total": all_total}}})
+    return _get
+
+
+def test_warns_when_non_rower_results_are_excluded(monkeypatch, caplog):
+    monkeypatch.setattr("c2_api.requests.get", _dispatch_by_type_param(rower_total=10, all_total=12))
+    client = _client()
+    with caplog.at_level("WARNING"):
+        client.get_results()
+    assert any("excluded 2 non-rower" in r.message for r in caplog.records)
+
+
+def test_no_warning_when_totals_match(monkeypatch, caplog):
+    monkeypatch.setattr("c2_api.requests.get", _dispatch_by_type_param(rower_total=10, all_total=10))
+    client = _client()
+    with caplog.at_level("WARNING"):
+        client.get_results()
+    assert not any("excluded" in r.message for r in caplog.records)
+
+
+def test_no_extra_request_when_total_missing_from_main_response(monkeypatch):
+    # Existing tests' fake responses (before this feature) never included a
+    # "total" key — this confirms that shape still works with zero new calls.
+    calls = {"n": 0}
+
+    def _get(*a, **k):
+        calls["n"] += 1
+        return _FakeResponse(200, {"data": [], "meta": {"pagination": {"total_pages": 1}}})
+
+    monkeypatch.setattr("c2_api.requests.get", _get)
+    client = _client()
+    client.get_results()
+    assert calls["n"] == 1   # only the main fetch — no follow-up check attempted
+
+
+def test_exclusion_check_failure_is_swallowed(monkeypatch, caplog):
+    import requests
+
+    def _get(*a, **k):
+        params = k["params"]
+        if "type" in params:
+            return _FakeResponse(200, {"data": [{"id": 1}], "meta": {"pagination": {
+                "total_pages": 1, "total": 10,
+            }}})
+        raise requests.ConnectionError("boom")
+
+    monkeypatch.setattr("c2_api.requests.get", _get)
+    client = _client()
+    with caplog.at_level("WARNING"):
+        results = client.get_results()
+    assert [r["id"] for r in results] == [1]   # the sync itself still succeeds
+    assert any("Could not check" in r.message for r in caplog.records)
+
+
 def test_sync_workouts_reports_error_on_401(monkeypatch, full_app_ctx):
     monkeypatch.setattr("c2_api.requests.get", lambda *a, **k: _FakeResponse(401))
     client = _client()

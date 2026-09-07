@@ -36,6 +36,9 @@ The Dashboard shows a "Last synced" indicator next to the Sync button, so you do
 **My latest workout isn't showing — what should I do?**
 First, make sure your workout has synced to the Concept2 Online Logbook via ErgData. Then click the Sync button on the Dashboard. If it still doesn't appear, wait a few minutes and try again — occasionally the Concept2 API has a short delay.
 
+**I also own a SkiErg or BikeErg — will those show up?**
+No — Row Tracker only pulls RowErg results by design; SkiErg/BikeErg support isn't currently on the roadmap. If your Concept2 account has non-rower results logged, sync now checks for that and logs a warning (visible via `docker logs`) rather than silently dropping them with no trace, so it's diagnosable if it ever matters to you.
+
 **Can I import workouts from a CSV or other file?**
 Yes — for seasons your Concept2 account didn't have API access for yet, export a season CSV from the Concept2 Online Logbook and upload it on the Import CSV page (linked from the Dashboard). Already-synced workouts are skipped automatically.
 

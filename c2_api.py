@@ -93,6 +93,7 @@ class C2ApiClient:
 
         results = []
         page    = 1
+        total_rower = None
 
         while True:
             params = {"per_page": PAGE_SIZE, "page": page, "type": "rower"}
@@ -138,13 +139,46 @@ class C2ApiClient:
             # syncs (rarely >100 new results) but would have quietly dropped
             # data after any outage long enough to queue up more than that.
             pagination = data.get("meta", {}).get("pagination", {})
+            if page == 1:
+                total_rower = pagination.get("total")
             last_page = pagination.get("total_pages", 1)
             if page >= last_page:
                 break
             page += 1
 
         logger.info(f"Fetched {len(results)} results from C2 API.")
+        self._warn_if_non_rower_results_exist(since_date, total_rower)
         return results
+
+    def _warn_if_non_rower_results_exist(self, since_date, total_rower):
+        """
+        The type=rower filter in get_results() is applied server-side, so
+        Row Tracker never even sees non-rower results (bikeerg, skierg, etc.)
+        in the paginated response — this makes that gap visible in the logs
+        instead of invisible. One extra lightweight request (per_page=1, no
+        type filter) reads the total result count across every machine
+        type; if it's higher than the rower-only total, something real was
+        excluded from this sync. Best-effort: a failure here never affects
+        the sync itself, since the results have already been returned.
+        """
+        if total_rower is None:
+            return
+        try:
+            params = {"per_page": 1, "page": 1}
+            if since_date:
+                params["from"] = since_date.isoformat()
+            resp = requests.get(RESULTS_URL, headers=self._get_headers(), params=params, timeout=30)
+            resp.raise_for_status()
+            total_all = resp.json().get("meta", {}).get("pagination", {}).get("total")
+        except requests.RequestException as e:
+            logger.warning(f"Could not check for non-rower results excluded by sync: {e}")
+            return
+
+        if total_all is not None and total_all > total_rower:
+            logger.warning(
+                f"C2 sync excluded {total_all - total_rower} non-rower result(s) "
+                f"({total_all} total vs {total_rower} rower) — check your Logbook for other machine types."
+            )
 
     def get_stroke_data(self, workout_id: int) -> list | None:
         """

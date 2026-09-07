@@ -78,6 +78,13 @@
       </details>
 
       <details class="faq-item">
+        <summary class="faq-question">I also own a SkiErg or BikeErg — will those show up?</summary>
+        <div class="faq-answer">
+          No — Row Tracker only pulls RowErg results by design; SkiErg/BikeErg support isn't currently on the roadmap. If your Concept2 account has non-rower results logged, sync now checks for that and logs a warning (visible via <code>docker logs</code>) rather than silently dropping them with no trace, so it's diagnosable if it ever matters to you.
+        </div>
+      </details>
+
+      <details class="faq-item">
         <summary class="faq-question">Can I import workouts from a CSV or other file?</summary>
         <div class="faq-answer">
           Yes — for seasons your Concept2 account didn't have API access for yet, export a season CSV from the

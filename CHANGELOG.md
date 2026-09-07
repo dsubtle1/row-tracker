@@ -9,6 +9,17 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.22.0] — 2026-09-07
+
+### Added
+- **Sync now detects and logs non-rower results excluded from the Concept2 API.** `c2_api.py`'s
+  `type=rower` filter is applied server-side, so a workout logged under a different Concept2
+  machine type never even appeared in the response — silently, with no trace. Sync now makes one
+  extra lightweight request per run to compare the rower-only result total against the true total
+  across every machine type, logging a warning if they ever diverge. Pure observability: nothing
+  about what gets synced or stored changes, and this account currently has zero excluded results
+  (verified live against the real API before shipping).
+
 ## [0.21.0] — 2026-09-07
 
 ### Added
