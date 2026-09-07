@@ -146,6 +146,46 @@ def test_workout_detail_missing_is_404(client):
     assert resp.status_code == 404
 
 
+def test_workout_detail_shows_existing_notes(client, full_app_ctx, full_make_workout):
+    from models import db
+    w = full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    w.notes = "Felt strong today"
+    db.session.commit()
+
+    resp = client.get("/workouts/1")
+    assert b"Felt strong today" in resp.data
+
+
+def test_save_notes_sets_the_workout_notes(client, full_app_ctx, full_make_workout):
+    from models import db, Workout
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+
+    resp = client.post("/workouts/1/notes", data={"notes": "New PB attempt, fell short"})
+    assert resp.status_code == 302
+    assert db.session.get(Workout, 1).notes == "New PB attempt, fell short"
+
+
+def test_save_notes_strips_whitespace_and_empty_becomes_null(client, full_app_ctx, full_make_workout):
+    from models import db, Workout
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+
+    client.post("/workouts/1/notes", data={"notes": "   "})
+    assert db.session.get(Workout, 1).notes is None
+
+
+def test_save_notes_truncates_to_2000_chars(client, full_app_ctx, full_make_workout):
+    from models import db, Workout
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+
+    client.post("/workouts/1/notes", data={"notes": "x" * 3000})
+    assert len(db.session.get(Workout, 1).notes) == 2000
+
+
+def test_save_notes_missing_workout_is_404(client):
+    resp = client.post("/workouts/999999/notes", data={"notes": "hi"})
+    assert resp.status_code == 404
+
+
 # --------------------------------------------------------------------------- #
 #  Personal bests                                                             #
 # --------------------------------------------------------------------------- #

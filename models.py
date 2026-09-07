@@ -34,6 +34,7 @@ class Workout(db.Model):
     heart_rate_max    = db.Column(db.Integer, nullable=True)      # peak HR for the session (C2 "heart_rate.max"); NULL = no HR strap worn / no data
     stroke_data       = db.Column(db.JSON, nullable=True)         # per-stroke array, fetched on demand; NULL until first detail-page view
     raw_json          = db.Column(db.JSON, nullable=True)         # full API payload; NULL from CSV
+    notes             = db.Column(db.Text, nullable=True)         # free-text user annotation, editable on the detail page; NULL until first note
     synced_at         = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships

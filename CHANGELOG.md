@@ -9,6 +9,20 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.19.0] — 2026-09-07
+
+### Added
+- **Workout notes.** Every workout detail page now has a free-text Notes field (up to 2,000
+  characters) — somewhere to record how a session felt, an equipment change, or why it got cut
+  short, none of which Concept2 tracks.
+- **Automatic schema sync on startup (`app._sync_schema()`).** `db.create_all()` only creates
+  missing tables, never alters existing ones — every nullable column this app has added
+  post-launch (`rest_distance_meters`, `rest_time_seconds`, `stroke_count`, `heart_rate_max`, and
+  now `notes`) has needed someone to manually run `ALTER TABLE` against every already-running
+  instance. This makes that step automatic and idempotent instead: on every startup, any model
+  column missing from the live database is added on the spot, logged, and never touched again.
+  SQLite `ADD COLUMN` only — additive, safe, no drops or renames.
+
 ## [0.18.0] — 2026-09-07
 
 ### Added

@@ -17,6 +17,17 @@
   {% endif %}
 </div>
 
+{# ── Notes ───────────────────────────────────────────────────────────────── #}
+<div class="wd-notes-card">
+  <form method="POST" action="{{ url_for('tracker.workout_save_notes', workout_id=workout.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <label for="wd-notes-input" class="wd-notes-label">Notes</label>
+    <textarea id="wd-notes-input" name="notes" rows="3" maxlength="2000"
+              placeholder="Anything worth remembering about this session...">{{ workout.notes or "" }}</textarea>
+    <button type="submit" class="btn btn-ghost btn-sm">Save</button>
+  </form>
+</div>
+
 {# ── Core stats ──────────────────────────────────────────────────────────── #}
 <div class="wd-stats-grid">
 

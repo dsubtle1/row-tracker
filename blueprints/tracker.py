@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from collections import defaultdict
 from urllib.parse import urlencode
 
-from flask import Blueprint, Response, current_app, jsonify, render_template, request
+from flask import Blueprint, Response, current_app, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import func
 
 from models import db, Workout, PersonalBest
@@ -310,6 +310,15 @@ def workout_list():
         date_from=date_from, date_to=date_to,
         min_distance=min_distance, max_distance=max_distance,
     )
+
+
+@tracker_bp.route("/workouts/<int:workout_id>/notes", methods=["POST"])
+def workout_save_notes(workout_id):
+    workout = db.get_or_404(Workout, workout_id)
+    notes = request.form.get("notes", "").strip()[:2000]
+    workout.notes = notes or None
+    db.session.commit()
+    return redirect(url_for("tracker.workout_detail", workout_id=workout_id))
 
 
 @tracker_bp.route("/workouts/<int:workout_id>")

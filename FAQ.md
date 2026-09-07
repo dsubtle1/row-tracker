@@ -54,6 +54,9 @@ Yes — click **Export Data** next to the Sync button on the Dashboard. You can 
 **Can I filter or search my workout list?**
 Yes — the Workouts page has a filter bar for date range and distance range (e.g. every 10k+ session in a given month). Filters combine, carry across pages, and can be bookmarked or shared since they're plain URL parameters — clear them with the Clear button or by revisiting the page with no filters.
 
+**Can I add a note to a workout?**
+Yes — every workout detail page has a Notes field near the top. Free text, up to 2,000 characters, saved with its own button. Good for things Concept2 doesn't track: how you felt, equipment changes, why a session got cut short.
+
 **My lifetime metres don't match the Concept2 website — why?**
 If you do interval workouts, Concept2 tracks the light rowing between intervals as separate "rest" meters, apart from each interval's own distance. Row Tracker includes those rest meters in lifetime and volume totals (the Dashboard total, volume badges, virtual journeys, and Season Challenges) — matching what Concept2's own site counts — but never in pace, personal bests, or single-piece test results, which stay based on work-interval meters only so a slower recovery split can't inflate your times. A small remaining gap usually means a manually-entered starting/legacy total on your Concept2 profile that predates connected-device logging, since that number isn't exposed by Concept2's results API at all.
 

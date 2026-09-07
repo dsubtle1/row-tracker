@@ -9,6 +9,7 @@ import logging
 from flask import Flask, Response, render_template
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
+from sqlalchemy import inspect, text
 from models import db
 
 # Without a handler, module-level loggers (scheduler.py, badge_engine.py,
@@ -23,6 +24,40 @@ logging.basicConfig(
 
 mail = Mail()
 csrf = CSRFProtect()
+logger = logging.getLogger(__name__)
+
+
+def _sync_schema():
+    """
+    Add any model column missing from the live database.
+
+    db.create_all() only creates missing TABLES, never alters existing
+    ones — every nullable column this app has added post-launch
+    (rest_distance_meters, rest_time_seconds, stroke_count,
+    heart_rate_max, ...) has needed a manual ALTER TABLE against every
+    already-running instance. This makes that step automatic and
+    idempotent instead. SQLite ADD COLUMN only — no renames, drops, or
+    type changes, which covers every case this app has actually hit.
+    """
+    inspector = inspect(db.engine)
+    existing_tables = set(inspector.get_table_names())
+    for table in db.metadata.sorted_tables:
+        if table.name not in existing_tables:
+            continue   # brand-new table — create_all() already made it
+        existing_cols = {c["name"] for c in inspector.get_columns(table.name)}
+        for column in table.columns:
+            if column.name in existing_cols:
+                continue
+            if not column.nullable and column.default is None:
+                logger.error(
+                    f"Schema sync: {table.name}.{column.name} is NOT NULL with no "
+                    f"default — needs a dedicated backfill script, skipping."
+                )
+                continue
+            col_type = column.type.compile(db.engine.dialect)
+            db.session.execute(text(f'ALTER TABLE "{table.name}" ADD COLUMN "{column.name}" {col_type}'))
+            logger.info(f"Schema sync: added {table.name}.{column.name}")
+    db.session.commit()
 
 
 def _read_version(app) -> str:
@@ -120,6 +155,7 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        _sync_schema()
 
         # Badge rows must exist before evaluate_badges() has anything to
         # check against — seed_badges() never ran anywhere in the app

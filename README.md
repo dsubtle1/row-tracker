@@ -55,6 +55,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Export workout history and personal bests as CSV or JSON, for use outside the app or as a portable backup
 - Full workout history with a paginated, filterable list (date range, distance range) and an enriched detail view
 - Enriched workout detail — heart rate (min/avg/max/ending with zone classification), per-split breakdown, avg watts, drag factor, stroke count
+- Editable free-text notes on any workout — a place for "felt strong today" or "new shoes, different footplate setting"
 - Per-stroke pace & stroke-rate chart on the workout detail page, fetched from Concept2 on first view and cached
 - 52-week volume heatmap — click any day to see that session's details
 
