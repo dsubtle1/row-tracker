@@ -9,6 +9,16 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.26.1] — 2026-09-08
+
+### Fixed
+- **FAQ described a WOD training-phase system that doesn't exist.** The docs claimed the engine
+  "looks at your last 28 days of training to determine your current phase (base, build, peak, or
+  recovery)" — there is no phase concept anywhere in `wod_engine.py`. Corrected the FAQ (and its
+  in-app twin, plus the unused `faq_template.html` and the README Features list) to describe what
+  the engine actually does: a 7-day under-representation check against a target session-type mix,
+  modified by the CAWR training-load signal. No behavior change — documentation only.
+
 ## [0.26.0] — 2026-09-08
 
 ### Added

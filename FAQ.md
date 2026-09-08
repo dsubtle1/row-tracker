@@ -87,7 +87,7 @@ Yes — click **View progression** on any PB card to open a chart of every genui
 ### Workout of the Day
 
 **How is the daily WOD generated?**
-The WOD engine looks at your last 28 days of training to determine your current phase (base, build, peak, or recovery) and generates a workout appropriate for that phase. Pace targets are based on your 2k personal best.
+The engine picks a session type each day from two signals, not a long-term training phase: it looks at what's under-represented in your last 7 days against a target mix (2 steady-state, 1 interval, 1 threshold, 1 long/test piece per week, test pieces capped to once every 14 days), then applies a CAWR (acute:chronic training load) modifier on top — forcing an easy steady-state session when your load is elevated, and biasing toward interval or threshold work when it's low. Pace targets are based on your 2k personal best.
 
 **Can I get a different WOD if I don't like today's?**
 Yes — click Force Regenerate on the WOD page to get a new one. You can also browse the full WOD library and assign any workout manually.

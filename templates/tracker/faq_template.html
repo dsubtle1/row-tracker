@@ -181,7 +181,7 @@
       <details class="faq-item">
         <summary class="faq-question">How is the daily WOD generated?</summary>
         <div class="faq-answer">
-          The WOD engine looks at your last 28 days of training to determine your current phase (base, build, peak, or recovery) and generates a workout appropriate for that phase. Pace targets are based on your 2k personal best.
+          The engine picks a session type each day from two signals, not a long-term training phase: it looks at what's under-represented in your last 7 days against a target mix (2 steady-state, 1 interval, 1 threshold, 1 long/test piece per week, test pieces capped to once every 14 days), then applies a CAWR (acute:chronic training load) modifier on top — forcing an easy steady-state session when your load is elevated, and biasing toward interval or threshold work when it's low. Pace targets are based on your 2k personal best.
         </div>
       </details>
 

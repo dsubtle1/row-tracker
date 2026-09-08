@@ -82,7 +82,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Optional AI "coach's read" (`USE_AI_INSIGHTS=true` + `ANTHROPIC_API_KEY`) — Claude Haiku writes a short first-person synthesis tying the cards together; it only ever rephrases the deterministic facts (never invents a number), and every card renders fine without it
 
 **Workout of the Day**
-- Rule-based periodization engine — reads last 28 days to set training phase
+- Rule-based session-type engine — targets a weekly mix (steady-state, interval, threshold, long/test) against your last 7 days, modified by a CAWR training-load signal
 - Target pace calculated from your 2k PB with zone offsets
 - Warm-up, main set, cool-down, and coaching notes generated daily
 - Training-load transparency — today's CAWR value is shown on the WOD card whenever it swaps in an easier or harder session for you, so the "why" is never hidden
