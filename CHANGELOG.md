@@ -9,6 +9,15 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.27.0] — 2026-09-08
+
+### Added
+- **Export Data now includes 5 previously-missing workout fields.** `notes`, `stroke_count`,
+  `heart_rate_max`, `rest_distance_meters`, and `rest_time_seconds` all existed on the `Workout`
+  model but were never wired into `/export/workouts.csv` or `/export/workouts.json` — `notes`
+  especially, since free text you typed in yourself had no way to leave the app except reading
+  the database directly.
+
 ## [0.26.1] — 2026-09-08
 
 ### Fixed

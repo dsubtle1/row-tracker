@@ -800,13 +800,15 @@ def export_workouts_csv():
     header = [
         "id", "date", "time_seconds", "time_formatted", "distance_meters",
         "avg_pace_seconds", "avg_pace_formatted", "avg_stroke_rate",
-        "total_calories", "synced_at",
+        "total_calories", "stroke_count", "heart_rate_max",
+        "rest_distance_meters", "rest_time_seconds", "notes", "synced_at",
     ]
     rows = [
         [
             w.id, w.workout_date.isoformat(), w.time_seconds, w.time_formatted,
             w.distance_meters, w.avg_pace_seconds, w.avg_pace_formatted,
-            w.avg_stroke_rate, w.total_calories,
+            w.avg_stroke_rate, w.total_calories, w.stroke_count, w.heart_rate_max,
+            w.rest_distance_meters, w.rest_time_seconds, w.notes or "",
             w.synced_at.isoformat() if w.synced_at else "",
         ]
         for w in workouts
@@ -829,6 +831,11 @@ def export_workouts_json():
             "avg_pace_formatted": w.avg_pace_formatted,
             "avg_stroke_rate":    w.avg_stroke_rate,
             "total_calories":     w.total_calories,
+            "stroke_count":       w.stroke_count,
+            "heart_rate_max":     w.heart_rate_max,
+            "rest_distance_meters": w.rest_distance_meters,
+            "rest_time_seconds":  w.rest_time_seconds,
+            "notes":              w.notes,
             "synced_at":          w.synced_at.isoformat() if w.synced_at else None,
         }
         for w in workouts

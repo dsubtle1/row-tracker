@@ -499,6 +499,32 @@ def test_export_workouts_json(client, full_make_workout):
     assert data[0]["distance_meters"] == 2000
 
 
+def test_export_workouts_includes_notes_and_extra_fields(client, full_make_workout):
+    from models import db
+    w = full_make_workout(
+        id=1, distance_meters=2000, time_seconds=480,
+        rest_distance_meters=50, rest_time_seconds=20,
+    )
+    w.stroke_count = 200
+    w.heart_rate_max = 175
+    w.notes = "Great session, negative split"
+    db.session.commit()
+
+    csv_resp = client.get("/export/workouts.csv")
+    body = csv_resp.data.decode("utf-8")
+    assert "stroke_count" in body and "heart_rate_max" in body
+    assert "200" in body and "175" in body
+    assert "Great session, negative split" in body
+
+    json_resp = client.get("/export/workouts.json")
+    data = json_resp.get_json()[0]
+    assert data["stroke_count"] == 200
+    assert data["heart_rate_max"] == 175
+    assert data["rest_distance_meters"] == 50
+    assert data["rest_time_seconds"] == 20
+    assert data["notes"] == "Great session, negative split"
+
+
 def test_export_pbs_csv_and_json(client, full_app_ctx):
     from models import db
     db.session.add(PersonalBest(category="2000m", value_seconds=450))
@@ -520,7 +546,8 @@ def test_export_empty_db_still_returns_valid_files(client):
     assert csv_resp.status_code == 200
     assert csv_resp.data.decode("utf-8").strip() == (
         "id,date,time_seconds,time_formatted,distance_meters,avg_pace_seconds,"
-        "avg_pace_formatted,avg_stroke_rate,total_calories,synced_at"
+        "avg_pace_formatted,avg_stroke_rate,total_calories,stroke_count,"
+        "heart_rate_max,rest_distance_meters,rest_time_seconds,notes,synced_at"
     )
     json_resp = client.get("/export/workouts.json")
     assert json_resp.get_json() == []
