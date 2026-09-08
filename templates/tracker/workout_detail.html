@@ -15,6 +15,7 @@
     {% if extras.source %}<span class="wd-source">· {{ extras.source }}</span>{% endif %}
   </p>
   {% endif %}
+  <a href="{{ url_for('tracker.day_view', date_str=workout.workout_date.isoformat()) }}" class="section-link">View full day →</a>
 </div>
 
 {# ── Notes ───────────────────────────────────────────────────────────────── #}

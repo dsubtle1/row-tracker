@@ -60,7 +60,7 @@
           <li><strong>Pace trend & weekly volume</strong> — mini sparkline previews of your recent training</li>
           <li><strong>Your Progress</strong> — a checklist of every active or completed virtual journey</li>
           <li><strong>Journey Map</strong> — a small map preview of whichever active journey you're furthest along on, with a link to its full route page</li>
-          <li><strong>52-week heatmap</strong> — a full year of training volume at a glance; click any square to see that day's individual workouts</li>
+          <li><strong>52-week heatmap</strong> — a full year of training volume at a glance; click any square to see that day's individual workouts, with a link through to that day's full Day View</li>
         </ul>
         <a href="{{ url_for('tracker.dashboard') }}" class="qs-action-link">Go to Dashboard →</a>
       </div>
@@ -187,6 +187,13 @@
           <div>
             <strong>Heatmap drill-down</strong>
             <p>Click any square in the 52-week heatmap to see that day's individual workouts in detail.</p>
+          </div>
+        </div>
+        <div class="qs-tip-card">
+          <span class="qs-tip-icon">📋</span>
+          <div>
+            <strong>Day View</strong>
+            <p>Every date has a unified page — linked from the heatmap, the WOD history calendar, and any workout detail page — showing that day's planned WOD, actual workout(s), the actual-vs-planned comparison, notes, and any PB achieved, all in one place.</p>
           </div>
         </div>
         <div class="qs-tip-card">

@@ -11,6 +11,7 @@ from models import db, Workout, WodHistory
 from wod_engine import (
     WOD_LIBRARY,
     build_month_calendar,
+    enrich_wod,
     generate_wod,
     generate_random_wod,
     get_or_create_today,
@@ -23,47 +24,7 @@ wod_bp = Blueprint("wod", __name__)
 
 # ── Helpers ────────────────────────────────────────────────────────────────
 
-def _actual_vs_planned(row: WodHistory, target_pace_seconds) -> dict | None:
-    """
-    "You hit target pace within X%" comparison, once a WOD is linked to the
-    workout that actually happened. None if not linked, or either side is
-    missing the pace data needed to compare.
-    """
-    actual = row.actual_workout
-    if not actual or not actual.avg_pace_seconds or not target_pace_seconds:
-        return None
-    diff_seconds = actual.avg_pace_seconds - target_pace_seconds   # positive = slower than target
-    pct = abs(diff_seconds) / target_pace_seconds * 100
-    return {
-        "diff_seconds": diff_seconds,
-        "pct": round(pct, 1),
-        "hit_target": pct <= 2,   # within 2%, matching the backlog's own "within 2%" framing
-    }
-
-
-def _enrich(row: WodHistory) -> dict:
-    """Merge WodHistory row with its wod_json into a flat display dict."""
-    j = row.wod_json or {}
-    return {
-        "id":            row.id,
-        "date":          row.generated_date,
-        "completed":     row.completed,
-        "wod_type":      row.wod_type,
-        "title":         j.get("title", "—"),
-        "structure_key": j.get("structure_key", ""),
-        "intervals":     j.get("intervals", []),
-        "pace_zone":     j.get("pace_zone", ""),
-        "target_pace_str": j.get("target_pace_str", "—"),
-        "warm_up":       j.get("warm_up", ""),
-        "cool_down":     j.get("cool_down", ""),
-        "coaching_notes": j.get("coaching_notes", ""),
-        "total_work_meters":  j.get("total_work_meters", 0),
-        "total_work_seconds": j.get("total_work_seconds", 0),
-        "cawr":          j.get("cawr"),
-        "cawr_note":     j.get("cawr_note", ""),
-        "actual_workout": row.actual_workout,
-        "comparison":    _actual_vs_planned(row, j.get("target_pace_seconds")),
-    }
+_enrich = enrich_wod   # local alias — every call site below predates the move to wod_engine.py
 
 
 def _auto_link_workout(wod_date):

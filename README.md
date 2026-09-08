@@ -59,6 +59,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Per-stroke pace & stroke-rate chart on the workout detail page, fetched from Concept2 on first view and cached
 - 52-week volume heatmap — click any day to see that session's details
 - Head-to-head comparison — pick any two workouts from the list for a split-by-split pace chart side by side
+- Unified Day View — a single page for any date pulling together the WOD planned for it, every workout actually synced that day, the actual-vs-planned comparison, any PB achieved, and notes — linked from the dashboard heatmap, the WOD history calendar, and every workout detail page
 
 **Personal Bests**
 - 8 categories: 100m, 500m, 1000m, 2000m, 5000m, 10000m, 30min, 60min

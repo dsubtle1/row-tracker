@@ -9,6 +9,22 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.26.0] — 2026-09-08
+
+### Added
+- **Unified Day View.** A single day's story used to be scattered across four separate pages
+  with no connection between them: the WOD plan, the actual workout, notes, and any PB. A new
+  page at `/day/<date>` pulls all of it together — the planned WOD (with its actual-vs-planned
+  comparison when the two are linked), every workout actually synced that day, notes, and any
+  personal best achieved — with prev/next-day navigation and a "Today" badge. Linked from the
+  dashboard heatmap's day-click modal, the WOD History calendar's day-click modal, and every
+  workout detail page.
+
+### Changed
+- Moved `actual_vs_planned()` and the WOD-enrichment helper from `blueprints/wod.py`'s private
+  functions into `wod_engine.py` as public functions, so both `blueprints/wod.py` and the new
+  Day View route can share the same logic without duplication.
+
 ## [0.25.1] — 2026-09-07
 
 ### Fixed

@@ -728,6 +728,53 @@ def get_wod_for_date(target_date: date) -> Optional[WodHistory]:
     )
 
 
+def actual_vs_planned(row: WodHistory, target_pace_seconds) -> Optional[dict]:
+    """
+    "You hit target pace within X%" comparison, once a WOD is linked to the
+    workout that actually happened. None if not linked, or either side is
+    missing the pace data needed to compare.
+    """
+    actual = row.actual_workout
+    if not actual or not actual.avg_pace_seconds or not target_pace_seconds:
+        return None
+    diff_seconds = actual.avg_pace_seconds - target_pace_seconds   # positive = slower than target
+    pct = abs(diff_seconds) / target_pace_seconds * 100
+    return {
+        "diff_seconds": diff_seconds,
+        "pct": round(pct, 1),
+        "hit_target": pct <= 2,   # within 2%, matching the backlog's own "within 2%" framing
+    }
+
+
+def enrich_wod(row: WodHistory) -> dict:
+    """
+    Merge a WodHistory row with its wod_json into a flat display dict.
+    Public (not blueprint-private) since both blueprints/wod.py and the Day
+    View in blueprints/tracker.py need the same shape.
+    """
+    j = row.wod_json or {}
+    return {
+        "id":            row.id,
+        "date":          row.generated_date,
+        "completed":     row.completed,
+        "wod_type":      row.wod_type,
+        "title":         j.get("title", "—"),
+        "structure_key": j.get("structure_key", ""),
+        "intervals":     j.get("intervals", []),
+        "pace_zone":     j.get("pace_zone", ""),
+        "target_pace_str": j.get("target_pace_str", "—"),
+        "warm_up":       j.get("warm_up", ""),
+        "cool_down":     j.get("cool_down", ""),
+        "coaching_notes": j.get("coaching_notes", ""),
+        "total_work_meters":  j.get("total_work_meters", 0),
+        "total_work_seconds": j.get("total_work_seconds", 0),
+        "cawr":          j.get("cawr"),
+        "cawr_note":     j.get("cawr_note", ""),
+        "actual_workout": row.actual_workout,
+        "comparison":    actual_vs_planned(row, j.get("target_pace_seconds")),
+    }
+
+
 # ── Random WOD Generator ──────────────────────────────────────────────────
 #
 # Intensity:   light (1–15 min) / medium (15–30 min) / heavy (30+ min)

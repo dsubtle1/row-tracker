@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from collections import defaultdict
 from urllib.parse import urlencode
 
-from flask import Blueprint, Response, current_app, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, current_app, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import func
 
 from models import db, Workout, PersonalBest
@@ -890,6 +890,51 @@ def quickstart():
 def auth_callback():
     """OAuth callback — not needed when using a pre-issued refresh token."""
     return jsonify({"status": "ok", "message": "OAuth callback not required — using pre-issued token."})
+
+
+@tracker_bp.route("/day/<date_str>")
+def day_view(date_str):
+    """
+    Unified view of a single day — the WOD planned for it, every workout
+    actually synced that day, the actual-vs-planned comparison (if the two
+    are linked), and any PB achieved. These currently live on four separate
+    pages with no connection between them.
+    """
+    try:
+        target = date.fromisoformat(date_str)
+    except ValueError:
+        abort(404)
+
+    from wod_engine import get_wod_for_date, enrich_wod
+    wod_row = get_wod_for_date(target)
+    wod = enrich_wod(wod_row) if wod_row else None
+
+    workouts = (
+        _rower()
+        .filter(Workout.workout_date == target)
+        .order_by(Workout.id.asc())
+        .all()
+    )
+
+    from pb_engine import DISTANCE_CATEGORIES, TIME_CATEGORIES
+    pb_order = list(DISTANCE_CATEGORIES) + list(TIME_CATEGORIES)
+    pbs = sorted(
+        PersonalBest.query.filter(PersonalBest.achieved_date == target).all(),
+        key=lambda pb: pb_order.index(pb.category) if pb.category in pb_order else len(pb_order),
+    )
+
+    today = date.today()
+    return render_template(
+        "tracker/day_view.html",
+        target_date=target,
+        wod=wod,
+        workouts=workouts,
+        pbs=pbs,
+        prev_date=target - timedelta(days=1),
+        next_date=target + timedelta(days=1),
+        is_today=(target == today),
+        is_future=(target > today),
+    )
 
 
 @tracker_bp.route("/api/data/workouts_by_date")

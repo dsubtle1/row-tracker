@@ -517,11 +517,13 @@ function openDayModal(dateStr) {
   backdrop.classList.add("day-modal-backdrop--open");
   modal.classList.add("day-modal--open");
 
+  const dayLink = '<a href="/day/' + dateStr + '" class="day-modal-detail-link">View full day →</a>';
+
   fetch("/api/data/workouts_by_date?date=" + dateStr)
     .then(r => r.json())
     .then(workouts => {
       if (!workouts.length) {
-        body.innerHTML = '<p class="day-modal-empty">No workouts recorded on this day.</p>';
+        body.innerHTML = '<p class="day-modal-empty">No workouts recorded on this day.</p>' + dayLink;
         return;
       }
       let html = '';
@@ -540,6 +542,7 @@ function openDayModal(dateStr) {
         html += '<a href="/workouts/' + w.id + '" class="day-modal-detail-link">View full detail →</a>';
         html += '</div>';
       });
+      html += dayLink;
       body.innerHTML = html;
     })
     .catch(function() {

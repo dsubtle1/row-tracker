@@ -146,6 +146,93 @@ def test_workout_detail_missing_is_404(client):
     assert resp.status_code == 404
 
 
+# --------------------------------------------------------------------------- #
+#  Unified Day View                                                           #
+# --------------------------------------------------------------------------- #
+
+def test_day_view_invalid_date_is_404(client):
+    resp = client.get("/day/not-a-date")
+    assert resp.status_code == 404
+
+
+def test_day_view_empty_day_shows_empty_states(client, full_app_ctx):
+    from datetime import date
+    resp = client.get(f"/day/{date.today().isoformat()}")
+    assert resp.status_code == 200
+    assert b"No WOD was generated for this day" in resp.data
+    assert b"No workouts synced for this day" in resp.data
+
+
+def test_day_view_shows_a_workout_and_its_notes(client, full_app_ctx, full_make_workout):
+    from datetime import date
+    from models import db
+    today = date.today()
+    w = full_make_workout(id=1, distance_meters=2000, time_seconds=480, workout_date=today)
+    w.notes = "Felt strong today"
+    db.session.commit()
+
+    resp = client.get(f"/day/{today.isoformat()}")
+    assert resp.status_code == 200
+    assert b"2,000m" in resp.data
+    assert b"Felt strong today" in resp.data
+
+
+def test_day_view_numbers_multiple_workouts(client, full_app_ctx, full_make_workout):
+    from datetime import date
+    today = date.today()
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480, workout_date=today)
+    full_make_workout(id=2, distance_meters=5000, time_seconds=1200, workout_date=today)
+
+    resp = client.get(f"/day/{today.isoformat()}")
+    assert resp.status_code == 200
+    assert b"Workout 1" in resp.data
+    assert b"Workout 2" in resp.data
+
+
+def test_day_view_shows_pb_banner(client, full_app_ctx, full_make_workout):
+    from datetime import date
+    from models import db, PersonalBest
+    today = date.today()
+    w = full_make_workout(id=1, distance_meters=2000, time_seconds=420, workout_date=today)
+    db.session.add(PersonalBest(category="2000m", value_seconds=420, workout_id=w.id, achieved_date=today))
+    db.session.commit()
+
+    resp = client.get(f"/day/{today.isoformat()}")
+    assert resp.status_code == 200
+    assert b"New PB" in resp.data
+    assert b"2000m" in resp.data
+
+
+def test_day_view_shows_wod_and_comparison_when_linked(client, full_app_ctx, full_make_workout):
+    from datetime import date
+    from models import db
+    from wod_engine import generate_wod, save_wod
+
+    spec = generate_wod()
+    row = save_wod(spec)
+    workout = full_make_workout(
+        id=1, avg_pace_seconds=spec.target_pace_seconds,
+        distance_meters=2000, time_seconds=spec.target_pace_seconds * 4,
+        workout_date=row.generated_date,
+    )
+    row.actual_workout_id = workout.id
+    row.completed = True
+    db.session.commit()
+
+    resp = client.get(f"/day/{row.generated_date.isoformat()}")
+    assert resp.status_code == 200
+    assert b"Hit target pace within" in resp.data
+    assert b"Completed" in resp.data
+
+
+def test_day_view_links_from_workout_detail(client, full_app_ctx, full_make_workout):
+    from datetime import date
+    today = date.today()
+    full_make_workout(id=1, distance_meters=2000, time_seconds=480, workout_date=today)
+    resp = client.get("/workouts/1")
+    assert f"/day/{today.isoformat()}".encode() in resp.data
+
+
 def test_workout_detail_shows_existing_notes(client, full_app_ctx, full_make_workout):
     from models import db
     w = full_make_workout(id=1, distance_meters=2000, time_seconds=480)

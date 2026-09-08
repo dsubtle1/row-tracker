@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}{{ target_date.strftime("%B %-d, %Y") }} — Row Tracker{% endblock %}
+
+{% block content %}
+
+<div class="page-header dv-header">
+  <a href="{{ url_for('tracker.day_view', date_str=prev_date.isoformat()) }}" class="btn btn-ghost btn-sm dv-nav">← {{ prev_date.strftime("%b %-d") }}</a>
+  <div class="dv-title-block">
+    <h1>{{ target_date.strftime("%A, %B %-d, %Y") }}</h1>
+    {% if is_today %}<span class="dv-today-badge">Today</span>{% endif %}
+  </div>
+  {% if not is_future %}
+  <a href="{{ url_for('tracker.day_view', date_str=next_date.isoformat()) }}" class="btn btn-ghost btn-sm dv-nav">{{ next_date.strftime("%b %-d") }} →</a>
+  {% else %}
+  <span class="dv-nav dv-nav--disabled"></span>
+  {% endif %}
+</div>
+
+{% if pbs %}
+<div class="dv-pb-banner">
+  {% for pb in pbs %}
+  <span>🏆 New PB: <strong>{{ pb.category }}</strong> — {{ pb.value_formatted }}</span>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if wod %}
+<div class="wod-card mb-4">
+  <div class="wod-header">
+    <div class="wod-header-left">
+      <span class="wod-type-badge wod-type-{{ wod.wod_type }}">{{ wod.wod_type | replace("_", " ") | title }}</span>
+      <h2 class="wod-title">{{ wod.title }}</h2>
+    </div>
+    <div class="wod-header-right">
+      <div class="wod-pace-target">
+        <span class="wod-pace-value">{{ wod.target_pace_str }}</span>
+        <span class="wod-pace-label">/500m · {{ wod.pace_zone }}</span>
+      </div>
+    </div>
+  </div>
+
+  {% if wod.cawr_note %}
+  <div class="wod-cawr-note">📊 {{ wod.cawr_note }}</div>
+  {% endif %}
+
+  <p class="wod-section-text">{{ wod.coaching_notes }}</p>
+
+  <div class="dv-wod-footer">
+    {% if wod.completed %}
+      <span class="wod-completed-badge">✓ Completed</span>
+      {% if wod.comparison %}
+      <span class="wod-comparison {{ 'wod-comparison--hit' if wod.comparison.hit_target else 'wod-comparison--miss' }}">
+        {% if wod.comparison.hit_target %}
+          ✓ Hit target pace within {{ wod.comparison.pct }}%
+        {% else %}
+          {{ wod.comparison.pct }}% off target ({{ "+" if wod.comparison.diff_seconds > 0 else "" }}{{ wod.comparison.diff_seconds }}s/500m)
+        {% endif %}
+      </span>
+      {% endif %}
+    {% else %}
+      <span class="dv-wod-pending">Not marked complete</span>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="chart-card mb-4">
+  <p class="muted">No WOD was generated for this day.</p>
+</div>
+{% endif %}
+
+{% if workouts %}
+{% for w in workouts %}
+<div class="chart-card mb-4">
+  <div class="dv-workout-header">
+    <h3 class="card-title">{{ "Workout" if workouts | length == 1 else "Workout " ~ loop.index }}</h3>
+    <a href="{{ url_for('tracker.workout_detail', workout_id=w.id) }}" class="section-link">Full detail →</a>
+  </div>
+  <div class="dv-workout-stats">
+    <div class="dv-stat"><span class="dv-stat-value">{{ "{:,}".format(w.distance_meters) if w.distance_meters else "—" }}m</span><span class="dv-stat-label">Distance</span></div>
+    <div class="dv-stat"><span class="dv-stat-value">{{ w.time_formatted }}</span><span class="dv-stat-label">Time</span></div>
+    <div class="dv-stat"><span class="dv-stat-value">{{ w.avg_pace_formatted }}</span><span class="dv-stat-label">/500m pace</span></div>
+    <div class="dv-stat"><span class="dv-stat-value">{{ w.avg_stroke_rate or "—" }}</span><span class="dv-stat-label">SPM</span></div>
+    <div class="dv-stat"><span class="dv-stat-value">{{ w.total_calories or "—" }}</span><span class="dv-stat-label">Calories</span></div>
+  </div>
+  {% if w.notes %}
+  <div class="dv-workout-notes">
+    <div class="wd-notes-label">Notes</div>
+    <p>{{ w.notes }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="chart-card mb-4">
+  <p class="muted">No workouts synced for this day.</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dv-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .dv-title-block { text-align: center; flex: 1; }
+  .dv-title-block h1 { margin-bottom: 0.25rem; }
+  .dv-today-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+    border-radius: 99px;
+    padding: 0.15rem 0.6rem;
+  }
+  .dv-nav { flex: none; white-space: nowrap; }
+  .dv-nav--disabled { min-width: 1px; }
+
+  .dv-pb-banner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 1rem;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: var(--radius);
+    color: #fbbf24;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .dv-wod-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .dv-wod-pending {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .dv-workout-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .dv-workout-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 1rem;
+  }
+  .dv-stat { display: flex; flex-direction: column; gap: 0.15rem; }
+  .dv-stat-value { font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .dv-stat-label { font-size: 0.72rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .dv-workout-notes {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border);
+  }
+  .dv-workout-notes p { margin: 0; font-size: 0.9rem; color: var(--color-text); }
+</style>
+{% endblock %}

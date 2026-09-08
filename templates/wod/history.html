@@ -74,8 +74,9 @@ function openWodDayModal(dateStr) {
       return r.json();
     })
     .then(data => {
+      const dayLink = '<a href="/day/' + dateStr + '" class="day-modal-detail-link">View full day →</a>';
       if (!data.exists) {
-        body.innerHTML = '<p class="day-modal-empty">No WOD generated this day.</p>';
+        body.innerHTML = '<p class="day-modal-empty">No WOD generated this day.</p>' + dayLink;
         return;
       }
       body.innerHTML =
@@ -86,7 +87,7 @@ function openWodDayModal(dateStr) {
             '<div class="dms-block"><span class="dms-value">' + esc(data.pace_zone) + '</span><span class="dms-label">zone</span></div>' +
             '<div class="dms-block"><span class="dms-value">' + (data.completed ? "✓ Done" : "—") + '</span><span class="dms-label">status</span></div>' +
           '</div>' +
-        '</div>';
+        '</div>' + dayLink;
     })
     .catch(function() {
       body.innerHTML = '<p class="day-modal-empty">Failed to load workout data.</p>';
