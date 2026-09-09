@@ -9,6 +9,22 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.28.0] — 2026-09-09
+
+### Added
+- **Best Splits leaderboard.** A new table on the PBs page shows your all-time top 10 fastest
+  single splits by normalized /500m pace, computed from any interval workout with per-split data
+  (reusing the same `raw_json`-derived split parsing as the workout detail page and head-to-head
+  comparison). CSV-imported workouts have no split data — rather than silently excluding them, the
+  page discloses exactly how many are left out.
+
+### Fixed
+- **A SQL `IS NULL` filter silently matched nothing.** While building the leaderboard's exclusion
+  count, found that SQLAlchemy's JSON column type stores an explicitly-assigned Python `None` as
+  the JSON literal `"null"` on SQLite, not a database `NULL` — so `Workout.raw_json.is_(None)`
+  matched zero rows even though 2,401 real workouts have no split data. Fixed by filtering on
+  `raw_json` truthiness in Python instead, the same pattern already used elsewhere in the app.
+
 ## [0.27.0] — 2026-09-08
 
 ### Added

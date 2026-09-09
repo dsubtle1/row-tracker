@@ -67,6 +67,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Improvement delta vs previous PB
 - Stale flag for PBs not tested in 90+ days
 - Full progression chart per category — every genuine record-breaking result over time, not just current-vs-previous
+- Best Splits leaderboard — your all-time top 10 fastest single splits by /500m pace, from any interval workout with per-split data; CSV-imported workouts lack split data, so the page discloses how many are excluded rather than silently leaving them out
 
 **Charts**
 - Pace over time with 10-session rolling average

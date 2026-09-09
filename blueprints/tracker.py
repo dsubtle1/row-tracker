@@ -365,6 +365,34 @@ def _compute_splits(workout: Workout) -> list[dict]:
     return splits
 
 
+def _best_splits(limit: int = 10) -> tuple[list[dict], int]:
+    """
+    All-time fastest single splits by normalized /500m pace, across every
+    workout that actually has per-split data. CSV-imported workouts have no
+    raw_json and no splits — rather than silently omitting them, this
+    returns how many are excluded so the leaderboard can disclose it.
+
+    Filters on `raw_json` truthiness in Python, not a SQL IS NULL check —
+    SQLAlchemy's JSON column type stores a Python None as the JSON literal
+    "null" on SQLite, not a SQL NULL, so `.is_(None)` silently matches
+    nothing at the database level.
+    """
+    all_workouts = Workout.query.filter_by(workout_type="rower").all()
+    excluded = sum(1 for w in all_workouts if not w.raw_json)
+
+    entries = []
+    for w in all_workouts:
+        if not w.raw_json:
+            continue
+        for s in _compute_splits(w):
+            if s["pace_seconds"] is None:
+                continue
+            entries.append({**s, "workout_id": w.id, "workout_date": w.workout_date})
+
+    entries.sort(key=lambda e: e["pace_seconds"])
+    return entries[:limit], excluded
+
+
 @tracker_bp.route("/workouts/<int:workout_id>")
 def workout_detail(workout_id):
     workout = db.get_or_404(Workout, workout_id)
@@ -483,7 +511,8 @@ def personal_bests():
     pbs     = [pb_map[cat] for cat in order if cat in pb_map]
     extras  = [pb for pb in pbs_raw if pb.category not in set(order)]
     pbs.extend(extras)
-    return render_template("tracker/pb.html", pbs=pbs)
+    best_splits, excluded_count = _best_splits()
+    return render_template("tracker/pb.html", pbs=pbs, best_splits=best_splits, excluded_count=excluded_count)
 
 
 @tracker_bp.route("/insights")

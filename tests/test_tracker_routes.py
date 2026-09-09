@@ -353,6 +353,41 @@ def test_pb_page_with_data(client, full_app_ctx):
     assert resp.status_code == 200
 
 
+def test_pb_page_best_splits_from_raw_json(client, full_app_ctx, full_make_workout):
+    from models import db
+    w = full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    w.raw_json = {
+        "workout": {
+            "splits": [
+                {"time": 1200, "distance": 500, "stroke_rate": 24},   # 2:00/500m
+                {"time": 1150, "distance": 500, "stroke_rate": 26},   # 1:55/500m — the best one
+            ]
+        }
+    }
+    db.session.commit()
+
+    resp = client.get("/pb")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8")
+    assert "Best Splits" in body
+    assert "1:55" in body
+    assert "500m in 1:55.0" in body
+
+
+def test_pb_page_discloses_csv_imported_workouts_excluded(client, full_app_ctx, full_make_workout):
+    from models import db
+    w = full_make_workout(id=1, distance_meters=2000, time_seconds=480)
+    # Explicit assignment, not just an untouched column — SQLAlchemy's JSON
+    # type stores this as the JSON literal "null" on SQLite, not a SQL NULL,
+    # which a naive `.is_(None)` filter would silently miss.
+    w.raw_json = None
+    db.session.commit()
+    resp = client.get("/pb")
+    body = resp.data.decode("utf-8")
+    assert "imported via CSV" in body
+    assert "no per-split data" in body
+
+
 # --------------------------------------------------------------------------- #
 #  Charts (HTML shells) + JSON data APIs                                      #
 # --------------------------------------------------------------------------- #

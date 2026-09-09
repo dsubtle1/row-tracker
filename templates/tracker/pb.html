@@ -30,6 +30,42 @@
 <p class="muted">No personal bests recorded yet.</p>
 {% endif %}
 
+<h2 class="section-title" style="margin-top: 2.5rem;">Best Splits</h2>
+
+{% if excluded_count %}
+<p class="muted" style="margin-bottom: 1rem;">
+  {{ "{:,}".format(excluded_count) }} historical workout{{ "s" if excluded_count != 1 else "" }} imported via CSV
+  {{ "have" if excluded_count != 1 else "has" }} no per-split data and {{ "aren't" if excluded_count != 1 else "isn't" }} included below.
+</p>
+{% endif %}
+
+{% if best_splits %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Pace /500m</th>
+      <th>Split</th>
+      <th>SPM</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in best_splits %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td><strong>{{ s.pace_str }}</strong></td>
+      <td data-label="Split">{{ s.distance }}m in {{ s.time_str }}</td>
+      <td data-label="SPM">{{ s.stroke_rate or "—" }}</td>
+      <td data-label="Date"><a href="{{ url_for('tracker.workout_detail', workout_id=s.workout_id) }}">{{ s.workout_date.strftime("%b %-d, %Y") }}</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No interval workouts with split data yet — best splits will show up here once you row one.</p>
+{% endif %}
+
 <div class="day-modal-backdrop" id="pbProgressionBackdrop" onclick="closePbProgressionModal()"></div>
 <div class="day-modal day-modal--wide" id="pbProgressionModal">
   <div class="day-modal-header">
