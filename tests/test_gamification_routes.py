@@ -183,6 +183,54 @@ def test_versus_page(client):
     assert resp.status_code == 200
 
 
+def test_months_ago_start_lands_on_correct_calendar_month():
+    """
+    Regression test: the old implementation derived "3 months ago" via a
+    fixed timedelta(days=89), which actually spanned a 3-month range rather
+    than the single calendar month 3 months prior, and derived "12 months
+    ago" by chaining off that already-wrong value instead of counting back
+    from today — landing ~4-5 months back instead of 12.
+    """
+    from datetime import date
+    from blueprints.gamification import _months_ago_start
+
+    today = date(2026, 9, 9)
+    assert _months_ago_start(today, 1)  == date(2026, 8, 1)
+    assert _months_ago_start(today, 3)  == date(2026, 6, 1)
+    assert _months_ago_start(today, 12) == date(2025, 9, 1)
+
+    # Year-boundary case
+    jan = date(2026, 1, 15)
+    assert _months_ago_start(jan, 1)  == date(2025, 12, 1)
+    assert _months_ago_start(jan, 12) == date(2025, 1, 1)
+
+
+def test_versus_data_three_months_ago_is_exactly_one_month_wide(monkeypatch, client, full_app_ctx, full_make_workout):
+    """
+    The old bug summed a 3-month range (May-July) into the "3 months ago"
+    column when today was in September, instead of just June — this pins
+    a workout in the month that range incorrectly used to include.
+    """
+    import blueprints.gamification as gam
+    from datetime import date
+
+    class FixedDate(date):
+        @classmethod
+        def today(cls):
+            return date(2026, 9, 9)
+
+    monkeypatch.setattr(gam, "date", FixedDate)
+
+    # Real "3 months ago" (June 2026) — must be included.
+    full_make_workout(id=1, distance_meters=1000, time_seconds=240, workout_date=date(2026, 6, 15))
+    # Previously wrongly swept into the same column (May 2026) — must not be.
+    full_make_workout(id=2, distance_meters=5000, time_seconds=1200, workout_date=date(2026, 5, 15))
+
+    data = gam._get_versus_data()
+    three_mo_cell = data["rows"][0]["cells"]["three_months_ago"]
+    assert three_mo_cell["raw"] == 1000
+
+
 def test_api_challenges(client):
     resp = client.get("/gamification/api/challenges")
     assert resp.status_code == 200

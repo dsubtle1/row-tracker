@@ -906,17 +906,27 @@ def _window_stats(start, end):
     }
 
 
-def _get_versus_data():
-    today      = date.today()
+def _months_ago_start(d: date, n: int) -> date:
+    """First day of the calendar month that is `n` months before `d`'s month."""
+    total = (d.year * 12 + (d.month - 1)) - n
+    year, month = divmod(total, 12)
+    return date(year, month + 1, 1)
 
-    # Window boundaries
+
+def _get_versus_data():
+    today = date.today()
+
+    # Window boundaries — each window is exactly one calendar month, offset
+    # by calendar months (not a fixed day count, which drifts across months
+    # of different lengths and previously left "3 months ago" spanning a
+    # 3-month range and "12 months ago" only ~4-5 months back).
     this_month_start  = today.replace(day=1)
+    last_month_start  = _months_ago_start(today, 1)
     last_month_end    = this_month_start - timedelta(days=1)
-    last_month_start  = last_month_end.replace(day=1)
-    three_months_ago_end   = last_month_start - timedelta(days=1)
-    three_months_ago_start = (three_months_ago_end - timedelta(days=89)).replace(day=1)
-    twelve_months_ago_end   = three_months_ago_start - timedelta(days=1)
-    twelve_months_ago_start = twelve_months_ago_end.replace(day=1)
+    three_months_ago_start = _months_ago_start(today, 3)
+    three_months_ago_end   = _months_ago_start(today, 2) - timedelta(days=1)
+    twelve_months_ago_start = _months_ago_start(today, 12)
+    twelve_months_ago_end   = _months_ago_start(today, 11) - timedelta(days=1)
 
     windows = {
         "this_month":       _window_stats(this_month_start,       today),

@@ -9,6 +9,19 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.28.1] — 2026-09-09
+
+### Fixed
+- **"You vs. Past You" showed wildly wrong numbers for the "3 months ago" and "12 months ago"
+  columns.** Reported by the user seeing an implausible 902,786m in one column. Root cause:
+  `_get_versus_data()` derived those windows with a fixed `timedelta(days=89)` instead of real
+  calendar-month arithmetic — "3 months ago" actually summed a 3-month range (e.g. May–July when
+  today was in September) instead of the single month 3 months prior, and "12 months ago" was
+  computed as just one month before that already-wrong window, landing ~4-5 months back instead
+  of a full year. Fixed with a proper `_months_ago_start(date, n)` helper using integer month
+  arithmetic, correct across year boundaries. Verified: "3 months ago" now shows a real single
+  month's total, and "12 months ago" now genuinely reflects the same month one year back.
+
 ## [0.28.0] — 2026-09-09
 
 ### Added
