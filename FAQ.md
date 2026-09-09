@@ -40,7 +40,7 @@ First, make sure your workout has synced to the Concept2 Online Logbook via ErgD
 No — Row Tracker only pulls RowErg results by design; SkiErg/BikeErg support isn't currently on the roadmap. If your Concept2 account has non-rower results logged, sync now checks for that and logs a warning (visible via `docker logs`) rather than silently dropping them with no trace, so it's diagnosable if it ever matters to you.
 
 **Can I import workouts from a CSV or other file?**
-Yes — for seasons your Concept2 account didn't have API access for yet, export a season CSV from the Concept2 Online Logbook and upload it on the Import CSV page (linked from the Dashboard). Already-synced workouts are skipped automatically.
+Yes — for seasons your Concept2 account didn't have API access for yet, export a season CSV from the Concept2 Online Logbook and upload it on the Import CSV page (linked from the Dashboard). The results table breaks skipped rows into three separate counts — not RowErg (e.g. BikeErg/SkiErg, filtered by design), already imported, and invalid (a missing or malformed Log ID or Date) — with a warning if any row is genuinely invalid, so a real parsing problem can't hide inside ordinary filtering.
 
 **Will my historical workouts appear?**
 Yes. The first time Row Tracker syncs, it backfills your full workout history from the Concept2 Logbook.
@@ -50,6 +50,9 @@ Yes — every night at 3:30 AM (right after sync, PB recalculation, and badge ev
 
 **Can I restore from a backup myself?**
 Yes — the Export Data page lists every backup with a Restore button next to it. Restoring requires typing RESTORE into a confirmation dialog first, since it's destructive: it replaces all current data with the chosen snapshot. Your current data is automatically saved as its own timestamped safety copy right before the swap, so a restore is itself undoable — just restore that safety copy if you change your mind. No SSH or terminal access needed.
+
+**Can I get a backup file off the server without SSH?**
+Yes — each row in the Export Data page's backup list also has a Download button that saves that snapshot's `.db` file directly, for offsite storage on your own machine.
 
 **Can I export my data?**
 Yes — click **Export Data** next to the Sync button on the Dashboard. You can download your full workout history or personal bests as CSV (for spreadsheets) or JSON (for other tools), separately from the automatic nightly backup.

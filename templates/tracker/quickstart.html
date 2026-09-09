@@ -40,7 +40,7 @@
         <div class="qs-tip-box">
           💡 After the first sync, Row Tracker syncs automatically every night at 3:00 AM. You can always click Sync manually to pull in your latest session straight away.
         </div>
-        <p>Have older seasons your Concept2 account didn't have API access for? Click <strong>Import CSV</strong> next to Sync to upload a season export from the Concept2 Online Logbook instead. Already-synced workouts are skipped automatically.</p>
+        <p>Have older seasons your Concept2 account didn't have API access for? Click <strong>Import CSV</strong> next to Sync to upload a season export from the Concept2 Online Logbook instead. The results table shows exactly how many rows were inserted, filtered as non-RowErg, already imported, or genuinely invalid (a missing/malformed Log ID or Date) — so a real parsing problem never hides inside ordinary filtering.</p>
         <a href="{{ url_for('tracker.dashboard') }}" class="qs-action-link">Go to Dashboard →</a>
       </div>
     </div>
@@ -208,7 +208,7 @@
           <span class="qs-tip-icon">💾</span>
           <div>
             <strong>Your data</strong>
-            <p>All workout data is stored in <code>row-tracker/data/row_tracker.db</code>. It's backed up automatically every night to <code>row-tracker/data/backups/</code>, keeping the last 30 days — worth copying that folder somewhere off the server occasionally too. Want just your workouts or PBs as a CSV or JSON file? Use <strong>Export Data</strong> next to the Sync button on the Dashboard. Need to roll back? The same Export Data page lists every nightly backup with a one-click Restore button (type-to-confirm, since it replaces all current data — your pre-restore data is saved automatically first).</p>
+            <p>All workout data is stored in <code>row-tracker/data/row_tracker.db</code>. It's backed up automatically every night to <code>row-tracker/data/backups/</code>, keeping the last 30 days — worth copying that folder somewhere off the server occasionally too. Want just your workouts or PBs as a CSV or JSON file? Use <strong>Export Data</strong> next to the Sync button on the Dashboard. Need to roll back? The same Export Data page lists every nightly backup with a one-click Restore button (type-to-confirm, since it replaces all current data — your pre-restore data is saved automatically first) and a Download button to save that snapshot file directly, no SSH needed.</p>
           </div>
         </div>
         <div class="qs-tip-card" style="grid-column: 1 / -1;">

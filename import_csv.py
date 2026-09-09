@@ -51,33 +51,42 @@ def parse_pace(pace_str: str) -> int | None:
 #  Row parser                                                                  #
 # --------------------------------------------------------------------------- #
 
-def parse_row(row: dict) -> Workout | None:
+def classify_row(row: dict) -> tuple[Workout | None, str | None]:
     """
-    Map one CSV row to a Workout instance.
-    Returns None if the row should be skipped (non-RowErg, missing ID, etc.).
+    Parse one CSV row, returning (workout_or_none, skip_reason).
+
+    skip_reason is None on success, else:
+      "non_rowing" — expected: not a RowErg session (bike, ski, etc.), filtered by design
+      "invalid"    — unexpected: missing/malformed Log ID or Date, a real parse
+                     failure that a plain "skipped: N" count would otherwise
+                     hide inside ordinary non-RowErg filtering
     """
-    # Filter: RowErg only
+    # Filter: RowErg only. A blank Type isn't a deliberate other-erg entry —
+    # it's a malformed/blank row (e.g. a trailing blank line), so it counts
+    # as invalid rather than expected non-RowErg filtering.
     workout_type_raw = row.get("Type", "").strip()
+    if not workout_type_raw:
+        return None, "invalid"
     if workout_type_raw != "RowErg":
-        return None
+        return None, "non_rowing"
 
     # Log ID — required
     log_id_raw = row.get("Log ID", "").strip()
     if not log_id_raw:
-        return None
+        return None, "invalid"
     try:
         log_id = int(log_id_raw)
     except ValueError:
-        return None
+        return None, "invalid"
 
     # Date — required
     date_raw = row.get("Date", "").strip()
     if not date_raw:
-        return None
+        return None, "invalid"
     try:
         workout_date = datetime.strptime(date_raw, "%Y-%m-%d %H:%M:%S").date()
     except ValueError:
-        return None
+        return None, "invalid"
 
     # Time in seconds (C2 exports as decimal seconds, e.g. 595.1)
     time_seconds = None
@@ -130,7 +139,16 @@ def parse_row(row: dict) -> Workout | None:
         stroke_data      = None,    # not available from CSV
         raw_json         = None,    # not available from CSV
         synced_at        = datetime.utcnow(),
-    )
+    ), None
+
+
+def parse_row(row: dict) -> Workout | None:
+    """
+    Map one CSV row to a Workout instance.
+    Returns None if the row should be skipped (non-RowErg, missing ID, etc.).
+    See classify_row() for *why* a row was skipped.
+    """
+    return classify_row(row)[0]
 
 
 # --------------------------------------------------------------------------- #
@@ -144,23 +162,32 @@ def import_rows(csv_file) -> dict:
     an active Flask app context. Shared by the CLI script (import_files,
     below) and the web upload route in blueprints/tracker.py.
 
-    Returns {"inserted": int, "skipped": int}.
+    Returns {"inserted": int, "skipped": int, "skipped_non_rowing": int,
+    "skipped_invalid": int, "skipped_duplicate": int}. "skipped" is the
+    total of the three breakdown counts, kept for existing callers that
+    only care about the aggregate; "skipped_invalid" is the one worth
+    watching — a malformed Log ID or Date, not an expected filter/dupe.
     """
     reader = csv.DictReader(csv_file)
     inserted = 0
-    skipped  = 0
+    skipped_non_rowing = 0
+    skipped_invalid    = 0
+    skipped_duplicate  = 0
 
     for row in reader:
-        workout = parse_row(row)
+        workout, reason = classify_row(row)
 
         if workout is None:
-            skipped += 1
+            if reason == "non_rowing":
+                skipped_non_rowing += 1
+            else:
+                skipped_invalid += 1
             continue
 
         # Use merge (INSERT OR IGNORE equivalent via SQLAlchemy)
         existing = db.session.get(Workout, workout.id)
         if existing is not None:
-            skipped += 1
+            skipped_duplicate += 1
             continue
 
         db.session.add(workout)
@@ -171,7 +198,13 @@ def import_rows(csv_file) -> dict:
             db.session.commit()
 
     db.session.commit()
-    return {"inserted": inserted, "skipped": skipped}
+    return {
+        "inserted":           inserted,
+        "skipped":            skipped_non_rowing + skipped_invalid + skipped_duplicate,
+        "skipped_non_rowing": skipped_non_rowing,
+        "skipped_invalid":    skipped_invalid,
+        "skipped_duplicate":  skipped_duplicate,
+    }
 
 
 def import_files(file_paths: list[str]) -> None:
@@ -180,6 +213,7 @@ def import_files(file_paths: list[str]) -> None:
     with app.app_context():
         total_inserted = 0
         total_skipped  = 0
+        total_invalid  = 0
 
         for file_path in sorted(file_paths):
             print(f"\n→ {os.path.basename(file_path)}")
@@ -187,14 +221,24 @@ def import_files(file_paths: list[str]) -> None:
             with open(file_path, newline="", encoding="utf-8-sig") as f:
                 stats = import_rows(f)
 
-            print(f"   inserted: {stats['inserted']}   skipped/non-RowErg: {stats['skipped']}")
+            print(
+                f"   inserted: {stats['inserted']}   "
+                f"non-RowErg: {stats['skipped_non_rowing']}   "
+                f"duplicate: {stats['skipped_duplicate']}   "
+                f"invalid: {stats['skipped_invalid']}"
+            )
+            if stats["skipped_invalid"]:
+                print(f"   ⚠ {stats['skipped_invalid']} row(s) had a malformed or missing Log ID/Date — check this file")
             total_inserted += stats["inserted"]
             total_skipped  += stats["skipped"]
+            total_invalid  += stats["skipped_invalid"]
 
         print(f"\n{'='*50}")
         print(f"Import complete.")
         print(f"  Total inserted : {total_inserted}")
         print(f"  Total skipped  : {total_skipped}")
+        if total_invalid:
+            print(f"  Total invalid  : {total_invalid}  ⚠ these were malformed rows, not expected filtering — worth a look")
 
         # After import, recalculate personal bests
         if total_inserted > 0:

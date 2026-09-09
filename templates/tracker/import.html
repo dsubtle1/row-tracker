@@ -38,7 +38,9 @@
         <tr>
           <th>File</th>
           <th>Inserted</th>
-          <th>Skipped</th>
+          <th>Not RowErg</th>
+          <th>Already imported</th>
+          <th>Invalid</th>
         </tr>
       </thead>
       <tbody>
@@ -46,10 +48,12 @@
         <tr>
           <td>{{ r.filename }}</td>
           {% if r.error %}
-          <td colspan="2">{{ r.error }}</td>
+          <td colspan="4">{{ r.error }}</td>
           {% else %}
           <td>{{ r.inserted }}</td>
-          <td>{{ r.skipped }}</td>
+          <td>{{ r.skipped_non_rowing }}</td>
+          <td>{{ r.skipped_duplicate }}</td>
+          <td{% if r.skipped_invalid %} class="import-invalid-count"{% endif %}>{{ r.skipped_invalid }}</td>
           {% endif %}
         </tr>
         {% endfor %}
@@ -60,10 +64,31 @@
     {{ results | sum(attribute="inserted") }} new workout(s) imported.
     {% if results | sum(attribute="inserted") > 0 %}Personal bests and badges have been recalculated.{% endif %}
   </p>
+  {% if results | sum(attribute="skipped_invalid") > 0 %}
+  <p class="import-invalid-warning">
+    ⚠ {{ results | sum(attribute="skipped_invalid") }} row(s) had a missing or malformed Log ID or Date — not
+    ordinary non-RowErg filtering, a real parsing problem. Worth opening the file to check.
+  </p>
+  {% endif %}
   {% else %}
   <p class="muted">Choose at least one CSV file to import.</p>
   {% endif %}
 </section>
 {% endif %}
 
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .import-invalid-count { color: var(--color-red); font-weight: 600; }
+  .import-invalid-warning {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    background: rgba(239,68,68,0.12);
+    color: var(--color-red);
+    border: 1px solid rgba(239,68,68,0.3);
+    font-size: 0.9rem;
+  }
+</style>
 {% endblock %}

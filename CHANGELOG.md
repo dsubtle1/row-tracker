@@ -9,6 +9,22 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.29.0] — 2026-09-09
+
+### Added
+- **Backup download.** Each row in the Export Data page's backup list now has a Download button
+  alongside Restore, so a snapshot's `.db` file can be pulled off the server for offsite storage
+  without SSH. Same filename validation pattern as restore (basename-only, prefix/suffix/existence
+  checked) guards against path traversal.
+- **CSV import now distinguishes real parse failures from expected filtering.** Previously,
+  `import_csv.py`'s "skipped" count lumped together three different things: a deliberately-filtered
+  non-RowErg row, an already-imported duplicate, and a row with a genuinely missing or malformed
+  Log ID or Date — the last of which is an actual problem that could hide invisibly inside routine
+  noise. The import results table now shows all three as separate columns, with a warning banner
+  when any row is genuinely invalid. Also fixed a related edge case found while building this: a
+  fully blank row (empty Type field) was being classified as "non-RowErg filtering" purely because
+  an empty string doesn't equal "RowErg" — it's now correctly counted as invalid instead.
+
 ## [0.28.1] — 2026-09-09
 
 ### Fixed

@@ -51,7 +51,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 
 **Training Data**
 - Automatic sync from the Concept2 Logbook API — nightly at 3:00 AM, or on demand
-- CSV import for seasons rowed before API access existed — upload a Concept2 Logbook export, duplicates skipped automatically
+- CSV import for seasons rowed before API access existed — upload a Concept2 Logbook export; non-RowErg rows, already-imported duplicates, and genuinely invalid rows (missing/malformed Log ID or Date) are each counted and shown separately, so a real parsing problem can't hide inside ordinary filtering
 - Export workout history and personal bests as CSV or JSON, for use outside the app or as a portable backup
 - Full workout history with a paginated, filterable list (date range, distance range) and an enriched detail view
 - Enriched workout detail — heart rate (min/avg/max/ending with zone classification), per-split breakdown, avg watts, drag factor, stroke count
@@ -120,6 +120,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - One-click restore from any backup on the Export Data page — a type-to-confirm dialog guards
   against accidental clicks, and restoring first snapshots your current data so the restore
   itself is undoable
+- Download any backup file directly for offsite storage, no SSH needed
 - Dark mode default with light mode toggle (persisted)
 - Fully responsive — iPhone and iPad optimised with hamburger nav drawer
 - Installable as a home-screen app (PWA) — manifest, app icon, and a service worker that caches static assets for a faster reload

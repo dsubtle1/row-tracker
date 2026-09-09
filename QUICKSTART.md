@@ -16,7 +16,7 @@ Row Tracker will connect to your Concept2 Logbook and pull in your full workout 
 
 > After the first sync, Row Tracker syncs automatically every night at 3:00 AM. You can always click Sync manually to pull in your latest session straight away.
 
-If you have older seasons your Concept2 account didn't have API access for, click **Import CSV** next to the Sync button to upload a season export from the Concept2 Online Logbook instead. Already-synced workouts are skipped automatically.
+If you have older seasons your Concept2 account didn't have API access for, click **Import CSV** next to the Sync button to upload a season export from the Concept2 Online Logbook instead. The results table shows exactly how many rows were inserted, filtered as non-RowErg, already imported, or genuinely invalid (a missing/malformed Log ID or Date) — so a real parsing problem never hides inside ordinary filtering.
 
 ---
 
@@ -123,7 +123,7 @@ Don't worry if the page looks sparse at first — insights only appear once ther
 - **Heatmap drill-down** — click any square in the 52-week heatmap to see that day's individual workouts in detail
 - **Day View** — every date has a unified page (linked from the heatmap, the WOD history calendar, and any workout detail page) showing that day's planned WOD, actual workout(s), the actual-vs-planned comparison, notes, and any PB achieved, all in one place
 - **Keeping your app running** — if you want Row Tracker to run in the background without keeping a terminal window open, use `docker compose up -d` instead of `docker compose up`. See the Installation Guide for details.
-- **Your data** — all workout data is stored in `row-tracker/data/row_tracker.db`. It's backed up automatically every night to `row-tracker/data/backups/`, keeping the last 30 days — worth copying that folder somewhere off the server occasionally too. Want just your workouts or PBs as a CSV or JSON file? Use **Export Data** next to the Sync button on the Dashboard. Need to roll back? The same Export Data page lists every nightly backup with a one-click Restore button (type-to-confirm, since it replaces all current data — your pre-restore data is saved automatically first).
+- **Your data** — all workout data is stored in `row-tracker/data/row_tracker.db`. It's backed up automatically every night to `row-tracker/data/backups/`, keeping the last 30 days — worth copying that folder somewhere off the server occasionally too. Want just your workouts or PBs as a CSV or JSON file? Use **Export Data** next to the Sync button on the Dashboard. Need to roll back? The same Export Data page lists every nightly backup with a one-click Restore button (type-to-confirm, since it replaces all current data — your pre-restore data is saved automatically first) and a Download button to save that snapshot file directly, no SSH needed.
 
 ---
 

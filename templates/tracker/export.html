@@ -47,9 +47,12 @@
         <span class="backup-row-date">{{ b.mtime.strftime("%B %-d, %Y, %-I:%M %p") }}</span>
         <span class="backup-row-meta">{{ "Pre-restore safety copy" if b.is_safety else "Nightly backup" }} · {{ b.size_mb }} MB</span>
       </div>
-      <button type="button" class="btn btn-danger btn-sm" onclick="openRestoreDialog('{{ b.filename }}', '{{ b.mtime.strftime("%B %-d, %Y, %-I:%M %p") }}')">
-        Restore
-      </button>
+      <div class="backup-row-actions">
+        <a href="{{ url_for('tracker.download_backup', filename=b.filename) }}" class="btn btn-ghost btn-sm">Download</a>
+        <button type="button" class="btn btn-danger btn-sm" onclick="openRestoreDialog('{{ b.filename }}', '{{ b.mtime.strftime("%B %-d, %Y, %-I:%M %p") }}')">
+          Restore
+        </button>
+      </div>
     </div>
     {% endfor %}
   </div>
@@ -112,6 +115,7 @@
   .backup-row-info { display: flex; flex-direction: column; gap: 0.1rem; }
   .backup-row-date { font-weight: 600; font-size: 0.9rem; }
   .backup-row-meta { font-size: 0.78rem; color: var(--color-text-muted); }
+  .backup-row-actions { display: flex; gap: 0.5rem; flex: none; }
 
   .btn-danger {
     background: transparent;

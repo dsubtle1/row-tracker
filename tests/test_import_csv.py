@@ -6,7 +6,7 @@ and the /import web route.
 
 import io
 
-from import_csv import parse_pace, parse_row, import_rows
+from import_csv import parse_pace, parse_row, classify_row, import_rows
 from models import Workout
 
 
@@ -105,6 +105,42 @@ def test_parse_row_ignores_unparseable_numeric_fields_rather_than_crashing():
 
 
 # ---------------------------------------------------------------------------
+# classify_row — same parsing, but distinguishes *why* a row was skipped
+# ---------------------------------------------------------------------------
+
+def test_classify_row_valid_row_has_no_skip_reason():
+    workout, reason = classify_row(_valid_row())
+    assert workout is not None
+    assert reason is None
+
+
+def test_classify_row_non_rowerg_is_expected_filtering():
+    workout, reason = classify_row(_valid_row(Type="BikeErg"))
+    assert workout is None
+    assert reason == "non_rowing"
+
+
+def test_classify_row_missing_log_id_is_invalid_not_non_rowing():
+    workout, reason = classify_row(_valid_row(**{"Log ID": ""}))
+    assert workout is None
+    assert reason == "invalid"
+
+
+def test_classify_row_malformed_date_is_invalid_not_non_rowing():
+    workout, reason = classify_row(_valid_row(Date="15/11/2024"))
+    assert workout is None
+    assert reason == "invalid"
+
+
+def test_classify_row_blank_type_is_invalid_not_non_rowing():
+    """A blank Type isn't a deliberate BikeErg/SkiErg entry — it's a
+    malformed/blank row and shouldn't hide inside expected filtering."""
+    workout, reason = classify_row(_valid_row(Type=""))
+    assert workout is None
+    assert reason == "invalid"
+
+
+# ---------------------------------------------------------------------------
 # import_rows — shared by the CLI script and the /import web route
 # ---------------------------------------------------------------------------
 
@@ -124,7 +160,10 @@ def test_import_rows_inserts_valid_and_counts_skips(app_ctx):
     )
     stats = import_rows(csv_file)
 
-    assert stats == {"inserted": 2, "skipped": 2}
+    assert stats == {
+        "inserted": 2, "skipped": 2,
+        "skipped_non_rowing": 1, "skipped_invalid": 1, "skipped_duplicate": 0,
+    }
     assert Workout.query.count() == 2
     assert {w.id for w in Workout.query.all()} == {111, 112}
 
@@ -138,7 +177,10 @@ def test_import_rows_skips_ids_already_in_the_database(app_ctx, make_workout):
     )
     stats = import_rows(csv_file)
 
-    assert stats == {"inserted": 1, "skipped": 1}
+    assert stats == {
+        "inserted": 1, "skipped": 1,
+        "skipped_non_rowing": 0, "skipped_invalid": 0, "skipped_duplicate": 1,
+    }
     assert Workout.query.count() == 2
 
 
@@ -148,6 +190,12 @@ def test_import_rows_is_idempotent_on_repeat_import(app_ctx):
     first = import_rows(_csv_text(row))
     second = import_rows(_csv_text(row))
 
-    assert first == {"inserted": 1, "skipped": 0}
-    assert second == {"inserted": 0, "skipped": 1}
+    assert first == {
+        "inserted": 1, "skipped": 0,
+        "skipped_non_rowing": 0, "skipped_invalid": 0, "skipped_duplicate": 0,
+    }
+    assert second == {
+        "inserted": 0, "skipped": 1,
+        "skipped_non_rowing": 0, "skipped_invalid": 0, "skipped_duplicate": 1,
+    }
     assert Workout.query.count() == 1

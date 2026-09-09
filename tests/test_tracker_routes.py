@@ -504,6 +504,20 @@ def test_import_rejects_non_csv_file(client):
     assert b"Not a .csv file" in resp.data
 
 
+def test_import_csv_surfaces_invalid_rows_distinctly_from_filtering(client, full_app_ctx):
+    csv_content = (
+        "Type,Log ID,Date,Work Time (Seconds),Work Distance,Pace,Stroke Rate/Cadence,Total Cal\n"
+        "RowErg,555001,2024-01-15 08:00:00,480.0,2000,2:00.0,24,220\n"
+        "SkiErg,555002,2024-01-16 08:00:00,480.0,2000,2:00.0,24,220\n"
+        "RowErg,,2024-01-17 08:00:00,480.0,2000,2:00.0,24,220\n"  # missing Log ID — invalid
+    )
+    data = {"csv_files": (io.BytesIO(csv_content.encode("utf-8")), "season.csv")}
+    resp = client.post("/import", data=data, content_type="multipart/form-data")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8")
+    assert "missing or malformed Log ID or Date" in body
+
+
 # --------------------------------------------------------------------------- #
 #  Data export                                                                #
 # --------------------------------------------------------------------------- #
@@ -615,6 +629,24 @@ def test_export_page_lists_backups(client, full_app_ctx):
     resp = client.get("/export")
     assert resp.status_code == 200
     assert b"row_tracker_2020-01-01.db" in resp.data or b"January 1, 2020" in resp.data
+
+
+def test_download_backup(client, full_app_ctx):
+    _make_backup_file(full_app_ctx, "row_tracker_2020-01-01.db", workout_id=1)
+    resp = client.get("/export/backup/row_tracker_2020-01-01.db")
+    assert resp.status_code == 200
+    assert "attachment" in resp.headers["Content-Disposition"]
+    assert len(resp.data) > 0
+
+
+def test_download_backup_rejects_path_traversal(client, full_app_ctx):
+    resp = client.get("/export/backup/..%2F..%2Fetc%2Fpasswd")
+    assert resp.status_code == 404
+
+
+def test_download_backup_rejects_nonexistent_file(client, full_app_ctx):
+    resp = client.get("/export/backup/row_tracker_does-not-exist.db")
+    assert resp.status_code == 404
 
 
 def test_restore_rejects_invalid_filename(client, full_app_ctx):

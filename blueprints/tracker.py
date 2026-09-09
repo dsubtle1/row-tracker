@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from collections import defaultdict
 from urllib.parse import urlencode
 
-from flask import Blueprint, Response, abort, current_app, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, current_app, jsonify, redirect, render_template, request, send_from_directory, url_for
 from sqlalchemy import func
 
 from models import db, Workout, PersonalBest
@@ -690,9 +690,11 @@ def import_csv_view():
         results = []
         total_inserted = 0
 
+        empty_stats = {"skipped": 0, "skipped_non_rowing": 0, "skipped_invalid": 0, "skipped_duplicate": 0}
+
         for upload in uploads:
             if not upload.filename.lower().endswith(".csv"):
-                results.append({"filename": upload.filename, "inserted": 0, "skipped": 0,
+                results.append({"filename": upload.filename, "inserted": 0, **empty_stats,
                                  "error": "Not a .csv file — skipped."})
                 continue
             try:
@@ -700,7 +702,7 @@ def import_csv_view():
                 stats = import_rows(stream)
             except Exception as e:
                 db.session.rollback()
-                results.append({"filename": upload.filename, "inserted": 0, "skipped": 0,
+                results.append({"filename": upload.filename, "inserted": 0, **empty_stats,
                                  "error": f"Couldn't read this file: {e}"})
                 continue
 
@@ -781,6 +783,22 @@ def _sqlite_file_copy(src_path, dest_path):
 @tracker_bp.route("/export")
 def export_page():
     return render_template("tracker/export.html", backups=_list_backups())
+
+
+@tracker_bp.route("/export/backup/<filename>")
+def download_backup(filename):
+    """
+    Download a single backup file for offsite storage — the only way to get
+    one off the server today is SSH. Same filename validation as restore_backup:
+    basename() first so a crafted path can't escape backup_dir, then checked
+    against the same prefix/suffix/existence pattern.
+    """
+    filename = os.path.basename(filename)
+    backup_dir = _backup_dir()
+    valid = filename.startswith("row_tracker_") and filename.endswith(".db") and os.path.isfile(os.path.join(backup_dir, filename))
+    if not valid:
+        abort(404)
+    return send_from_directory(backup_dir, filename, as_attachment=True)
 
 
 @tracker_bp.route("/restore", methods=["POST"])
