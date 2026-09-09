@@ -9,6 +9,27 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.30.0] — 2026-09-09
+
+### Added
+- **Challenge History.** The live Season Challenges page only ever showed the current quarter and
+  month — once a period rolled over, whether you hit last quarter's 200,000m target just vanished,
+  resetting to 0% with no record. A new Challenge History section on the same page shows the last
+  4 quarters and 6 months with a hit/miss result each, computed retroactively with the same query
+  logic rather than needing a new table (the same approach PB progression used).
+- **Custom Goals.** Every other target in the app — quarterly distance, monthly volume, badge
+  thresholds — is hardcoded. A new `CustomGoal` model plus `goals_engine.py` lets you set your own:
+  a distance target by an optional deadline (metres counted from goal creation, with a projected
+  ETA from the same rolling 28-day pace calculation badges already use), or a PB-pace target for
+  any of the 8 standard categories (e.g. "break 7:00 for 2k"), correctly handling both directions —
+  lower-is-better for distance categories, higher-is-better for time categories. Linked from the
+  Achievements hub, which also shows up to 4 active goals inline.
+- **Weekly training digest (opt-in).** `NOTIFY_WEEKLY_DIGEST=true` sends a Sunday-evening summary
+  (metres and sessions that week, any PB, the soonest-projected still-locked badge) through the
+  same notification channels as badge/milestone alerts. Off by default, unlike those — this fires
+  every week regardless of activity rather than only on an achievement, so it's a deliberate opt-in
+  rather than more of the same notification type.
+
 ## [0.29.0] — 2026-09-09
 
 ### Added

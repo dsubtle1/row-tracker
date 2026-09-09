@@ -97,9 +97,12 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - 17 badges across Performance, Volume, Consistency, and Efficiency categories — the four
   lifetime-metres badges show an ETA projected from your current 28-day pace while locked
 - Season challenges — quarterly distance, PB attempts, consistency, monthly volume
+- Challenge History — whether past quarters and months hit their targets, since the live challenges only ever show the current one
+- Custom Goals — every other target in the app is fixed; set your own distance-by-deadline or PB-pace target, with live progress and (for distance goals) a projected ETA
 - You vs. Past You — compare this month against last month, 3 months ago, and 12 months ago
 - Stale PB nudges on the Achievements hub
 - Notifications when you earn a badge, cross a lifetime-metres milestone, or complete a virtual journey — email by default, with optional ntfy.sh, Discord, and generic-webhook channels you can enable independently (`.env`, no UI)
+- Optional weekly training digest (`NOTIFY_WEEKLY_DIGEST=true`) — a Sunday-evening summary of metres and sessions that week, any PB, and the soonest-projected still-locked badge, off by default since it's a recurring email rather than an achievement ping
 
 **Virtual Journeys**
 - Row the world's great routes — metres rowed move you along the route in real time

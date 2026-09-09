@@ -133,4 +133,75 @@
   </div>
 </div>
 
+{# ── History ── #}
+<div class="page-header" style="margin-top: 2rem;">
+  <h2 class="section-title">Challenge History</h2>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h3 class="challenge-title mb-3">Quarterly Distance</h3>
+    {% if history.quarters %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Quarter</th>
+          <th>Distance</th>
+          <th>Result</th>
+          <th>PB Season</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in history.quarters %}
+        <tr>
+          <td>{{ q.label }}<br><span class="text-muted small">{{ q.range }}</span></td>
+          <td data-label="Distance">{{ "{:,}".format(q.metres) }}m / {{ "{:,}".format(q.target) }}m</td>
+          <td data-label="Result">
+            <span class="pace-badge {{ 'on-pace' if q.hit else 'behind' }}">
+              {{ "Hit ✓" if q.hit else q.pct ~ "%" }}
+            </span>
+          </td>
+          <td data-label="PB Season">{{ q.pb_attempted }} / {{ q.pb_total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">No completed quarters yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h3 class="challenge-title mb-3">Monthly Volume</h3>
+    {% if history.months %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Distance</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in history.months %}
+        <tr>
+          <td>{{ m.label }}</td>
+          <td data-label="Distance">{{ "{:,}".format(m.metres) }}m / {{ "{:,}".format(m.target) }}m</td>
+          <td data-label="Result">
+            <span class="pace-badge {{ 'on-pace' if m.hit else 'behind' }}">
+              {{ "Hit ✓" if m.hit else m.pct ~ "%" }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">No completed months yet.</p>
+    {% endif %}
+  </div>
+</div>
+
 {% endblock %}

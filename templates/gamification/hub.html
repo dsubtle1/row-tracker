@@ -154,6 +154,39 @@
   </div>
 </section>
 
+{# ── Custom goals summary ── #}
+<section class="mb-5">
+  <div class="section-title-row">
+    <h2 class="section-title">🎯 Your Goals</h2>
+    <a href="{{ url_for('gamification.goals') }}" class="section-link">{{ "Manage →" if goals else "Set a goal →" }}</a>
+  </div>
+  {% if goals %}
+  <div class="challenge-grid">
+    {% for goal, progress in goals %}
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <span class="challenge-icon">{{ "🏁" if goal.achieved_date else "🎯" }}</span>
+        <span class="challenge-name">{{ goal.label }}</span>
+        {% if goal.achieved_date %}<span class="pace-badge on-pace">✓ Achieved</span>{% endif %}
+      </div>
+      <div class="challenge-numbers">
+        <span class="challenge-achieved">{{ progress.current_display }}</span>
+        {% if goal.goal_type == "distance" %}<span class="challenge-target"> / {{ progress.target_display }}</span>{% endif %}
+      </div>
+      <div class="progress-track mt-2">
+        <div class="progress-fill {% if goal.achieved_date %}progress-fill--complete{% endif %}" style="width: {{ progress.pct }}%"></div>
+      </div>
+      <div class="challenge-footer">
+        {{ progress.pct }}%{% if progress.eta and not goal.achieved_date %} · ETA {{ progress.eta }}{% endif %}{% if goal.deadline %} · by {{ goal.deadline.strftime("%b %-d, %Y") }}{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card"><div class="card-body"><p class="muted">No custom goals yet — every other target in this app is fixed; set your own.</p></div></div>
+  {% endif %}
+</section>
+
 {# ── You vs. Past You summary ── #}
 <section class="mb-5">
   <div class="section-title-row">

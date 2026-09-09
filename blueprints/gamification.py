@@ -5,7 +5,7 @@ Phase 3C (versus board) adds to this file next.
 """
 
 from flask import Blueprint, render_template, jsonify
-from models import db, Badge, Workout, PersonalBest, Journey
+from models import db, Badge, Workout, PersonalBest, Journey, CustomGoal
 from badge_engine import evaluate_badges, BADGE_ICONS, get_badge_progress, weekly_avg_meters
 from datetime import date, timedelta
 from sqlalchemy import func, extract
@@ -484,18 +484,27 @@ def _get_transcan_data():
 # SEASON CHALLENGES helpers (Phase 3B)
 # ---------------------------------------------------------------------------
 
+def _quarter_bounds(quarters_ago: int = 0):
+    """
+    (start, end, label) for the quarter `quarters_ago` quarters before the
+    current one — 0 is the current (in-progress) quarter, 1 is the last
+    completed one, etc. Generalizes what used to be _current_quarter() so
+    challenge history can walk backwards through past quarters with the
+    same math instead of a second copy of it.
+    """
+    today = date.today()
+    current_q_index = (today.month - 1) // 3   # 0..3
+    total = today.year * 4 + current_q_index - quarters_ago
+    year, q = divmod(total, 4)
+    start = date(year, q * 3 + 1, 1)
+    end = date(year, 12, 31) if q == 3 else date(year, q * 3 + 4, 1) - timedelta(days=1)
+    label = f"Q{q + 1} {year}"
+    return start, end, label
+
+
 def _current_quarter():
     """Return (start_date, end_date, label) for the current quarter."""
-    today = date.today()
-    q_starts = [date(today.year, 1, 1), date(today.year, 4, 1),
-                date(today.year, 7, 1), date(today.year, 10, 1)]
-    q_labels = ["Q1", "Q2", "Q3", "Q4"]
-    for i in range(3, -1, -1):
-        if today >= q_starts[i]:
-            start = q_starts[i]
-            end   = q_starts[i + 1] - timedelta(days=1) if i < 3 else date(today.year, 12, 31)
-            return start, end, q_labels[i]
-    return q_starts[0], date(today.year, 3, 31), "Q1"
+    return _quarter_bounds(0)
 
 def _get_challenges():
     today         = date.today()
@@ -592,6 +601,62 @@ def _get_challenges():
     }
 
 
+def challenge_history(n_quarters: int = 4, n_months: int = 6):
+    """
+    Whether past (completed, not current) quarters and months hit their
+    challenge targets. _get_challenges() only ever shows the live, in-
+    progress period — once a quarter or month rolls over, whether you hit
+    last quarter's 200,000m target used to just vanish, resetting to 0%
+    with no record. This runs the same query logic retroactively instead
+    of needing a new table, the same way PB progression was built.
+    """
+    QUARTER_TARGET = 200_000
+    MONTH_TARGET   = 80_000
+    PB_CATS = ["100m", "500m", "1000m", "2000m", "5000m", "10000m", "30min", "60min"]
+
+    quarters = []
+    for i in range(1, n_quarters + 1):
+        start, end, label = _quarter_bounds(i)
+        metres = db.session.query(func.sum(Workout.total_distance_meters)).filter(
+            Workout.workout_date >= start,
+            Workout.workout_date <= end,
+        ).scalar() or 0
+        pb_attempted = db.session.query(func.count(func.distinct(PersonalBest.category))).filter(
+            PersonalBest.achieved_date >= start,
+            PersonalBest.achieved_date <= end,
+            PersonalBest.category.in_(PB_CATS),
+        ).scalar() or 0
+        quarters.append({
+            "label":        label,
+            "range":        f"{start.strftime('%b %d')} – {end.strftime('%b %d, %Y')}",
+            "metres":       metres,
+            "target":       QUARTER_TARGET,
+            "pct":          min(round(metres / QUARTER_TARGET * 100, 1), 100),
+            "hit":          metres >= QUARTER_TARGET,
+            "pb_attempted": pb_attempted,
+            "pb_total":     len(PB_CATS),
+        })
+
+    today = date.today()
+    months = []
+    for i in range(1, n_months + 1):
+        start = _months_ago_start(today, i)
+        end   = _months_ago_start(today, i - 1) - timedelta(days=1)
+        metres = db.session.query(func.sum(Workout.total_distance_meters)).filter(
+            Workout.workout_date >= start,
+            Workout.workout_date <= end,
+        ).scalar() or 0
+        months.append({
+            "label":  start.strftime("%B %Y"),
+            "metres": metres,
+            "target": MONTH_TARGET,
+            "pct":    min(round(metres / MONTH_TARGET * 100, 1), 100),
+            "hit":    metres >= MONTH_TARGET,
+        })
+
+    return {"quarters": quarters, "months": months}
+
+
 # ---------------------------------------------------------------------------
 # Journey completion notifications
 # ---------------------------------------------------------------------------
@@ -648,6 +713,9 @@ def hub():
     challenges     = _get_challenges()
     versus         = _get_versus_data()
 
+    from goals_engine import active_goals, goal_progress
+    goals = [(g, goal_progress(g)) for g in active_goals() if not g.achieved_date][:4]
+
     return render_template(
         "gamification/hub.html",
         stats=stats,
@@ -659,6 +727,7 @@ def hub():
         transcan=transcan,
         challenges=challenges,
         versus=versus,
+        goals=goals,
         active_page="gamification",
         today=date.today(),
     )
@@ -709,11 +778,77 @@ def route():
 def challenges():
     """Season challenges — full page view."""
     data = _get_challenges()
+    history = challenge_history()
     return render_template(
         "gamification/challenges.html",
         challenges=data,
+        history=history,
         active_page="gamification",
     )
+
+
+@gamification_bp.route("/goals", methods=["GET", "POST"])
+def goals():
+    """Custom goals — every other target in the app is hardcoded; this lets
+    the user set their own (distance-by-deadline, or a PB-pace target)."""
+    from flask import redirect, request
+    from goals_engine import create_goal, active_goals, goal_progress, parse_time_str, PB_CATEGORY_CHOICES
+    from pb_engine import DISTANCE_CATEGORIES
+
+    if request.method == "POST":
+        goal_type = request.form.get("goal_type", "").strip()
+        label     = request.form.get("label", "").strip()[:200]
+        deadline_raw = request.form.get("deadline", "").strip()
+        deadline  = date.fromisoformat(deadline_raw) if deadline_raw else None
+
+        if goal_type == "distance":
+            try:
+                target_value = int(request.form.get("target_metres", "").strip())
+            except ValueError:
+                target_value = None
+            if label and target_value and target_value > 0:
+                create_goal("distance", label, target_value, deadline=deadline)
+        elif goal_type == "pb_pace":
+            pb_category = request.form.get("pb_category", "").strip()
+            if pb_category in PB_CATEGORY_CHOICES:
+                if pb_category in DISTANCE_CATEGORIES:
+                    target_value = parse_time_str(request.form.get("target_time", ""))
+                else:
+                    try:
+                        target_value = int(request.form.get("target_metres_pace", "").strip())
+                    except ValueError:
+                        target_value = None
+                if label and target_value and target_value > 0:
+                    create_goal("pb_pace", label, target_value, pb_category=pb_category, deadline=deadline)
+
+        return redirect("/gamification/goals")
+
+    goals_with_progress = [(g, goal_progress(g)) for g in active_goals()]
+    return render_template(
+        "gamification/goals.html",
+        goals=goals_with_progress,
+        pb_categories=PB_CATEGORY_CHOICES,
+        distance_categories=DISTANCE_CATEGORIES,
+        active_page="gamification",
+    )
+
+
+@gamification_bp.route("/goals/<int:goal_id>/archive", methods=["POST"])
+def archive_goal(goal_id):
+    from flask import redirect
+    goal = db.get_or_404(CustomGoal, goal_id)
+    goal.archived = True
+    db.session.commit()
+    return redirect("/gamification/goals")
+
+
+@gamification_bp.route("/goals/<int:goal_id>/delete", methods=["POST"])
+def delete_goal(goal_id):
+    from flask import redirect
+    goal = db.get_or_404(CustomGoal, goal_id)
+    db.session.delete(goal)
+    db.session.commit()
+    return redirect("/gamification/goals")
 
 
 @gamification_bp.route("/route/holland")

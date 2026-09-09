@@ -123,6 +123,11 @@ def create_app():
     app.config["NOTIFY_DISCORD_WEBHOOK_URL"] = os.environ.get("NOTIFY_DISCORD_WEBHOOK_URL", "")
     app.config["NOTIFY_WEBHOOK_URL"]         = os.environ.get("NOTIFY_WEBHOOK_URL", "")
 
+    # Weekly training summary (Sunday evening) — off by default, unlike the
+    # achievement pings above, since it's a recurring email regardless of
+    # activity rather than something triggered by an event.
+    app.config["NOTIFY_WEEKLY_DIGEST"] = os.environ.get("NOTIFY_WEEKLY_DIGEST", "false").lower() == "true"
+
     # Feature flags (read from .env via Docker)
     app.config["USE_AI_WOD"] = os.environ.get("USE_AI_WOD", "false").lower() == "true"
     # Optional AI "coach's read" synthesis on the Insights page. Off by default;

@@ -145,11 +145,20 @@ The four lifetime-metres badges (First 100k, Quarter Million, Half Million, One 
 **What are Season Challenges?**
 Quarterly targets that reset on January 1, April 1, July 1, and October 1. They include a distance target, a PB season checklist, a consistency challenge, and a monthly volume goal.
 
+**What happened to last quarter's challenge — did I hit it?**
+Check Challenge History, below the live challenges on the Season Challenges page. It shows the last 4 quarters and last 6 months with a hit/miss result for the quarterly distance and monthly volume targets, so hitting (or missing) a target doesn't just vanish once the period rolls over.
+
+**Can I set my own goals instead of the built-in targets?**
+Yes — every target elsewhere in the app (200,000m/quarter, 80,000m/month, badge thresholds) is fixed. Custom Goals (linked from the Achievements hub) lets you set your own: a distance target by an optional deadline (metres are counted from when you create the goal, not your lifetime total), or a PB-pace target for one of the 8 standard categories (e.g. "break 7:00 for 2k"). Distance goals get a projected ETA from your rolling 28-day pace, same as the lifetime-metres badges; PB-pace goals don't, since pace improvement doesn't extrapolate the same way cumulative distance does.
+
 **Will I get notified when I earn a badge, hit a milestone, or finish a journey?**
 Yes — Row Tracker notifies you automatically after every sync that earns a new badge, crosses a lifetime-metres milestone (100k, 250k, 500k, 1M, and so on), or completes a virtual journey. By default that's email: it reuses the same Flask-Mail setup as the feedback form, but sends to `NOTIFY_EMAIL` in your `.env` (defaults to `MAIL_USERNAME` — your own inbox — if left blank) rather than the feedback address.
 
 **Can I get notifications somewhere other than email?**
 Yes — set any of `NOTIFY_NTFY_TOPIC`, `NOTIFY_DISCORD_WEBHOOK_URL`, or `NOTIFY_WEBHOOK_URL` in your `.env` and Row Tracker sends the same notifications there too (ntfy.sh, a Discord channel, or any endpoint that accepts a JSON POST). All four channels are independent — enable any combination, including none of them plus email, or drop email entirely by leaving `NOTIFY_EMAIL`/`MAIL_USERNAME` blank. Each channel fails independently, so a broken webhook never blocks the others. There's no in-app settings page for this — it's `.env`-only, like the Concept2 and mail integrations.
+
+**Is there a weekly summary email?**
+Optional, and off by default — set `NOTIFY_WEEKLY_DIGEST=true` in your `.env`. Unlike the badge/milestone/journey notifications above, which only fire on an achievement, this sends every Sunday evening regardless of activity: metres and sessions that week, any PB, and the soonest-projected still-locked badge. Uses the same channels configured above.
 
 ---
 

@@ -301,6 +301,20 @@
       </details>
 
       <details class="faq-item">
+        <summary class="faq-question">What happened to last quarter's challenge — did I hit it?</summary>
+        <div class="faq-answer">
+          Check Challenge History, below the live challenges on the Season Challenges page. It shows the last 4 quarters and last 6 months with a hit/miss result for the quarterly distance and monthly volume targets, so hitting (or missing) a target doesn't just vanish once the period rolls over.
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-question">Can I set my own goals instead of the built-in targets?</summary>
+        <div class="faq-answer">
+          Yes — every target elsewhere in the app (200,000m/quarter, 80,000m/month, badge thresholds) is fixed. Custom Goals (linked from the Achievements hub) lets you set your own: a distance target by an optional deadline (metres are counted from when you create the goal, not your lifetime total), or a PB-pace target for one of the 8 standard categories (e.g. "break 7:00 for 2k"). Distance goals get a projected ETA from your rolling 28-day pace, same as the lifetime-metres badges; PB-pace goals don't, since pace improvement doesn't extrapolate the same way cumulative distance does.
+        </div>
+      </details>
+
+      <details class="faq-item">
         <summary class="faq-question">Will I get notified when I earn a badge, hit a milestone, or finish a journey?</summary>
         <div class="faq-answer">
           Yes — Row Tracker emails you automatically after every sync that earns a new badge, crosses a lifetime-metres milestone (100k, 250k, 500k, 1M, and so on), or completes a virtual journey. It reuses the same Flask-Mail setup as the feedback form, but sends to <code>NOTIFY_EMAIL</code> in your <code>.env</code> (defaults to <code>MAIL_USERNAME</code> — your own inbox — if left blank) rather than the feedback address.

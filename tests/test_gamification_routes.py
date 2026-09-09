@@ -178,6 +178,116 @@ def test_challenges_page(client):
     assert resp.status_code == 200
 
 
+def test_challenge_history_quarter_bounds_never_overlap():
+    from blueprints.gamification import _quarter_bounds
+    seen_days = set()
+    for i in range(0, 8):
+        start, end, _ = _quarter_bounds(i)
+        assert start <= end
+        days = (end - start).days + 1
+        assert days in (90, 91, 92)   # a real calendar quarter, nothing wider
+        assert not (start in seen_days or end in seen_days)
+        seen_days.add(start)
+        seen_days.add(end)
+
+
+def test_challenge_history_reports_past_quarter_hit(client, full_app_ctx, full_make_workout):
+    from datetime import date
+    from blueprints.gamification import challenge_history, _quarter_bounds
+
+    last_q_start, last_q_end, _ = _quarter_bounds(1)
+    full_make_workout(id=1, distance_meters=200_000, time_seconds=48_000,
+                       workout_date=last_q_start + (last_q_end - last_q_start) // 2)
+
+    history = challenge_history(n_quarters=2, n_months=1)
+    assert history["quarters"][0]["metres"] == 200_000
+    assert history["quarters"][0]["hit"] is True
+
+
+def test_challenge_history_page_renders_past_periods(client, full_app_ctx):
+    resp = client.get("/gamification/challenges")
+    assert resp.status_code == 200
+    assert b"Challenge History" in resp.data
+    assert b"Quarterly Distance" in resp.data
+    assert b"Monthly Volume" in resp.data
+
+
+# --------------------------------------------------------------------------- #
+#  Custom goals                                                               #
+# --------------------------------------------------------------------------- #
+
+def test_goals_page_empty(client):
+    resp = client.get("/gamification/goals")
+    assert resp.status_code == 200
+    assert b"No goals yet" in resp.data
+
+
+def test_goals_page_creates_distance_goal(client, full_app_ctx):
+    from models import CustomGoal
+    resp = client.post("/gamification/goals", data={
+        "label": "Row 1,000,000m this year",
+        "goal_type": "distance",
+        "target_metres": "1000000",
+        "deadline": "",
+    }, follow_redirects=True)
+    assert resp.status_code == 200
+    goal = CustomGoal.query.filter_by(label="Row 1,000,000m this year").first()
+    assert goal is not None
+    assert goal.goal_type == "distance"
+    assert goal.target_value == 1_000_000
+
+
+def test_goals_page_creates_pb_pace_goal(client, full_app_ctx):
+    from models import CustomGoal
+    resp = client.post("/gamification/goals", data={
+        "label": "Break 7:00 for 2k",
+        "goal_type": "pb_pace",
+        "pb_category": "2000m",
+        "target_time": "7:00",
+        "deadline": "2026-12-31",
+    }, follow_redirects=True)
+    assert resp.status_code == 200
+    goal = CustomGoal.query.filter_by(label="Break 7:00 for 2k").first()
+    assert goal is not None
+    assert goal.pb_category == "2000m"
+    assert goal.target_value == 420
+    assert goal.deadline.isoformat() == "2026-12-31"
+
+
+def test_goals_page_ignores_incomplete_submission(client, full_app_ctx):
+    from models import CustomGoal
+    client.post("/gamification/goals", data={"label": "", "goal_type": "distance", "target_metres": ""})
+    assert CustomGoal.query.count() == 0
+
+
+def test_archive_goal(client, full_app_ctx):
+    from models import db, CustomGoal
+    from goals_engine import create_goal
+    goal = create_goal("distance", "Test", 1000)
+
+    resp = client.post(f"/gamification/goals/{goal.id}/archive", follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.session.get(CustomGoal, goal.id).archived is True
+
+
+def test_delete_goal(client, full_app_ctx):
+    from models import db, CustomGoal
+    from goals_engine import create_goal
+    goal = create_goal("distance", "Test", 1000)
+
+    resp = client.post(f"/gamification/goals/{goal.id}/delete", follow_redirects=True)
+    assert resp.status_code == 200
+    assert db.session.get(CustomGoal, goal.id) is None
+
+
+def test_hub_page_shows_goals_summary(client, full_app_ctx):
+    from goals_engine import create_goal
+    create_goal("distance", "Row 500,000m", 500_000)
+    resp = client.get("/gamification/")
+    assert resp.status_code == 200
+    assert b"Row 500,000m" in resp.data
+
+
 def test_versus_page(client):
     resp = client.get("/gamification/versus")
     assert resp.status_code == 200

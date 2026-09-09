@@ -199,6 +199,34 @@ class Journey(db.Model):
         return f"<Journey route={self.route_key} started={self.start_date} [{status}]>"
 
 
+class CustomGoal(db.Model):
+    """
+    A user-defined target, since every goal elsewhere in the app (quarterly
+    distance, badge thresholds, journey lengths) is hardcoded. Two types:
+    "distance" (row N metres by an optional deadline, counted from
+    start_date forward) and "pb_pace" (hit a target time/distance for one
+    PB category by an optional deadline). Progress and ETA are computed
+    live in goals_engine.py, the same pattern already used for badges and
+    journeys — no snapshot/history table needed.
+    """
+    __tablename__ = "custom_goals"
+
+    id            = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    goal_type     = db.Column(db.Text, nullable=False)          # "distance" or "pb_pace"
+    label         = db.Column(db.Text, nullable=False)          # user's own description
+    target_value  = db.Column(db.Integer, nullable=False)       # metres (distance) or seconds/metres (pb_pace, category-dependent)
+    pb_category   = db.Column(db.Text, nullable=True)           # only for goal_type == "pb_pace"
+    deadline      = db.Column(db.Date, nullable=True)
+    start_date    = db.Column(db.Date, nullable=False)          # distance goals count from here forward
+    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+    achieved_date = db.Column(db.Date, nullable=True)            # set once hit, then treated as complete
+    archived      = db.Column(db.Boolean, default=False)         # dismissed without deleting
+
+    def __repr__(self):
+        status = "achieved" if self.achieved_date else "active"
+        return f"<CustomGoal {self.goal_type} target={self.target_value} [{status}]>"
+
+
 class SyncStatus(db.Model):
     """
     Singleton row (there's only ever one, since this is a single-user app)

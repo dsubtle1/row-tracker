@@ -102,6 +102,23 @@ def evaluate_badges():
         notify_job_failure("Evaluate badges", e)
 
 
+def send_weekly_digest():
+    """Weekly training summary — Sunday evening, see SCHEDULER_TZ. Opt-in via NOTIFY_WEEKLY_DIGEST."""
+    from flask import current_app
+    from notify import notify_weekly_digest, notify_job_failure
+
+    if not current_app.config.get("NOTIFY_WEEKLY_DIGEST", False):
+        logger.info("Weekly digest skipped — NOTIFY_WEEKLY_DIGEST not enabled.")
+        return
+
+    try:
+        notify_weekly_digest()
+        logger.info("Weekly digest sent.")
+    except Exception as e:
+        logger.error(f"Weekly digest failed: {e}")
+        notify_job_failure("Weekly training digest", e)
+
+
 def run_backup():
     """Nightly database snapshot with retention pruning."""
     from flask import current_app
@@ -161,6 +178,14 @@ def init_scheduler(app):
         trigger          = CronTrigger(hour=3, minute=30, timezone=SCHEDULER_TZ),
         id               = "run_backup",
         name             = "Nightly database backup",
+        replace_existing = True,
+    )
+
+    scheduler.add_job(
+        func             = with_app_context(send_weekly_digest),
+        trigger          = CronTrigger(day_of_week="sun", hour=18, minute=0, timezone=SCHEDULER_TZ),
+        id               = "weekly_digest",
+        name             = "Weekly training digest",
         replace_existing = True,
     )
 

@@ -283,3 +283,57 @@ def test_check_journey_completions_no_active_journeys_is_noop(full_app_ctx, sent
     from blueprints.gamification import check_journey_completions
     check_journey_completions()
     assert sent_messages == []
+
+
+# --------------------------------------------------------------------------- #
+#  notify_weekly_digest()                                                     #
+# --------------------------------------------------------------------------- #
+
+def test_weekly_digest_sends_even_with_no_activity(full_app_ctx, sent_messages):
+    """Unlike every other notify_* function, this fires every week on
+    schedule regardless of whether anything happened."""
+    notify.notify_weekly_digest()
+    assert len(sent_messages) == 1
+    assert "0m this week" in sent_messages[0].subject
+
+
+def test_weekly_digest_summarizes_the_week(full_app_ctx, full_make_workout, sent_messages):
+    full_make_workout(id=1, distance_meters=5000, time_seconds=1200, workout_date=date.today())
+    full_make_workout(id=2, distance_meters=2000, time_seconds=480, workout_date=date.today() - timedelta(days=1))
+
+    notify.notify_weekly_digest()
+
+    assert len(sent_messages) == 1
+    msg = sent_messages[0]
+    assert "7,000m this week" in msg.subject
+    assert "2 sessions" in msg.body
+
+
+def test_weekly_digest_excludes_workouts_outside_the_7_day_window(full_app_ctx, full_make_workout, sent_messages):
+    full_make_workout(id=1, distance_meters=5000, time_seconds=1200, workout_date=date.today() - timedelta(days=10))
+
+    notify.notify_weekly_digest()
+
+    assert "0m this week" in sent_messages[0].subject
+
+
+def test_weekly_digest_includes_pbs_achieved_this_week(full_app_ctx, sent_messages):
+    from models import PersonalBest
+    db.session.add(PersonalBest(category="2000m", value_seconds=420, achieved_date=date.today()))
+    db.session.commit()
+
+    notify.notify_weekly_digest()
+
+    assert "New PBs this week" in sent_messages[0].body
+    assert "2000m" in sent_messages[0].body
+
+
+def test_weekly_digest_includes_next_badge_eta_when_projectable(full_app_ctx, full_make_workout, sent_messages):
+    # 28 days of steady volume gives weekly_avg_meters() something to project from.
+    for i in range(28):
+        full_make_workout(id=i + 1, distance_meters=10_000, time_seconds=2400,
+                           workout_date=date.today() - timedelta(days=i))
+
+    notify.notify_weekly_digest()
+
+    assert "Next badge:" in sent_messages[0].body

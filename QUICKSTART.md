@@ -99,10 +99,11 @@ You can run all four simultaneously. Each shows your current position, upcoming 
 Click **Achievements** in the navigation bar to see:
 
 - **Badges** — 17 badges across Performance, Volume, Consistency, and Efficiency categories, awarded automatically as you hit milestones
-- **Season Challenges** — quarterly targets including distance goals, PB attempts, and consistency streaks
+- **Season Challenges** — quarterly targets including distance goals, PB attempts, and consistency streaks, plus a **Challenge History** section showing whether past quarters and months hit their targets
+- **Custom Goals** — every other target in the app is fixed; set your own distance-by-deadline or PB-pace target, with live progress and (for distance goals) a projected ETA
 - **You vs. Past You** — a side-by-side comparison of your training across this month, last month, 3 months ago, and 12 months ago
 
-> You'll also get notified whenever you earn a badge, cross a lifetime-metres milestone, or finish a virtual journey — email by default (`NOTIFY_EMAIL` in your `.env`, defaults to your own `MAIL_USERNAME` inbox if left blank), or ntfy/Discord/a generic webhook if you set `NOTIFY_NTFY_TOPIC`, `NOTIFY_DISCORD_WEBHOOK_URL`, or `NOTIFY_WEBHOOK_URL` instead or in addition.
+> You'll also get notified whenever you earn a badge, cross a lifetime-metres milestone, or finish a virtual journey — email by default (`NOTIFY_EMAIL` in your `.env`, defaults to your own `MAIL_USERNAME` inbox if left blank), or ntfy/Discord/a generic webhook if you set `NOTIFY_NTFY_TOPIC`, `NOTIFY_DISCORD_WEBHOOK_URL`, or `NOTIFY_WEBHOOK_URL` instead or in addition. A weekly training-digest email (metres/sessions, any PB, next badge ETA) is also available but off by default — set `NOTIFY_WEEKLY_DIGEST=true` to turn it on.
 
 ---
 

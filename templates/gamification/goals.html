@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Custom Goals — Row Tracker{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>🎯 Custom Goals</h1>
+  <p class="page-subtitle">Every other target in this app is fixed — set your own.</p>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h2 class="section-title mb-3">New Goal</h2>
+    <form method="post" id="goal-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      <div class="feedback-field">
+        <label for="label">Description</label>
+        <input type="text" id="label" name="label" maxlength="200" required placeholder="e.g. Row 1,000,000m this year" />
+      </div>
+
+      <div class="feedback-field">
+        <label for="goal_type">Type</label>
+        <select id="goal_type" name="goal_type" onchange="toggleGoalFields()">
+          <option value="distance">Distance target</option>
+          <option value="pb_pace">PB target</option>
+        </select>
+      </div>
+
+      <div id="distance-fields" class="feedback-field">
+        <label for="target_metres">Target distance (metres)</label>
+        <input type="number" id="target_metres" name="target_metres" min="1" placeholder="1000000" />
+      </div>
+
+      <div id="pb-fields" class="feedback-field" style="display: none;">
+        <label for="pb_category">PB category</label>
+        <select id="pb_category" name="pb_category" onchange="togglePbTargetField()">
+          {% for cat in pb_categories %}
+          <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+        <label for="target_time" class="mt-2" id="target-time-label">Target time (M:SS) — the whole piece, e.g. 7:00 for 2k</label>
+        <input type="text" id="target_time" name="target_time" placeholder="7:00" />
+        <input type="number" id="target_metres_pace" name="target_metres_pace" min="1" placeholder="Target metres" style="display: none;" />
+      </div>
+
+      <div class="feedback-field">
+        <label for="deadline">Deadline (optional)</label>
+        <input type="date" id="deadline" name="deadline" />
+      </div>
+
+      <button type="submit" class="btn btn-primary">Add Goal</button>
+    </form>
+  </div>
+</div>
+
+<h2 class="section-title mb-3">Active &amp; Achieved Goals</h2>
+
+{% if goals %}
+<div class="challenge-grid">
+  {% for goal, progress in goals %}
+  <div class="challenge-card">
+    <div class="challenge-header">
+      <span class="challenge-icon">{{ "🏁" if goal.achieved_date else "🎯" }}</span>
+      <span class="challenge-name">{{ goal.label }}</span>
+      {% if goal.achieved_date %}<span class="pace-badge on-pace">✓ Achieved {{ goal.achieved_date.strftime("%b %-d, %Y") }}</span>{% endif %}
+    </div>
+
+    {% if goal.goal_type != "distance" %}
+    <div class="challenge-subtitle mb-2">{{ goal.pb_category }} — target {{ progress.target_display }}</div>
+    {% endif %}
+    <div class="challenge-numbers">
+      <span class="challenge-achieved">{{ progress.current_display }}</span>
+      {% if goal.goal_type == "distance" %}<span class="challenge-target"> / {{ progress.target_display }}</span>{% endif %}
+    </div>
+
+    <div class="progress-track mt-2">
+      <div class="progress-fill {% if goal.achieved_date %}progress-fill--complete{% endif %}" style="width: {{ progress.pct }}%"></div>
+    </div>
+    <div class="challenge-footer">
+      {{ progress.pct }}%{% if progress.eta and not goal.achieved_date %} · ETA {{ progress.eta }}{% endif %}{% if goal.deadline %} · by {{ goal.deadline.strftime("%b %-d, %Y") }}{% endif %}
+    </div>
+
+    <div class="goal-actions mt-3">
+      <form method="post" action="{{ url_for('gamification.archive_goal', goal_id=goal.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="btn btn-ghost btn-sm">Archive</button>
+      </form>
+      <form method="post" action="{{ url_for('gamification.delete_goal', goal_id=goal.id) }}" onsubmit="return confirm('Delete this goal permanently?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="btn btn-ghost btn-sm">Delete</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="card-body"><p class="muted">No goals yet — add one above.</p></div></div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .goal-actions { display: flex; gap: 0.5rem; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleGoalFields() {
+  const isDistance = document.getElementById("goal_type").value === "distance";
+  document.getElementById("distance-fields").style.display = isDistance ? "" : "none";
+  document.getElementById("pb-fields").style.display = isDistance ? "none" : "";
+  document.getElementById("target_metres").required = isDistance;
+}
+
+const distanceCategories = new Set([{% for cat in distance_categories %}"{{ cat }}",{% endfor %}]);
+
+function togglePbTargetField() {
+  const cat = document.getElementById("pb_category").value;
+  const isDistanceCat = distanceCategories.has(cat);
+  document.getElementById("target_time").style.display = isDistanceCat ? "" : "none";
+  document.getElementById("target_metres_pace").style.display = isDistanceCat ? "none" : "";
+  document.getElementById("target-time-label").style.display = isDistanceCat ? "" : "none";
+}
+
+toggleGoalFields();
+togglePbTargetField();
+</script>
+{% endblock %}

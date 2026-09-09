@@ -182,3 +182,55 @@ def notify_journey_complete(route_key, journey):
         f"🏆\n"
     )
     _send(subject, body)
+
+
+def notify_weekly_digest():
+    """
+    Sunday-evening summary: metres and sessions in the last 7 days, any PB
+    achieved, and the soonest-projected still-locked lifetime badge.
+
+    Distinct from every other notify_* function here — those fire only on
+    an achievement (a badge, a milestone, a journey finish); this one fires
+    every week on schedule regardless of whether anything happened, so a
+    quiet week is visible too, not just a loud one.
+    """
+    from datetime import date, timedelta
+    from models import PersonalBest
+
+    today = date.today()
+    week_start = today - timedelta(days=6)
+
+    workouts = Workout.query.filter(
+        Workout.workout_date >= week_start,
+        Workout.workout_date <= today,
+        Workout.workout_type == "rower",
+    ).all()
+    metres = sum(w.total_distance_meters for w in workouts)
+    count = len(workouts)
+
+    pbs = PersonalBest.query.filter(
+        PersonalBest.achieved_date >= week_start,
+        PersonalBest.achieved_date <= today,
+    ).all()
+
+    lines = [f"This week: {metres:,}m across {count} session{'s' if count != 1 else ''}."]
+
+    if pbs:
+        lines.append("")
+        lines.append("New PBs this week:")
+        lines.extend(f"  🏆 {pb.category} — {pb.value_formatted}" for pb in pbs)
+
+    from badge_engine import get_badge_progress
+    next_badge = None   # (eta_iso, badge_name) — soonest of any still-locked lifetime badge
+    for badge in Badge.query.filter(Badge.earned_date.is_(None)).all():
+        progress = get_badge_progress(badge.badge_key)
+        if progress and progress.get("eta"):
+            if next_badge is None or progress["eta"] < next_badge[0]:
+                next_badge = (progress["eta"], badge.badge_name)
+    if next_badge:
+        lines.append("")
+        lines.append(f"Next badge: {next_badge[1]} — projected {next_badge[0]}")
+
+    subject = f"[Row Tracker] Weekly digest — {metres:,}m this week"
+    body = "\n".join(lines) + "\n"
+    _send(subject, body)
