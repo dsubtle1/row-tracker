@@ -1,8 +1,10 @@
 """Tests for Workout.total_distance_meters (work + rest, never mixed into pace/PBs)."""
 
+from datetime import date, timedelta
+
 from sqlalchemy import func
 
-from models import db, Workout
+from models import db, PersonalBest, Workout
 
 
 def test_total_distance_meters_adds_rest(make_workout):
@@ -32,3 +34,21 @@ def test_total_time_seconds_treats_null_time_as_zero():
     # it should degrade to 0, same as a missing rest value.
     w = Workout(workout_type="rower", time_seconds=None, rest_time_seconds=200)
     assert w.total_time_seconds == 200
+
+
+def test_staleness_tier_fresh_under_90_days():
+    pb = PersonalBest(category="2000m", achieved_date=date.today() - timedelta(days=10))
+    assert pb.staleness_tier == 0
+
+
+def test_staleness_tier_due_for_retest_between_90_days_and_1_year():
+    pb = PersonalBest(category="2000m", achieved_date=date.today() - timedelta(days=200))
+    assert pb.staleness_tier == 1
+
+
+def test_staleness_tier_long_overdue_past_1_year():
+    # Regression: on a multi-year account every PB used to clear the old
+    # single 90-day is_stale threshold, so the amber "time to test" badge
+    # fired on every card. Anything past a year gets a quieter tier instead.
+    pb = PersonalBest(category="2000m", achieved_date=date.today() - timedelta(days=900))
+    assert pb.staleness_tier == 2

@@ -43,5 +43,8 @@ designidea.webp
 # Local git worktrees
 .worktrees/
 
+# Impeccable design-critique snapshots (local review archive, not shipped)
+.impeccable/
+
 # Local-only deploy trigger (references personal homelab; not for the public repo)
 deploy.sh

@@ -80,10 +80,20 @@ def _attach_badge_display(badges):
         badge.progress = None if badge.earned_date else get_badge_progress(badge.badge_key)
 
 def _get_stale_pbs():
-    cutoff = date.today() - timedelta(days=90)
+    """PBs due for a retest (90 days - 1 year old).
+
+    Bounded on both ends: under 90 days isn't stale yet, and over a year
+    isn't a "nudge" anymore — see PersonalBest.staleness_tier. Without the
+    upper bound, every PB on a multi-year account nudges forever, which
+    defeats the point of a nudge list.
+    """
+    today = date.today()
+    lower_cutoff = today - timedelta(days=365)
+    upper_cutoff = today - timedelta(days=90)
     return PersonalBest.query.filter(
         PersonalBest.achieved_date != None,
-        PersonalBest.achieved_date < cutoff
+        PersonalBest.achieved_date < upper_cutoff,
+        PersonalBest.achieved_date >= lower_cutoff,
     ).all()
 
 def _get_gamification_stats():
@@ -521,7 +531,9 @@ def _get_challenges():
         Workout.workout_date <= today,
     ).scalar() or 0
     q_pct = min(round((q_metres / QUARTER_TARGET) * 100, 1), 100)
-    daily_needed = round((QUARTER_TARGET - q_metres) / days_remaining) if days_remaining > 0 else 0
+    q_remaining = max(QUARTER_TARGET - q_metres, 0)
+    q_exceeded = q_metres > QUARTER_TARGET
+    daily_needed = round(q_remaining / days_remaining) if days_remaining > 0 else 0
     on_pace_daily = round(QUARTER_TARGET / days_in_q)
 
     # ── 2. PB season — attempt all 8 categories this quarter ──────────────
@@ -557,6 +569,8 @@ def _get_challenges():
         Workout.workout_date <= today,
     ).scalar() or 0
     month_pct = min(round((month_metres / MONTH_TARGET) * 100, 1), 100)
+    month_remaining = max(MONTH_TARGET - month_metres, 0)
+    month_exceeded = month_metres > MONTH_TARGET
     month_days_remaining = (
         date(today.year, today.month % 12 + 1, 1) - timedelta(days=1) - today
     ).days if today.month < 12 else (date(today.year, 12, 31) - today).days
@@ -571,6 +585,9 @@ def _get_challenges():
             "target":        QUARTER_TARGET,
             "achieved":      q_metres,
             "pct":           q_pct,
+            "remaining":     q_remaining,
+            "exceeded":      q_exceeded,
+            "overshoot_multiple": round(q_metres / QUARTER_TARGET, 1) if q_exceeded else None,
             "daily_needed":  daily_needed,
             "on_pace_daily": on_pace_daily,
             "on_pace":       q_metres >= round(QUARTER_TARGET * (days_elapsed / days_in_q)),
@@ -595,6 +612,9 @@ def _get_challenges():
             "target":        MONTH_TARGET,
             "achieved":      month_metres,
             "pct":           month_pct,
+            "remaining":     month_remaining,
+            "exceeded":      month_exceeded,
+            "overshoot_multiple": round(month_metres / MONTH_TARGET, 1) if month_exceeded else None,
             "days_remaining": month_days_remaining,
             "month_name":    today.strftime("%B"),
         },
@@ -1123,10 +1143,16 @@ def _get_versus_data():
             if fmt == "metres" and isinstance(display, int):
                 display = f"{display:,}"
 
-            # Delta vs this_month (skip for this_month itself)
+            # Delta of THIS column vs this_month (skip for this_month itself).
+            # diff is "this column's value minus this month's value": a
+            # positive diff means the column outperformed this month on a
+            # higher-is-better metric. Previously computed the other way
+            # around (this_month minus raw), which inverted every label —
+            # e.g. a past month with far more metres than the partial
+            # current month was marked "worse than this month".
             delta = None
             if col != "this_month" and this_val is not None and raw is not None:
-                diff = this_val - raw
+                diff = raw - this_val
                 if lower_is_better:
                     delta = "better" if diff < 0 else ("worse" if diff > 0 else "same")
                 else:

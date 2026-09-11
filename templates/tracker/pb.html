@@ -9,15 +9,17 @@
 {% if pbs %}
 <div class="pb-grid">
   {% for pb in pbs %}
-  <div class="pb-card {% if pb.is_stale %}pb-stale{% endif %}">
+  <div class="pb-card {% if pb.staleness_tier == 1 %}pb-stale{% endif %}">
     <div class="pb-category">{{ pb.category }}</div>
     <div class="pb-value">{{ pb.value_formatted }}</div>
     <div class="pb-date">{{ pb.achieved_date }}</div>
     {% if pb.delta_seconds %}
       <div class="pb-delta positive">▲ {{ pb.delta_seconds }}s improvement</div>
     {% endif %}
-    {% if pb.is_stale %}
+    {% if pb.staleness_tier == 1 %}
       <div class="pb-stale-badge">{{ pb.days_since_achieved }}d old — time to test</div>
+    {% elif pb.staleness_tier == 2 %}
+      <div class="pb-stale-note">Last tested {{ (pb.days_since_achieved / 365) | round(1) }} years ago</div>
     {% endif %}
     <button type="button" class="btn btn-ghost btn-sm pb-progression-btn"
             onclick="openPbProgressionModal('{{ pb.category }}')">

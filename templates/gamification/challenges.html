@@ -31,9 +31,20 @@
     <div class="progress-track progress-track--lg mt-3">
       <div class="progress-fill" style="width: {{ challenges.quarter.pct }}%"></div>
     </div>
+    {% if challenges.quarter.exceeded %}
+    <div class="mt-2">
+      <span class="challenge-exceeded-note">🎉 Crushed it — {{ challenges.quarter.overshoot_multiple }}x over target</span>
+    </div>
+    <div class="challenge-detail-row mt-3">
+      <div class="challenge-detail">
+        <span class="cd-label">Days remaining</span>
+        <span class="cd-value">{{ challenges.days_remaining }}</span>
+      </div>
+    </div>
+    {% else %}
     <div class="d-flex justify-between mt-2">
       <span class="text-muted small">{{ challenges.quarter.pct }}% complete</span>
-      <span class="text-muted small">{{ "{:,}".format(challenges.quarter.target - challenges.quarter.achieved) }}m to go</span>
+      <span class="text-muted small">{{ "{:,}".format(challenges.quarter.remaining) }}m to go</span>
     </div>
     <div class="challenge-detail-row mt-3">
       <div class="challenge-detail">
@@ -49,6 +60,7 @@
         <span class="cd-value">{{ challenges.days_remaining }}</span>
       </div>
     </div>
+    {% endif %}
   </div>
 </div>
 
@@ -126,10 +138,16 @@
     <div class="progress-track progress-track--lg mt-3">
       <div class="progress-fill" style="width: {{ challenges.volume_month.pct }}%"></div>
     </div>
+    {% if challenges.volume_month.exceeded %}
+    <div class="mt-2">
+      <span class="challenge-exceeded-note">🎉 Crushed it — {{ challenges.volume_month.overshoot_multiple }}x over target</span>
+    </div>
+    {% else %}
     <div class="d-flex justify-between mt-2">
       <span class="text-muted small">{{ challenges.volume_month.pct }}%</span>
-      <span class="text-muted small">{{ "{:,}".format(challenges.volume_month.target - challenges.volume_month.achieved) }}m to go</span>
+      <span class="text-muted small">{{ "{:,}".format(challenges.volume_month.remaining) }}m to go</span>
     </div>
+    {% endif %}
   </div>
 </div>
 

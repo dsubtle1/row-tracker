@@ -201,6 +201,13 @@ def create_app():
         response.headers["Cache-Control"] = "no-cache"
         return response
 
+    # A mistyped or stale-bookmarked URL otherwise fell through to Flask's
+    # raw unstyled Werkzeug "Not Found" page — no nav, no theme, no way
+    # back into the app.
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template("404.html"), 404
+
     # ---------------------------------------------------------------- scheduler
     # Skipped under TESTING — a real BackgroundScheduler thread has no
     # business running against a throwaway test database, and every test

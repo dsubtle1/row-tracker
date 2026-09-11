@@ -136,9 +136,21 @@ class PersonalBest(db.Model):
         return (datetime.utcnow().date() - self.achieved_date).days
 
     @property
-    def is_stale(self):
+    def staleness_tier(self):
+        """0 = fresh, 1 = due for a retest (90d-1yr), 2 = long overdue (1yr+).
+
+        Replaces a single is_stale (>90 days) flag: on accounts with years
+        of history, every PB cleared 90 days, so one amber badge stopped
+        distinguishing anything. Tier 2 gets a quiet informational note
+        instead of the "time to test" alarm treatment, which stays reserved
+        for PBs that recently went stale.
+        """
         d = self.days_since_achieved
-        return d is not None and d > 90
+        if d is None or d <= 90:
+            return 0
+        if d <= 365:
+            return 1
+        return 2
 
 
 class WodHistory(db.Model):

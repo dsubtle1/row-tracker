@@ -9,6 +9,36 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.31.0] — 2026-09-11
+
+### Fixed
+- **"You vs. Past You" arrows were inverted.** The delta calculation compared this month's total
+  against a past period backwards, so a full past month with far more metres than the still-partial
+  current month was marked "worse than this month" — the opposite of what the legend and the
+  numbers themselves implied. Also added a note explaining that this month's cumulative totals
+  will trail a completed month until it's over, which is expected rather than a decline.
+- **Exceeding a Season Challenge target showed negative numbers.** "Daily needed" and "m to go" went
+  negative once you passed 100% of the quarterly or monthly goal, reading as a broken calculation
+  instead of a win. Both cards now show a "Crushed it — Nx over target" state once exceeded.
+- **The PB "stale" badge fired on every card on any multi-year account.** The 90-day threshold never
+  distinguished anything once every PB cleared it — all 7 real PB cards got the identical amber
+  "time to test" treatment. Split into two tiers: 90 days–1 year still gets the amber badge, 1 year+
+  gets a quiet "last tested N years ago" note instead.
+- **Contrast failures in both themes.** Light-theme accent text (links, `.section-link`,
+  `.pb-shortcut-card`) measured 3.93–4.30:1 against its background, below the 4.5:1 AA minimum;
+  darkened to clear ~5.4:1. Dark-theme muted text measured 4.2:1 against the workout-compare bar's
+  surface specifically; brightened to clear AA against every surface tone in the app.
+- **Mistyped or stale URLs hit the raw, unstyled Flask 404 page.** Added a branded 404 template
+  (nav, theme, a link back to the Dashboard) instead of the bare Werkzeug error page.
+
+### Changed
+- **`.card`/`.card-body` had no base styling at all.** Several pages (Season Challenges, Versus,
+  Export Data, Custom Goals, the Achievements hub) build sections from this class but no rule ever
+  defined it, so those sections rendered with no background, border, or shadow — invisible against
+  the page. Added the missing base rule, plus a slim accent-colored top edge as this card family's
+  own signature rather than reusing the plain border-and-shadow recipe every other card class
+  already repeats.
+
 ## [0.30.0] — 2026-09-09
 
 ### Added

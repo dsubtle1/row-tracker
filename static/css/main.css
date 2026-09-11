@@ -10,7 +10,11 @@
   --color-surface-2:  #1e212b;
   --color-border:     #262a35;
   --color-text:       #e6e9ef;
-  --color-text-muted: #7a8399;
+  /* Brightened from #7a8399 — that value only cleared 4.2:1 against the
+     lighter --color-surface-2 panels (e.g. the workout-compare bar), below
+     the 4.5:1 AA minimum for normal text. This clears 4.5:1 against every
+     surface tone in the app. */
+  --color-text-muted: #838ca3;
   --color-accent:     #cdfa3f;
   --color-accent-2:   #e2ff85;
   --color-teal:       var(--color-accent);
@@ -37,8 +41,12 @@
   --color-nav-bg:       #1e293b;
   /* Same hue as the dark-theme neon accent (~75°), darkened for
      sufficient contrast against a light background. --color-teal
-     (defined in :root) resolves through this automatically. */
-  --color-accent:       #67840b;
+     (defined in :root) resolves through this automatically.
+     Darkened further from #67840b (3.93-4.30:1, below the 4.5:1 AA
+     minimum for text) to #5a7209 (~5.4:1 against white/light surfaces) —
+     this is used as text color (links, .section-link, .pb-shortcut-card)
+     as well as backgrounds/borders, so it must clear text contrast. */
+  --color-accent:       #5a7209;
   --color-accent-2:     #516808;
 
   /* Variables used as fallbacks in later-phase components */
@@ -186,6 +194,26 @@ code {
   font-weight: 600;
 }
 
+/* ---- Card (generic) ----
+   Several pages (challenges, versus, export, goals, hub) build sections
+   from class="card"/"card-body" directly, but no base rule ever styled
+   them — they rendered with no background, border, or shadow at all,
+   invisible against the page. Also gives this family its own signature
+   (a slim accent-colored top edge) rather than reusing the plain
+   thin-border-plus-shadow recipe every other card class already repeats. */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 2px solid var(--color-accent);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+.card .card-body {
+  padding: 1.25rem;
+}
+
 /* ---- Status Card ---- */
 .status-card {
   background: var(--color-surface);
@@ -272,6 +300,12 @@ code {
   color: var(--color-amber);
   margin-top: 0.5rem;
   font-style: italic;
+}
+
+.pb-stale-note {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.5rem;
 }
 
 /* ---- Detail Grid ---- */
@@ -1746,6 +1780,11 @@ code {
 }
 .progress-track--lg { height: 12px; }
 .progress-fill--complete { background: var(--color-success, #3ddc84); }
+.challenge-exceeded-note {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-success, #3ddc84);
+}
 .challenge-detail-row {
   display: flex;
   gap: 2rem;
@@ -2396,6 +2435,12 @@ code {
   background: var(--color-surface);
   border-color: var(--color-border);
   color: var(--color-text);
+}
+
+/* The shorthand border-color reset above overwrites .card's accent-colored
+   top edge (it recolors all four sides); restore just the top. */
+[data-theme="light"] .card {
+  border-top-color: var(--color-accent);
 }
 
 /* Text that used hardcoded light-text fallbacks */

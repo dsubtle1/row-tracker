@@ -65,7 +65,9 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - 8 categories: 100m, 500m, 1000m, 2000m, 5000m, 10000m, 30min, 60min
 - Recalculated automatically after every sync
 - Improvement delta vs previous PB
-- Stale flag for PBs not tested in 90+ days
+- Stale flag for PBs not tested in 90+ days, tiered so it stays meaningful on long-running
+  accounts — an amber "time to test" badge from 90 days to a year, then a quiet "last tested N
+  years ago" note beyond that instead of the same alarm treatment on every card forever
 - Full progression chart per category — every genuine record-breaking result over time, not just current-vs-previous
 - Best Splits leaderboard — your all-time top 10 fastest single splits by /500m pace, from any interval workout with per-split data; CSV-imported workouts lack split data, so the page discloses how many are excluded rather than silently leaving them out
 
@@ -100,7 +102,8 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 - Challenge History — whether past quarters and months hit their targets, since the live challenges only ever show the current one
 - Custom Goals — every other target in the app is fixed; set your own distance-by-deadline or PB-pace target, with live progress and (for distance goals) a projected ETA
 - You vs. Past You — compare this month against last month, 3 months ago, and 12 months ago
-- Stale PB nudges on the Achievements hub
+- Stale PB nudges on the Achievements hub — shown for PBs 90 days to a year old; beyond a year
+  it's a quiet note on the PBs page instead of an ongoing nudge
 - Notifications when you earn a badge, cross a lifetime-metres milestone, or complete a virtual journey — email by default, with optional ntfy.sh, Discord, and generic-webhook channels you can enable independently (`.env`, no UI)
 - Optional weekly training digest (`NOTIFY_WEEKLY_DIGEST=true`) — a Sunday-evening summary of metres and sessions that week, any PB, and the soonest-projected still-locked badge, off by default since it's a recurring email rather than an achievement ping
 

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found — Row Tracker{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>🚣 Lost your stroke?</h1>
+  <p class="page-subtitle">There's no page at this address.</p>
+</div>
+
+<p class="muted">
+  The link might be out of date, or the address was mistyped.
+  <a href="{{ url_for('tracker.dashboard') }}">Back to the Dashboard</a>.
+</p>
+{% endblock %}

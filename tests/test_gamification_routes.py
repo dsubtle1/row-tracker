@@ -341,12 +341,65 @@ def test_versus_data_three_months_ago_is_exactly_one_month_wide(monkeypatch, cli
     assert three_mo_cell["raw"] == 1000
 
 
+def test_versus_delta_marks_a_bigger_past_total_as_better_not_worse(monkeypatch, client, full_app_ctx, full_make_workout):
+    """
+    Regression: delta used to be computed as this_month minus the past
+    column instead of the other way around, inverting every label — a full
+    past month with far more metres than the still-in-progress current
+    month was marked "worse than this month" even though the legend (and
+    common sense, for a higher-is-better metric) says a bigger total should
+    be "better".
+    """
+    import blueprints.gamification as gam
+    from datetime import date
+
+    class FixedDate(date):
+        @classmethod
+        def today(cls):
+            return date(2026, 9, 9)
+
+    monkeypatch.setattr(gam, "date", FixedDate)
+
+    # Current month (partial, small total).
+    full_make_workout(id=1, distance_meters=1000, time_seconds=240, workout_date=date(2026, 9, 5))
+    # Last month (complete, much bigger total) — must read as "better".
+    full_make_workout(id=2, distance_meters=10000, time_seconds=2400, workout_date=date(2026, 8, 15))
+
+    data = gam._get_versus_data()
+    total_metres_row = next(r for r in data["rows"] if r["metric"] == "total_metres")
+    assert total_metres_row["cells"]["last_month"]["delta"] == "better"
+
+
 def test_api_challenges(client):
     resp = client.get("/gamification/api/challenges")
     assert resp.status_code == 200
     data = resp.get_json()
     assert "quarter" in data
     assert "pb_season" in data
+
+
+def test_quarterly_challenge_clamps_remaining_and_daily_needed_when_target_exceeded(client, full_app_ctx, full_make_workout):
+    """
+    Regression: exceeding the quarterly/monthly target used to render
+    negative "m to go" and "daily needed" figures instead of a clamped,
+    celebratory overshoot state.
+    """
+    import blueprints.gamification as gam
+    from datetime import date
+
+    today = date.today()
+    full_make_workout(id=1, distance_meters=250_000, time_seconds=60_000, workout_date=today)
+
+    data = gam._get_challenges()
+    assert data["quarter"]["achieved"] > data["quarter"]["target"]
+    assert data["quarter"]["exceeded"] is True
+    assert data["quarter"]["remaining"] == 0
+    assert data["quarter"]["daily_needed"] >= 0
+    assert data["quarter"]["overshoot_multiple"] > 1
+
+    assert data["volume_month"]["exceeded"] is True
+    assert data["volume_month"]["remaining"] == 0
+    assert data["volume_month"]["overshoot_multiple"] > 1
 
 
 def test_api_versus(client):
