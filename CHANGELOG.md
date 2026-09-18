@@ -9,6 +9,17 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.31.2] — 2026-09-18
+
+### Fixed
+- **Sync-status/versus/pace-badge greens and reds were hardcoded hex, repeated at every call site.** Formalized as `--color-success`/`--color-danger` CSS tokens (kept distinct from the existing `--color-green`/`--color-red` pair rather than merged, since they're a different hue already established across several components).
+- **Light-theme heatmap tokens (`--heatmap-0..4`) were defined but never actually used** — the light heatmap cells were still using their own raw hex. Wired the tokens up, and added a matching dark-theme set so both themes are tokenized.
+- **Two spellings of "fully round" (`999px` and `99px`) coexisted** across 12 pill-shaped elements. Consolidated to a single `--radius-pill` token.
+- **Three near-duplicate mobile breakpoints (`600px`/`640px`/`700px`)** collapsed to a consistent two (`640px`/`768px`).
+
+### Added
+- `design-system/row-tracker/MASTER.md` — a formal token audit of `main.css` documenting what's already tokenized (color, font family, radius, transition) vs. what still isn't (spacing scale, type scale), with usage-frequency analysis for both.
+
 ## [0.31.1] — 2026-09-18
 
 ### Fixed
