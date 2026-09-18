@@ -9,6 +9,42 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.31.3] — 2026-09-18
+
+Follow-up from an `/impeccable critique` of the Dashboard (score: 24/40,
+"Acceptable"). Addresses all 5 priority issues it found.
+
+### Changed
+- **Dashboard chartreuse accent overuse.** The pace/volume sparklines, the
+  52-week heatmap's top color step, journey progress bars, and the Journey
+  Map path/marker all used the same accent color as the sync button and
+  primary stat glow, diluting the app's own "one signal" design rule.
+  Sparklines are now neutral, the heatmap has its own self-contained green
+  ramp, and journey progress now uses the existing `--color-success` token
+  — the accent is now reserved for the sync button and the primary stat
+  block, the page's two genuinely actionable/hero moments.
+
+### Fixed
+- **A stale sync (no successful sync in 48+ hours) looked identical to a
+  fresh one.** The "Last synced" indicator only changed style when the
+  *most recent attempt* had errored — a sync that simply stopped running
+  showed the same quiet gray text as "5 minutes ago." Added a warning-amber
+  state at the 48-hour threshold.
+- **Heatmap cells and the "Your Progress" journey rows were keyboard- and
+  screen-reader-inaccessible** — clickable `<span>`/`<div>` elements with no
+  role, tabindex, or aria-label. Both are now reachable and operable via
+  keyboard, with accessible labels carrying the same info as their visual
+  `title`/text.
+- **The day-detail modal lacked real dialog semantics** — no `role="dialog"`,
+  no `aria-modal`, no focus management. Added ARIA dialog attributes, a
+  minimal focus trap, and focus return to the triggering element on close.
+- **A journey-progress label could overflow its row by 40px** despite
+  already having `text-overflow: ellipsis` — the real cause was a missing
+  `min-width: 0` on the flex item, a common flexbox gotcha where the
+  default `min-width: auto` lets content grow past its flex-basis.
+- Added `aria-live="polite"` to the sync-status region so a completing sync
+  is announced to screen readers, not just visually.
+
 ## [0.31.2] — 2026-09-18
 
 ### Fixed

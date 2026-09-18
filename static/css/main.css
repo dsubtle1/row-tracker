@@ -38,12 +38,15 @@
   --accent-glow: 0 0 18px color-mix(in srgb, var(--color-accent) 45%, transparent);
   --transition: 150ms ease;
 
-  /* Heatmap — dark theme (default) */
+  /* Heatmap — dark theme (default). Its own green ramp, deliberately NOT
+     reusing --color-accent for the top step: the heatmap is a passive
+     52-week-at-a-glance readout, not an action or "new" signal, so it
+     shouldn't compete with the One Signal Rule's single accent. */
   --heatmap-0: var(--color-surface-2);
   --heatmap-1: #2e4a1c;
   --heatmap-2: #4d7c2b;
   --heatmap-3: #8bc93f;
-  --heatmap-4: var(--color-accent);
+  --heatmap-4: color-mix(in srgb, #8bc93f 65%, white);
 }
 
 [data-theme="light"] {
@@ -840,6 +843,11 @@ code {
 
 .progress-check-label {
   flex: 0 0 160px;
+  /* min-width: 0 overrides the flex-item default of min-width: auto, which
+     otherwise lets this grow past its flex-basis to fit its own text —
+     the actual cause of the label overflowing its row; text-overflow
+     alone can't clip without this. */
+  min-width: 0;
   font-size: 0.85rem;
   font-weight: 500;
   color: var(--color-text);
@@ -858,7 +866,12 @@ code {
 
 .progress-check-bar-fill {
   height: 100%;
-  background: var(--color-accent);
+  /* Not --color-accent: this is a passive, always-visible progress readout
+     for every active journey, not a single actionable moment — using the
+     One Signal accent here would make it compete with the sync button and
+     hero stat glow. --color-success reads as "on track" without claiming
+     the accent's "act on this" meaning. */
+  background: var(--color-success);
   border-radius: 3px;
   transition: width 0.6s ease;
 }
@@ -878,7 +891,12 @@ code {
   margin-left: auto;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--color-accent);
+  color: var(--color-success);
+}
+
+.progress-check-row:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 @media (max-width: 640px) {
@@ -910,14 +928,17 @@ code {
 
 .journey-map-path {
   fill: none;
-  stroke: var(--color-accent);
+  /* --color-success, not --color-accent — same reasoning as the progress
+     bars above: this is a standing progress readout, not the page's one
+     actionable signal. */
+  stroke: var(--color-success);
   stroke-width: 4;
   stroke-linecap: round;
   transition: stroke-dasharray 0.6s ease;
 }
 
 .journey-map-marker {
-  fill: var(--color-accent);
+  fill: var(--color-success);
   stroke: var(--color-surface);
   stroke-width: 2;
 }
@@ -2020,6 +2041,16 @@ code {
 .sync-lastrun--error {
   color: var(--color-danger);
   font-weight: 600;
+}
+
+.sync-lastrun--stale {
+  color: var(--color-amber);
+  font-weight: 600;
+}
+
+.heatmap-cell[role="button"]:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
 }
 
 /* ============================================================

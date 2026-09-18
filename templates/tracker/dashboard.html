@@ -72,7 +72,7 @@
   <button class="sync-btn" id="syncBtn" onclick="triggerSync()">
     <span class="sync-icon">⟳</span> Sync Workouts
   </button>
-  <span class="sync-status" id="syncStatus"></span>
+  <span class="sync-status" id="syncStatus" aria-live="polite"></span>
   {% set sync_failing = sync_status and sync_status.last_error and (not sync_status.last_success_at or sync_status.last_attempt_at > sync_status.last_success_at) %}
   <span
     class="sync-lastrun {{ 'sync-lastrun--error' if sync_failing else '' }}"
@@ -171,10 +171,10 @@
 
 {# ── Day detail modal ─────────────────────────────────────────────────── #}
 <div class="day-modal-backdrop" id="dayModalBackdrop" onclick="closeDayModal()"></div>
-<div class="day-modal" id="dayModal">
+<div class="day-modal" id="dayModal" role="dialog" aria-modal="true" aria-labelledby="dayModalDate" tabindex="-1">
   <div class="day-modal-header">
     <span class="day-modal-date" id="dayModalDate"></span>
-    <button class="day-modal-close" onclick="closeDayModal()">✕</button>
+    <button class="day-modal-close" onclick="closeDayModal()" aria-label="Close">✕</button>
   </div>
   <div class="day-modal-body" id="dayModalBody">
     <div class="day-modal-loading">Loading…</div>
@@ -256,12 +256,21 @@ const heatmapDays = {{ heatmap | tojson }};
       } else {
         cell.dataset.level = "empty";
       }
-      // Click handler — open day modal for any cell with a date
+      // Click/keyboard handler — open day modal for any cell with a date
       if (d && d.date) {
         cell.style.cursor = "pointer";
         cell.dataset.date = d.date;
+        cell.setAttribute("role", "button");
+        cell.setAttribute("tabindex", "0");
+        cell.setAttribute("aria-label", cell.title || d.date);
         cell.addEventListener("click", function() {
-          openDayModal(this.dataset.date);
+          openDayModal(this.dataset.date, this);
+        });
+        cell.addEventListener("keydown", function(e) {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openDayModal(this.dataset.date, this);
+          }
         });
       }
       col.appendChild(cell);
@@ -277,8 +286,12 @@ const heatmapDays = {{ heatmap | tojson }};
 (function () {
   let paceChart = null, volumeChart = null;
 
-  function accentColor() {
-    return getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim() || "#cdfa3f";
+  // Not the accent color: these sparklines are passive, always-visible
+  // trend readouts, not an actionable moment — the One Signal Rule
+  // reserves chartreuse for things that need the user's action or
+  // attention (sync button, primary stat glow).
+  function chartLineColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue("--color-text-muted").trim() || "#838ca3";
   }
 
   function fmtPace(sec) {
@@ -321,7 +334,7 @@ const heatmapDays = {{ heatmap | tojson }};
         labels: recent.map(w => w.start),
         datasets: [{
           data: recent.map(w => w.meters),
-          backgroundColor: accentColor(),
+          backgroundColor: chartLineColor(),
           borderRadius: 2,
           barPercentage: 0.7,
         }],
@@ -379,7 +392,7 @@ const heatmapDays = {{ heatmap | tojson }};
             labels: data.map(d => d.date),
             datasets: [{
               data: data.map(d => d.pace_seconds),
-              borderColor: accentColor(),
+              borderColor: chartLineColor(),
               backgroundColor: "transparent",
               borderWidth: 2,
               pointRadius: 0,
@@ -452,7 +465,15 @@ const heatmapDays = {{ heatmap | tojson }};
     relevant.forEach(r => {
       const row = document.createElement("div");
       row.className = "progress-check-row";
-      row.onclick = () => { window.location.href = r.href; };
+      row.setAttribute("role", "button");
+      row.tabIndex = 0;
+      row.setAttribute("aria-label",
+        r.label + (r.data.complete ? " — complete" : ` — ${r.data.pct}% complete`));
+      const go = () => { window.location.href = r.href; };
+      row.onclick = go;
+      row.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+      });
 
       row.innerHTML = r.data.complete
         ? `<span class="progress-check-icon">${r.emoji}</span>
@@ -502,11 +523,15 @@ const heatmapDays = {{ heatmap | tojson }};
 
 // ── Day modal ────────────────────────────────────────────────────────────
 
-function openDayModal(dateStr) {
+let dayModalTrigger = null;
+
+function openDayModal(dateStr, triggerEl) {
   const backdrop = document.getElementById("dayModalBackdrop");
   const modal    = document.getElementById("dayModal");
   const dateEl   = document.getElementById("dayModalDate");
   const body     = document.getElementById("dayModalBody");
+
+  dayModalTrigger = triggerEl || document.activeElement;
 
   const dt = new Date(dateStr + "T00:00:00");
   dateEl.textContent = dt.toLocaleDateString("default", {
@@ -516,6 +541,7 @@ function openDayModal(dateStr) {
   body.innerHTML = '<div class="day-modal-loading">Loading…</div>';
   backdrop.classList.add("day-modal-backdrop--open");
   modal.classList.add("day-modal--open");
+  modal.focus();
 
   const dayLink = '<a href="/day/' + dateStr + '" class="day-modal-detail-link">View full day →</a>';
 
@@ -553,10 +579,37 @@ function openDayModal(dateStr) {
 function closeDayModal() {
   document.getElementById("dayModalBackdrop").classList.remove("day-modal-backdrop--open");
   document.getElementById("dayModal").classList.remove("day-modal--open");
+  if (dayModalTrigger) {
+    dayModalTrigger.focus();
+    dayModalTrigger = null;
+  }
 }
 
 document.addEventListener("keydown", function(e) {
-  if (e.key === "Escape") closeDayModal();
+  const modal = document.getElementById("dayModal");
+  if (!modal.classList.contains("day-modal--open")) return;
+
+  if (e.key === "Escape") {
+    closeDayModal();
+    return;
+  }
+
+  // Minimal focus trap: keep Tab cycling within the modal while it's open.
+  if (e.key === "Tab") {
+    const focusable = modal.querySelectorAll(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last  = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
 });
 
 // ── Last-synced indicator ──────────────────────────────────────────────────
@@ -584,6 +637,16 @@ document.addEventListener("keydown", function(e) {
   else                 text = `Last synced: ${Math.round(mins / 1440)}d ago`;
   el.textContent = text;
   el.title = then.toLocaleString();
+
+  // Nightly auto-sync is the product's core trust mechanism — a sync
+  // that simply stopped running (as opposed to one that actively failed)
+  // deserves its own visible warning, not the same quiet gray text as
+  // "5 minutes ago".
+  const STALE_AFTER_MINUTES = 48 * 60;
+  if (mins >= STALE_AFTER_MINUTES) {
+    el.classList.add("sync-lastrun--stale");
+    el.textContent = "⚠ " + text + " — sync may need attention";
+  }
 })();
 
 // ── Sync button ──────────────────────────────────────────────────────────
