@@ -9,6 +9,15 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.31.1] — 2026-09-18
+
+### Fixed
+- **Broken "Cancel"/"Close" buttons in the feedback modal and Quick Start's "FAQ & Known Issues" link.** They referenced a `.btn-secondary` CSS class that was never defined, so they rendered as unstyled browser-default buttons instead of the app's theme. Switched to the existing `.btn-ghost` style used everywhere else.
+- **Inconsistent section headings on gamification pages.** A second `.section-title` rule (added for badges/challenges/goals) only partially overrode the original, so those headings kept an unintended uppercase transform from the base rule. Split into its own `.section-title--lg` class.
+- **"Check for new badges" used a blocking `alert()` popup.** Replaced with the same inline status-text pattern used for sync status on the dashboard.
+- **Icon-only nav buttons (feedback, theme toggle) had no `aria-label`**, relying only on `title`, which isn't reliably exposed to screen readers/touch. Added explicit labels.
+- Removed a duplicate, conflicting `.btn-sm` CSS rule that silently shadowed the original.
+
 ## [0.31.0] — 2026-09-11
 
 ### Fixed

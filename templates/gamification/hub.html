@@ -22,13 +22,14 @@
       {{ "{:,}".format(stats.total_metres) }}m lifetime · {{ stats.earned_badges }} badges earned
     </div>
     <button class="btn btn-ghost btn-sm mt-3" onclick="triggerBadgeCheck()">Check for new badges</button>
+    <span class="sync-status" id="badgeCheckStatus"></span>
   </div>
 </div>
 
 {# ── Rhine journey summary ── #}
 <section class="mb-5">
   <div class="section-title-row">
-    <h2 class="section-title">🚣 Rhine Journey</h2>
+    <h2 class="section-title--lg">🚣 Rhine Journey</h2>
     <a href="{{ url_for('gamification.route') }}" class="section-link">Full map →</a>
   </div>
   <div class="card">
@@ -84,7 +85,7 @@
 {# ── Season challenges summary ── #}
 <section class="mb-5">
   <div class="section-title-row">
-    <h2 class="section-title">🏆 {{ challenges.q_label }} Challenges</h2>
+    <h2 class="section-title--lg">🏆 {{ challenges.q_label }} Challenges</h2>
     <a href="{{ url_for('gamification.challenges') }}" class="section-link">Full view →</a>
   </div>
   <div class="challenge-grid">
@@ -157,7 +158,7 @@
 {# ── Custom goals summary ── #}
 <section class="mb-5">
   <div class="section-title-row">
-    <h2 class="section-title">🎯 Your Goals</h2>
+    <h2 class="section-title--lg">🎯 Your Goals</h2>
     <a href="{{ url_for('gamification.goals') }}" class="section-link">{{ "Manage →" if goals else "Set a goal →" }}</a>
   </div>
   {% if goals %}
@@ -190,7 +191,7 @@
 {# ── You vs. Past You summary ── #}
 <section class="mb-5">
   <div class="section-title-row">
-    <h2 class="section-title">📊 You vs. Past You</h2>
+    <h2 class="section-title--lg">📊 You vs. Past You</h2>
     <a href="{{ url_for('gamification.versus') }}" class="section-link">Full table →</a>
   </div>
   <div class="card">
@@ -236,7 +237,7 @@
 {# ── Recently earned ── #}
 {% if recently_earned %}
 <section class="mb-5">
-  <h2 class="section-title">🎉 Recently Earned</h2>
+  <h2 class="section-title--lg">🎉 Recently Earned</h2>
   <div class="badge-grid">
     {% for badge in recently_earned %}
     <div class="badge-card earned new">
@@ -253,7 +254,7 @@
 {# ── Stale PB nudges ── #}
 {% if stale_pbs %}
 <section class="mb-5">
-  <h2 class="section-title">⏰ PB Nudges</h2>
+  <h2 class="section-title--lg">⏰ PB Nudges</h2>
   <div class="nudge-list">
     {% for pb in stale_pbs %}
     <div class="nudge-card">
@@ -271,7 +272,7 @@
 {# ── Badge categories ── #}
 {% for category, badge_list in by_category.items() %}
 <section class="mb-5">
-  <h2 class="section-title">{{ category }}</h2>
+  <h2 class="section-title--lg">{{ category }}</h2>
   <div class="badge-grid">
     {% for badge in badge_list %}
     <div class="badge-card {% if badge.earned_date %}earned{% else %}locked{% endif %}">
@@ -303,13 +304,24 @@
 {% block extra_js %}
 <script>
 function triggerBadgeCheck() {
+  const status = document.getElementById('badgeCheckStatus');
+  status.className = 'sync-status';
+  status.textContent = 'Checking…';
   fetch('/gamification/api/badges/check', { method: 'POST', headers: { 'X-CSRFToken': csrfToken() } })
     .then(r => r.json())
     .then(data => {
       if (data.newly_awarded && data.newly_awarded.length > 0) {
-        alert('New badges earned: ' + data.newly_awarded.join(', '));
-        location.reload();
+        status.className = 'sync-status sync-status--ok';
+        status.textContent = 'New badges earned: ' + data.newly_awarded.join(', ') + ' — reloading…';
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        status.className = 'sync-status';
+        status.textContent = 'No new badges yet.';
       }
+    })
+    .catch(() => {
+      status.className = 'sync-status sync-status--error';
+      status.textContent = 'Check failed — try again.';
     });
 }
 </script>

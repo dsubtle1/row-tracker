@@ -19,7 +19,7 @@
 
 {% for category, badge_list in by_category.items() %}
 <section class="mb-5">
-  <h2 class="section-title">
+  <h2 class="section-title--lg">
     {{ category }}
     <span class="category-count">
       {{ badge_list | selectattr('earned_date') | list | length }} / {{ badge_list | length }}

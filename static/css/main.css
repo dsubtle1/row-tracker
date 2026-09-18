@@ -1477,10 +1477,12 @@ code {
   color: var(--color-text-muted, #7a82a0);
 }
 
-/* Section title with count */
-.section-title {
+/* Section title with count (larger, non-eyebrow variant) */
+.section-title--lg {
   font-size: 1rem;
   font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
   color: var(--color-text-primary, #e8ecf4);
   margin-bottom: 0.75rem;
   display: flex;
@@ -2408,11 +2410,6 @@ code {
   font-size: 0.82rem;
   font-weight: 600;
   color: #3ddc84;
-}
-
-.btn-sm {
-  padding: 0.3rem 0.8rem;
-  font-size: 0.8rem;
 }
 
 /* ============================================================

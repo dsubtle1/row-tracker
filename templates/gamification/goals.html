@@ -10,7 +10,7 @@
 
 <div class="card mb-4">
   <div class="card-body">
-    <h2 class="section-title mb-3">New Goal</h2>
+    <h2 class="section-title--lg mb-3">New Goal</h2>
     <form method="post" id="goal-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
@@ -54,7 +54,7 @@
   </div>
 </div>
 
-<h2 class="section-title mb-3">Active &amp; Achieved Goals</h2>
+<h2 class="section-title--lg mb-3">Active &amp; Achieved Goals</h2>
 
 {% if goals %}
 <div class="challenge-grid">
