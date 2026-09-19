@@ -9,6 +9,35 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.31.6] — 2026-09-19
+
+Remaining P2/P3 polish from the third Dashboard critique.
+
+### Added
+- **A "what does this mean?" hint next to the lifetime-metres milestone
+  gauge**, explaining the milestone/journey mechanic to first-time
+  viewers who'd otherwise see "67.2% · 8,188,363m to 25M" with no context.
+  Keyboard-focusable and screen-reader-labeled, matching the pattern
+  already used for heatmap cells.
+- **A visible "Syncing…" status message** alongside the existing spinning
+  icon while a sync is in progress, announced via the sync-status
+  region's existing `aria-live`.
+
+### Changed
+- **Heatmap cells and their gaps are larger on mobile** (18px cells,
+  4px gaps, up from 12px/3px) to reduce mis-tap risk on a touch screen.
+  Note: a literal 44px touch target per cell isn't achievable for a
+  52-week dense grid without redesigning the interaction to a coarser
+  week-level tap target — this is a bounded improvement, not full
+  compliance, and is left that way deliberately rather than changing
+  the heatmap's core interaction model as an unrequested side effect.
+
+### Not changed
+- The heatmap's per-day tooltip remains desktop-hover-only. On mobile,
+  tapping a cell already opens the full day-detail modal — a strict
+  superset of what the tooltip shows — so a separate mobile-visible
+  tooltip would be redundant rather than a real gap.
+
 ## [0.31.5] — 2026-09-19
 
 Follow-up from a third `/impeccable critique` of the Dashboard (score:

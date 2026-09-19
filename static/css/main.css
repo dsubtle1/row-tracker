@@ -485,6 +485,31 @@ code {
   line-height: 1.3;
 }
 
+/* Small inline "what does this mean" affordance — first-time viewers
+   otherwise have no explanation of the milestone/journey mechanic. */
+.info-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 0.2rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-text-muted);
+  color: var(--color-text-muted);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+}
+
+.info-hint:hover,
+.info-hint:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  outline: none;
+}
+
 /* ---- Section ---- */
 .section {
   background: var(--color-surface);
@@ -593,6 +618,30 @@ code {
 
 .heatmap-cell:hover {
   opacity: 0.75;
+}
+
+/* Mobile: enlarge the tap target. A true 44px target per cell isn't
+   achievable for a 52-week grid without redesigning the interaction
+   model (e.g. week-level taps instead of day-level) — this is a bounded
+   improvement, not full compliance, but it meaningfully reduces mis-tap
+   risk over the 12px desktop size where a mouse pointer is precise
+   enough that this isn't a real problem. */
+@media (max-width: 640px) {
+  .heatmap-grid,
+  .heatmap-col {
+    gap: 4px;
+  }
+
+  .heatmap-cell {
+    width: 18px;
+    height: 18px;
+  }
+
+  .heatmap-dow {
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+  }
 }
 
 /* Levels */

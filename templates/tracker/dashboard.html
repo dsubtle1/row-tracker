@@ -30,7 +30,12 @@
       </svg>
       <div class="gauge-text">
         <span class="gauge-pct">{{ summary.milestone_pct }}%</span>
-        <span class="gauge-sub">{{ "{:,}".format(summary.meters_to_milestone) }}m to {{ summary.next_label }}</span>
+        <span class="gauge-sub">
+          {{ "{:,}".format(summary.meters_to_milestone) }}m to {{ summary.next_label }}
+          <span class="info-hint" role="button" tabindex="0"
+                title="Milestones mark round-number distance totals (100k, 1M, etc). Your lifetime metres also power Journeys — real-world routes you complete by distance rowed, under the Journeys tab."
+                aria-label="What are milestones and journeys?">?</span>
+        </span>
       </div>
     </div>
     {% endif %}
@@ -669,7 +674,7 @@ function triggerSync() {
 
   btn.disabled    = true;
   btn.textContent = "⟳ Syncing…";
-  status.textContent = "";
+  status.textContent = "Syncing…";
   status.className   = "sync-status";
 
   fetch("/sync", { method: "POST", headers: { "X-CSRFToken": csrfToken() } })
