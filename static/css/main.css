@@ -1995,6 +1995,11 @@ code {
   margin-bottom: 0.5rem;
 }
 
+/* Filled at rest, matching .btn-primary's treatment — this genuinely is
+   the page's one primary action, so it gets the One Signal Rule's accent
+   the same way .btn-primary does elsewhere, rather than a third bespoke
+   outline-only button style that competed with the primary stat glow for
+   "look here" at first paint. */
 .sync-btn {
   display: inline-flex;
   align-items: center;
@@ -2002,19 +2007,21 @@ code {
   padding: 0.45rem 1rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--color-accent);
-  background: transparent;
+  color: #fff;
+  background: var(--color-accent);
   border: 1px solid var(--color-accent);
   border-radius: var(--radius-sm, 6px);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
 .sync-btn:hover:not(:disabled) {
-  background: var(--color-accent);
+  background: var(--color-accent-2);
+  border-color: var(--color-accent-2);
   color: #fff;
 }
 
+:root:not([data-theme="light"]) .sync-btn,
 :root:not([data-theme="light"]) .sync-btn:hover:not(:disabled) {
   color: #0a0b10;
 }

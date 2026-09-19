@@ -9,6 +9,22 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.31.5] — 2026-09-19
+
+Follow-up from a third `/impeccable critique` of the Dashboard (score:
+30/40, up from 27/40, "Good"). All prior fixes independently re-verified
+as genuinely landed. Addresses the pass's one P1 finding.
+
+### Changed
+- **The "Sync Workouts" button was a bespoke third button style** —
+  permanently accent-outlined at rest, matching neither `.btn-primary`'s
+  filled treatment nor `.btn-ghost`'s muted one — and competed visually
+  with the primary stat block's glow for attention at first paint. Since
+  it genuinely is the page's one primary action, it now uses the same
+  filled-accent treatment as `.btn-primary` instead of its own outline
+  style, consolidating the dashboard back down to one visual "look here"
+  signal per the One Signal Rule.
+
 ## [0.31.4] — 2026-09-19
 
 Follow-up from a re-run `/impeccable critique` of the Dashboard (score:
