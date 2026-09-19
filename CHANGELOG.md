@@ -9,6 +9,28 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.32.0] — 2026-09-19
+
+### Changed
+- **Dashboard redesigned: "Open Deck".** Replaces the dark card-and-glow
+  "Erg Console" look on the dashboard specifically with an open, no-box
+  layout — big Bricolage Grotesque numerals, full-bleed alternating tonal
+  zones instead of bordered cards, gentle SVG wave dividers between
+  sections instead of straight rules, and one blue accent color reserved
+  for the primary action and progress fills. Fully supports both the
+  existing dark and light theme toggle, with independently-tuned,
+  contrast-corrected tokens for each. See `DESIGN.md` for the full system
+  — this is the first page migrated to it; every other page keeps the
+  prior look until individually migrated.
+- Dropped the full-width brand-lockup logo from the dashboard (the nav
+  already carries the logo + wordmark on every page; the large hero image
+  was pure repeated chrome on a page opened daily).
+- The hero lifetime-metres figure is now abbreviated at display size
+  (e.g. "16.8M") with the exact figure given as supporting text directly
+  below, rather than the full digit string set at 92px.
+- Weekly volume changed from a Chart.js bar chart to plain CSS bars,
+  consistent with the new "no chrome, just data" component language.
+
 ## [0.31.6] — 2026-09-19
 
 Remaining P2/P3 polish from the third Dashboard critique.

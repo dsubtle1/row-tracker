@@ -101,6 +101,15 @@ def _lifetime_meters():
     return result or 0
 
 
+def _abbreviate_meters(m):
+    """Dashboard hero figure: full precision only below 1,000m."""
+    if m >= 1_000_000:
+        return f"{m / 1_000_000:.1f}M"
+    if m >= 1_000:
+        return f"{m / 1_000:.1f}k"
+    return str(m)
+
+
 def _nearest_milestone(meters):
     for m, label in [
         (100_000, "100k"), (250_000, "250k"), (500_000, "500k"),
@@ -254,6 +263,7 @@ def dashboard():
     last = _rower().order_by(Workout.workout_date.desc()).first()
     summary = {
         "lifetime_meters":     lifetime_m,
+        "lifetime_meters_short": _abbreviate_meters(lifetime_m),
         "lifetime_km":         round(lifetime_m / 1000, 1),
         "workouts_week":       _workouts_this_week(),
         "workouts_month":      _workouts_this_month(),

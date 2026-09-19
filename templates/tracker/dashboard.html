@@ -1,183 +1,196 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — Row Tracker{% endblock %}
+{% block main_class %}main-content--open-deck{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=Instrument+Sans:wght@400;500;600&display=swap">
+{% endblock %}
 
 {% block content %}
+<div class="od">
 
-{# ── Brand hero — theme-switched full logo ────────────────────────────── #}
-<div class="brand-hero">
-  <img class="brand-logo brand-logo--dark"
-       src="{{ url_for('static', filename='img/logo-dark.png') }}"
-       alt="Row Tracker — Train · Track · Improve" />
-  <img class="brand-logo brand-logo--light"
-       src="{{ url_for('static', filename='img/logo-light.png') }}"
-       alt="Row Tracker — Train · Track · Improve" />
-</div>
+{# ── Zone 1: wordmark, hero, milestone ──────────────────────────────── #}
+<div class="od-zone od-zone--bg">
+  <div class="od-zone-inner">
+    <div class="od-wordmark-row">
+      <span class="od-wordmark">Row Tracker</span>
+      <span class="od-progress-muted" style="font-size: 13px;">Dashboard</span>
+    </div>
 
-{# ── Summary Bar ──────────────────────────────────────────────────────── #}
-<div class="summary-bar">
+    <div class="od-hero">
+      <span class="od-hero-value">{{ summary.lifetime_meters_short }}</span>
+      <span class="od-hero-sub">{{ "{:,}".format(summary.lifetime_meters) }}m rowed &mdash; lifetime</span>
+    </div>
 
-  <div class="stat-block stat-block--primary">
-    <span class="stat-value">{{ "{:,}".format(summary.lifetime_meters) }}</span>
-    <span class="stat-label">metres lifetime</span>
     {% if summary.next_milestone %}
-    {# Ring geometry: r=26 -> circumference = 2*pi*26 ~= 163.36 #}
-    <div class="gauge-row">
-      <svg class="gauge-ring" viewBox="0 0 64 64" width="52" height="52">
-        <circle class="gauge-ring-track" cx="32" cy="32" r="26" />
-        <circle class="gauge-ring-fill" cx="32" cy="32" r="26"
-                stroke-dasharray="163.36"
-                stroke-dashoffset="{{ (163.36 * (1 - (summary.milestone_pct or 0) / 100)) | round(2) }}" />
-      </svg>
-      <div class="gauge-text">
-        <span class="gauge-pct">{{ summary.milestone_pct }}%</span>
-        <span class="gauge-sub">
-          {{ "{:,}".format(summary.meters_to_milestone) }}m to {{ summary.next_label }}
-          <span class="info-hint" role="button" tabindex="0"
+    <div class="od-progress">
+      <div class="od-progress-track">
+        <div class="od-progress-fill" style="width: {{ summary.milestone_pct or 0 }}%;"></div>
+      </div>
+      <div class="od-progress-labels">
+        <span class="od-progress-strong">
+          {{ summary.milestone_pct }}% to {{ summary.next_label }}
+          <span class="od-info-hint" role="button" tabindex="0"
                 title="Milestones mark round-number distance totals (100k, 1M, etc). Your lifetime metres also power Journeys — real-world routes you complete by distance rowed, under the Journeys tab."
                 aria-label="What are milestones and journeys?">?</span>
         </span>
+        <span class="od-progress-muted">{{ "{:,}".format(summary.meters_to_milestone) }}m to go</span>
       </div>
     </div>
     {% endif %}
   </div>
-
-  <div class="stat-block">
-    <span class="stat-value">{{ summary.streak }}</span>
-    <span class="stat-label">day streak</span>
-  </div>
-
-  {# Week + month paired in one tile — keeps the summary bar at 4 chunks
-     instead of 5, per the working-memory/chunking guideline. #}
-  <div class="stat-block stat-block--paired">
-    <div class="stat-block-pair-item">
-      <span class="stat-value stat-value--md">{{ summary.workouts_week }}</span>
-      <span class="stat-label">this week</span>
-    </div>
-    <div class="stat-block-pair-item">
-      <span class="stat-value stat-value--md">{{ summary.workouts_month }}</span>
-      <span class="stat-label">this month</span>
-    </div>
-  </div>
-
-  {% if summary.last_workout %}
-  <div class="stat-block stat-block--last">
-    <span class="stat-label stat-label--eyebrow">last session</span>
-    <span class="stat-value stat-value--md">
-      {{ "{:,}".format(summary.last_workout.distance_meters) }}m
-    </span>
-    <span class="stat-sub">
-      {{ summary.last_workout.avg_pace_formatted }}/500m
-      &nbsp;·&nbsp;
-      {{ summary.last_workout.workout_date.strftime("%b %-d") }}
-    </span>
-  </div>
-  {% endif %}
-
 </div>
 
-{# ── Sync bar ─────────────────────────────────────────────────────────── #}
-<div class="sync-bar">
-  <button class="sync-btn" id="syncBtn" onclick="triggerSync()">
-    <span class="sync-icon">⟳</span> Sync Workouts
-  </button>
-  <span class="sync-status" id="syncStatus" aria-live="polite"></span>
-  {% set sync_failing = sync_status and sync_status.last_error and (not sync_status.last_success_at or sync_status.last_attempt_at > sync_status.last_success_at) %}
-  <span
-    class="sync-lastrun {{ 'sync-lastrun--error' if sync_failing else '' }}"
-    id="syncLastRun"
-    data-last-success="{{ (sync_status.last_success_at.isoformat() ~ 'Z') if sync_status and sync_status.last_success_at else '' }}"
-    data-failing="{{ 'true' if sync_failing else 'false' }}"
-    title="{{ sync_status.last_error if sync_failing else '' }}"
-  ></span>
-  <a href="{{ url_for('tracker.import_csv_view') }}" class="btn btn-ghost btn-sm">Import CSV</a>
-  <a href="{{ url_for('tracker.export_page') }}" class="btn btn-ghost btn-sm">Export Data</a>
+<div class="od-wave" style="background: var(--od-bg);">
+  <svg viewBox="0 0 480 32" preserveAspectRatio="none"><path d="M0,14 C120,30 360,-2 480,14 L480,32 L0,32 Z" style="fill: var(--od-bg-alt);"/></svg>
 </div>
 
-{# ── Trend sparklines ─────────────────────────────────────────────────── #}
-<div class="trends-row">
-  <div class="trend-card">
-    <div class="trend-card-header">
-      <span class="trend-card-title">Pace Trend</span>
-      <a href="{{ url_for('tracker.chart_pace') }}" class="trend-card-link">View →</a>
+{# ── Zone 2: stats, last session, sync ──────────────────────────────── #}
+<div class="od-zone od-zone--alt">
+  <div class="od-zone-inner">
+    <div class="od-stats">
+      <div class="od-stat">
+        <span class="od-stat-value">{{ summary.streak }}</span>
+        <span class="od-stat-label">day streak</span>
+      </div>
+      <div class="od-stat-divider"></div>
+      <div class="od-stat">
+        <span class="od-stat-value">{{ summary.workouts_week }}</span>
+        <span class="od-stat-label">this week</span>
+      </div>
+      <div class="od-stat-divider"></div>
+      <div class="od-stat">
+        <span class="od-stat-value">{{ summary.workouts_month }}</span>
+        <span class="od-stat-label">this month</span>
+      </div>
     </div>
-    <div class="trend-sparkline-wrap">
+
+    {% if summary.last_workout %}
+    <div class="od-last-session">
+      <span class="od-last-session-label">Last session</span>
+      <span class="od-last-session-value">
+        {{ "{:,}".format(summary.last_workout.distance_meters) }}m
+        <span class="od-progress-muted">&middot;</span>
+        {{ summary.last_workout.avg_pace_formatted }}/500m
+        <span class="od-progress-muted">&middot;</span>
+        {{ summary.last_workout.workout_date.strftime("%b %-d") }}
+      </span>
+    </div>
+    {% endif %}
+
+    <div class="od-sync-row">
+      <div class="od-sync-status-group">
+        <span class="od-sync-status" id="syncStatus" aria-live="polite"></span>
+        {% set sync_failing = sync_status and sync_status.last_error and (not sync_status.last_success_at or sync_status.last_attempt_at > sync_status.last_success_at) %}
+        <span
+          class="od-sync-lastrun {{ 'od-sync-lastrun--error' if sync_failing else '' }}"
+          id="syncLastRun"
+          data-last-success="{{ (sync_status.last_success_at.isoformat() ~ 'Z') if sync_status and sync_status.last_success_at else '' }}"
+          data-failing="{{ 'true' if sync_failing else 'false' }}"
+          title="{{ sync_status.last_error if sync_failing else '' }}"
+        ></span>
+      </div>
+      <div class="od-sync-actions">
+        <a href="{{ url_for('tracker.import_csv_view') }}" class="od-btn-link">Import CSV</a>
+        <a href="{{ url_for('tracker.export_page') }}" class="od-btn-link">Export data</a>
+        <button class="od-btn-primary" id="syncBtn" onclick="triggerSync()">
+          <span class="sync-icon">⟳</span> Sync workouts
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="od-wave" style="background: var(--od-bg-alt);">
+  <svg viewBox="0 0 480 32" preserveAspectRatio="none"><path d="M0,14 C120,-2 360,30 480,14 L480,32 L0,32 Z" style="fill: var(--od-bg);"/></svg>
+</div>
+
+{# ── Zone 3: pace trend, weekly volume ──────────────────────────────── #}
+<div class="od-zone od-zone--bg">
+  <div class="od-zone-inner">
+    <div class="od-section-header">
+      <span class="od-section-title">Pace trend</span>
+      <a href="{{ url_for('tracker.chart_pace') }}" class="od-btn-link">View all</a>
+    </div>
+    <div class="od-sparkline-wrap">
       <canvas id="paceSparkline"></canvas>
       <div class="chart-message chart-message--sm" id="paceSparklineMessage" style="display: none;"></div>
     </div>
-    <span class="trend-card-sub" id="paceSparklineSub">Last 90 days</span>
-  </div>
+    <span class="od-sparkline-sub" id="paceSparklineSub">Last 90 days</span>
 
-  <div class="trend-card">
-    <div class="trend-card-header">
-      <span class="trend-card-title">Weekly Volume</span>
-    </div>
-    <div class="trend-sparkline-wrap">
-      <canvas id="volumeSparkline"></canvas>
+    <div class="od-volume-wrap">
+      <span class="od-section-title">Weekly volume</span>
+      <div class="od-bars" id="volumeBars"></div>
       <div class="chart-message chart-message--sm" id="volumeSparklineMessage" style="display: none;"></div>
+      <span class="od-sparkline-sub" id="volumeSparklineSub">Last 12 weeks</span>
     </div>
-    <span class="trend-card-sub" id="volumeSparklineSub">Last 12 weeks</span>
   </div>
 </div>
 
-{# ── Volume Heatmap ───────────────────────────────────────────────────── #}
-<section class="section">
-  <div class="section-header">
-    <h2 class="section-title">Volume — past 52 weeks</h2>
-  </div>
+<div class="od-wave" style="background: var(--od-bg);">
+  <svg viewBox="0 0 480 32" preserveAspectRatio="none"><path d="M0,14 C120,30 360,-2 480,14 L480,32 L0,32 Z" style="fill: var(--od-bg-alt);"/></svg>
+</div>
 
-  <div class="heatmap-scroll">
-    <div class="heatmap-grid" id="heatmap"></div>
-  </div>
-
-  <div class="heatmap-legend">
-    <span class="legend-label">Less</span>
-    <span class="heatmap-cell legend-cell" data-level="0"></span>
-    <span class="heatmap-cell legend-cell" data-level="1"></span>
-    <span class="heatmap-cell legend-cell" data-level="2"></span>
-    <span class="heatmap-cell legend-cell" data-level="3"></span>
-    <span class="heatmap-cell legend-cell" data-level="4"></span>
-    <span class="legend-label">More</span>
-  </div>
-</section>
-
-{# ── Your Progress (active journeys) ──────────────────────────────────── #}
-<section class="section" id="journeyProgressSection" style="display: none;">
-  <div class="section-header">
-    <h2 class="section-title">Your Progress</h2>
-    <a href="{{ url_for('gamification.journeys') }}" class="section-link">All journeys →</a>
-  </div>
-  <div class="progress-checklist" id="journeyChecklist"></div>
-</section>
-
-{# ── Journey Map teaser (most-progressed active journey) ─────────────── #}
-<section class="section" id="journeyMapSection" style="display: none;">
-  <div class="section-header">
-    <h2 class="section-title">Journey Map</h2>
-    <a href="#" class="section-link" id="journeyMapLink">View journey →</a>
-  </div>
-  <div class="journey-map-teaser">
-    <svg class="journey-map-svg" id="journeyMapSvg" viewBox="0 0 320 110" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="journeyMapGlow">
-          <feGaussianBlur stdDeviation="2.5" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      <path class="journey-map-path-bg"
-        d="M 10,85 C 60,25 110,25 160,60 C 210,95 250,35 310,20"/>
-      <path class="journey-map-path" id="journeyMapPathFill"
-        d="M 10,85 C 60,25 110,25 160,60 C 210,95 250,35 310,20"/>
-      <circle class="journey-map-marker" id="journeyMapMarker" r="6" cx="10" cy="85" filter="url(#journeyMapGlow)"/>
-    </svg>
-    <div class="journey-map-caption">
-      <span class="journey-map-emoji" id="journeyMapEmoji"></span>
-      <span class="journey-map-name" id="journeyMapName"></span>
-      <span class="journey-map-pct" id="journeyMapPct"></span>
+{# ── Zone 4: volume heatmap ──────────────────────────────────────────── #}
+<div class="od-zone od-zone--alt">
+  <div class="od-zone-inner">
+    <div class="od-heatmap-wrap">
+      <span class="od-section-title">Volume &mdash; past 52 weeks</span>
+      <div class="od-heatmap-scroll">
+        <div class="od-heatmap-grid" id="heatmap"></div>
+      </div>
+      <div class="od-heatmap-legend">
+        <span class="od-heatmap-legend-label">Less</span>
+        <span class="od-heatmap-cell" data-level="0"></span>
+        <span class="od-heatmap-cell" data-level="1"></span>
+        <span class="od-heatmap-cell" data-level="2"></span>
+        <span class="od-heatmap-cell" data-level="3"></span>
+        <span class="od-heatmap-cell" data-level="4"></span>
+        <span class="od-heatmap-legend-label">More</span>
+      </div>
     </div>
   </div>
-</section>
+</div>
 
-{# ── Day detail modal ─────────────────────────────────────────────────── #}
+<div class="od-wave" style="background: var(--od-bg-alt);">
+  <svg viewBox="0 0 480 32" preserveAspectRatio="none"><path d="M0,14 C120,-2 360,30 480,14 L480,32 L0,32 Z" style="fill: var(--od-bg);"/></svg>
+</div>
+
+{# ── Zone 5: journeys ────────────────────────────────────────────────── #}
+<div class="od-zone od-zone--bg">
+  <div class="od-zone-inner">
+    <div class="od-journeys-wrap" id="journeyProgressSection" style="display: none;">
+      <div class="od-section-header" style="margin-bottom: 20px;">
+        <span class="od-section-title">Your progress</span>
+        <a href="{{ url_for('gamification.journeys') }}" class="od-btn-link">All journeys</a>
+      </div>
+      <div class="od-journey-list" id="journeyChecklist"></div>
+    </div>
+
+    <div class="od-journey-map-wrap" id="journeyMapSection" style="display: none;">
+      <div class="od-section-header">
+        <span class="od-section-title">Journey map</span>
+        <a href="#" class="od-btn-link" id="journeyMapLink">Continue journey</a>
+      </div>
+      <svg class="od-journey-map-svg" id="journeyMapSvg" viewBox="0 0 320 110" xmlns="http://www.w3.org/2000/svg">
+        <path class="od-journey-map-path-bg"
+          d="M 10,85 C 60,25 110,25 160,60 C 210,95 250,35 310,20"/>
+        <path class="od-journey-map-path" id="journeyMapPathFill"
+          d="M 10,85 C 60,25 110,25 160,60 C 210,95 250,35 310,20"/>
+        <circle class="od-journey-map-marker" id="journeyMapMarker" r="5" cx="10" cy="85"/>
+      </svg>
+      <div class="od-journey-map-caption">
+        <span id="journeyMapEmoji"></span>
+        <span class="od-journey-map-name" id="journeyMapName"></span>
+        <span class="od-journey-map-pct-text" id="journeyMapPct"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+{# ── Day detail modal — unchanged structure/behavior from prior system ── #}
 <div class="day-modal-backdrop" id="dayModalBackdrop" onclick="closeDayModal()"></div>
 <div class="day-modal" id="dayModal" role="dialog" aria-modal="true" aria-labelledby="dayModalDate" tabindex="-1">
   <div class="day-modal-header">
@@ -195,7 +208,7 @@
 {% include "tracker/_chart_cdn.html" %}
 <script>
 // Heatmap data injected from Flask — shared by the heatmap grid below
-// and the weekly-volume sparkline (no second data fetch needed).
+// and the weekly-volume bar chart (no second data fetch needed).
 const heatmapDays = {{ heatmap | tojson }};
 
 (function () {
@@ -204,8 +217,6 @@ const heatmapDays = {{ heatmap | tojson }};
   const grid = document.getElementById("heatmap");
   if (!grid) return;
 
-  // Build column-per-week structure (Mon–Sun rows)
-  // Group days into ISO weeks
   const weeks = [];
   let week = [];
   days.forEach((d, i) => {
@@ -216,26 +227,23 @@ const heatmapDays = {{ heatmap | tojson }};
     }
   });
 
-  // DOW labels column
   const labels = ["M", "", "W", "", "F", "", "S"];
   const labelCol = document.createElement("div");
-  labelCol.className = "heatmap-col heatmap-col--labels";
+  labelCol.className = "od-heatmap-col";
   labels.forEach(l => {
     const el = document.createElement("span");
-    el.className = "heatmap-dow";
+    el.className = "od-heatmap-dow";
     el.textContent = l;
     labelCol.appendChild(el);
   });
   grid.appendChild(labelCol);
 
-  // Month label tracking
   let lastMonth = -1;
 
   weeks.forEach(wk => {
     const col = document.createElement("div");
-    col.className = "heatmap-col";
+    col.className = "od-heatmap-col";
 
-    // Determine if we should show a month label (first week a month appears)
     const firstDay = wk.find(d => d.dow === 0) || wk[0];
     const dt = new Date(firstDay.date + "T00:00:00");
     const mo = dt.getMonth();
@@ -244,27 +252,23 @@ const heatmapDays = {{ heatmap | tojson }};
       lastMonth = mo;
     }
 
-    // Fill Mon–Sun; pad if week starts mid-week
     for (let dow = 0; dow < 7; dow++) {
       const d = wk.find(x => x.dow === dow);
       const cell = document.createElement("span");
-      cell.className = "heatmap-cell";
+      cell.className = "od-heatmap-cell";
       if (d) {
         cell.dataset.level = d.level;
+        const dateStr = new Date(d.date + "T00:00:00")
+          .toLocaleDateString("default", { month: "short", day: "numeric" });
         if (d.meters) {
           const km = (d.meters / 1000).toFixed(1);
-          const dateStr = new Date(d.date + "T00:00:00")
-            .toLocaleDateString("default", { month: "short", day: "numeric" });
           cell.title = `${dateStr}: ${km}km`;
         } else {
-          const dateStr = new Date(d.date + "T00:00:00")
-            .toLocaleDateString("default", { month: "short", day: "numeric" });
           cell.title = dateStr;
         }
       } else {
         cell.dataset.level = "empty";
       }
-      // Click/keyboard handler — open day modal for any cell with a date
       if (d && d.date) {
         cell.style.cursor = "pointer";
         cell.dataset.date = d.date;
@@ -287,19 +291,15 @@ const heatmapDays = {{ heatmap | tojson }};
   });
 })();
 
-// ── Trend sparklines ─────────────────────────────────────────────────────
+// ── Trend sparkline + weekly volume bars ─────────────────────────────────
 // Pace reuses the same /api/data/pace endpoint as the full Pace Trend
 // chart; weekly volume is derived client-side from heatmapDays above —
 // no second data fetch needed.
 (function () {
-  let paceChart = null, volumeChart = null;
+  let paceChart = null;
 
-  // Not the accent color: these sparklines are passive, always-visible
-  // trend readouts, not an actionable moment — the One Signal Rule
-  // reserves chartreuse for things that need the user's action or
-  // attention (sync button, primary stat glow).
-  function chartLineColor() {
-    return getComputedStyle(document.documentElement).getPropertyValue("--color-text-muted").trim() || "#838ca3";
+  function accentColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue("--od-accent").trim() || "#4C7FFF";
   }
 
   function fmtPace(sec) {
@@ -308,12 +308,11 @@ const heatmapDays = {{ heatmap | tojson }};
     return `${m}:${s.toString().padStart(2, "0")}`;
   }
 
-  function renderVolumeSparkline() {
-    const canvas  = document.getElementById("volumeSparkline");
+  function renderVolumeBars() {
+    const wrap    = document.getElementById("volumeBars");
     const message = document.getElementById("volumeSparklineMessage");
-    if (!canvas) return;
+    if (!wrap) return;
 
-    // Group heatmapDays (oldest first, dow 0=Mon..6=Sun) into weekly totals.
     const weeks = [];
     let weekTotal = 0, weekStart = null;
     heatmapDays.forEach((d, i) => {
@@ -326,46 +325,25 @@ const heatmapDays = {{ heatmap | tojson }};
       }
     });
     const recent = weeks.slice(-12);
+    wrap.innerHTML = "";
     if (!recent.length) {
-      canvas.style.display = "none";
+      wrap.style.display = "none";
       message.style.display = "";
       message.textContent = "No workouts yet";
       return;
     }
-    canvas.style.display = "";
+    wrap.style.display = "";
     message.style.display = "none";
 
-    if (volumeChart) volumeChart.destroy();
-    volumeChart = new Chart(canvas.getContext("2d"), {
-      type: "bar",
-      data: {
-        labels: recent.map(w => w.start),
-        datasets: [{
-          data: recent.map(w => w.meters),
-          backgroundColor: chartLineColor(),
-          borderRadius: 2,
-          barPercentage: 0.7,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: "index", intersect: false },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              title: items => new Date(recent[items[0].dataIndex].start + "T00:00:00")
-                .toLocaleDateString("default", { month: "short", day: "numeric" }),
-              label: item => `  ${(item.raw / 1000).toFixed(1)}km`,
-            },
-          },
-        },
-        scales: {
-          x: { display: false },
-          y: { display: false, beginAtZero: true },
-        },
-      },
+    const max = Math.max(...recent.map(w => w.meters), 1);
+    recent.forEach((w, i) => {
+      const bar = document.createElement("div");
+      const pct = Math.max(4, Math.round((w.meters / max) * 100));
+      bar.className = "od-bar" + (i === recent.length - 1 && w.meters === max ? " od-bar--peak" : "");
+      bar.style.height = pct + "%";
+      const dateStr = new Date(w.start + "T00:00:00").toLocaleDateString("default", { month: "short", day: "numeric" });
+      bar.title = `${dateStr}: ${(w.meters / 1000).toFixed(1)}km`;
+      wrap.appendChild(bar);
     });
 
     const latest = recent[recent.length - 1];
@@ -400,7 +378,7 @@ const heatmapDays = {{ heatmap | tojson }};
             labels: data.map(d => d.date),
             datasets: [{
               data: data.map(d => d.pace_seconds),
-              borderColor: chartLineColor(),
+              borderColor: accentColor(),
               backgroundColor: "transparent",
               borderWidth: 2,
               pointRadius: 0,
@@ -439,22 +417,17 @@ const heatmapDays = {{ heatmap | tojson }};
       });
   }
 
-  renderVolumeSparkline();
+  renderVolumeBars();
   renderPaceSparkline();
 
-  // Re-render on theme toggle so the sparkline color follows the accent.
+  // Re-render on theme toggle so the pace line follows the accent color.
   const observer = new MutationObserver(() => {
-    renderVolumeSparkline();
     renderPaceSparkline();
   });
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 })();
 
 // ── Your Progress (active journeys) ─────────────────────────────────────
-// Pulls the same JSON endpoints the route detail pages use — no new
-// backend. Only journeys that are active or complete get a row; a
-// journey that's never been started has nothing worth showing here
-// (the full Journeys page already offers "Start Journey").
 (function () {
   const ROUTES = [
     { key: "rhine",    label: "Rhine River",          emoji: "🇨🇭", api: "/gamification/api/rhine",    href: "{{ url_for('gamification.route') }}" },
@@ -468,42 +441,33 @@ const heatmapDays = {{ heatmap | tojson }};
       fetch(r.api)
         .then(res => res.json())
         .then(data => ({ ...r, data }))
-        // One route's endpoint failing shouldn't hide every other route's
-        // progress — resolve to a harmless "not relevant" entry instead of
-        // rejecting the whole Promise.all.
         .catch(() => ({ ...r, data: { active: false, complete: false } }))
     )
   ).then(results => {
     const relevant = results.filter(r => r.data.active || r.data.complete);
-    if (!relevant.length) return;   // section stays hidden
+    if (!relevant.length) return;
 
     const list = document.getElementById("journeyChecklist");
     relevant.forEach(r => {
-      const row = document.createElement("div");
-      row.className = "progress-check-row";
-      row.setAttribute("role", "button");
-      row.tabIndex = 0;
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "od-journey-row";
       row.setAttribute("aria-label",
         r.label + (r.data.complete ? " — complete" : ` — ${r.data.pct}% complete`));
-      const go = () => { window.location.href = r.href; };
-      row.onclick = go;
-      row.addEventListener("keydown", function(e) {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
-      });
+      row.onclick = () => { window.location.href = r.href; };
 
       row.innerHTML = r.data.complete
-        ? `<span class="progress-check-icon">${r.emoji}</span>
-           <span class="progress-check-label">${r.label}</span>
-           <span class="progress-check-complete">✓ Complete</span>`
-        : `<span class="progress-check-icon">${r.emoji}</span>
-           <span class="progress-check-label">${r.label}</span>
-           <div class="progress-check-bar-track"><div class="progress-check-bar-fill" style="width:${r.data.pct}%"></div></div>
-           <span class="progress-check-pct">${r.data.pct}%</span>`;
+        ? `<span class="od-journey-icon">${r.emoji}</span>
+           <span class="od-journey-label">${r.label}</span>
+           <span class="od-journey-complete">Complete</span>`
+        : `<span class="od-journey-icon">${r.emoji}</span>
+           <span class="od-journey-label od-journey-label--fixed">${r.label}</span>
+           <div class="od-journey-bar"><div class="od-journey-bar-fill" style="width:${r.data.pct}%"></div></div>
+           <span class="od-journey-pct">${r.data.pct}%</span>`;
 
       list.appendChild(row);
     });
 
-    document.getElementById("journeyProgressSection").classList.add("section--fade-in");
     document.getElementById("journeyProgressSection").style.display = "";
 
     const activeOnly = results.filter(r => r.data.active);
@@ -532,15 +496,13 @@ const heatmapDays = {{ heatmap | tojson }};
     document.getElementById("journeyMapName").textContent = route.label;
     document.getElementById("journeyMapPct").textContent = pct + "%";
     link.href = route.href;
-    link.textContent = "Continue journey →";
+    link.textContent = "Continue journey";
 
-    section.classList.add("section--fade-in");
     section.style.display = "";
   }
 })();
 
 // ── Day modal ────────────────────────────────────────────────────────────
-
 let dayModalTrigger = null;
 
 function openDayModal(dateStr, triggerEl) {
@@ -612,7 +574,6 @@ document.addEventListener("keydown", function(e) {
     return;
   }
 
-  // Minimal focus trap: keep Tab cycling within the modal while it's open.
   if (e.key === "Tab") {
     const focusable = modal.querySelectorAll(
       'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -656,13 +617,9 @@ document.addEventListener("keydown", function(e) {
   el.textContent = text;
   el.title = then.toLocaleString();
 
-  // Nightly auto-sync is the product's core trust mechanism — a sync
-  // that simply stopped running (as opposed to one that actively failed)
-  // deserves its own visible warning, not the same quiet gray text as
-  // "5 minutes ago".
   const STALE_AFTER_MINUTES = 48 * 60;
   if (mins >= STALE_AFTER_MINUTES) {
-    el.classList.add("sync-lastrun--stale");
+    el.classList.add("od-sync-lastrun--stale");
     el.textContent = "⚠ " + text + " — sync may need attention";
   }
 })();
@@ -673,23 +630,23 @@ function triggerSync() {
   const status = document.getElementById("syncStatus");
 
   btn.disabled    = true;
-  btn.textContent = "⟳ Syncing…";
+  btn.innerHTML   = "<span class='sync-icon'>⟳</span> Syncing…";
   status.textContent = "Syncing…";
-  status.className   = "sync-status";
+  status.className   = "od-sync-status";
 
   fetch("/sync", { method: "POST", headers: { "X-CSRFToken": csrfToken() } })
     .then(r => r.json())
     .then(data => {
       btn.disabled    = false;
-      btn.innerHTML   = "<span class='sync-icon'>⟳</span> Sync Workouts";
+      btn.innerHTML   = "<span class='sync-icon'>⟳</span> Sync workouts";
 
       if (data.status === "error" || data.status === "partial") {
         status.textContent = "✗ " + (data.message || "Sync failed — see logs.");
-        status.className   = "sync-status sync-status--error";
+        status.className   = "od-sync-status od-sync-status--error";
         const lastRun = document.getElementById("syncLastRun");
         if (lastRun) {
           lastRun.textContent = "⚠ Last sync failed — see logs";
-          lastRun.className   = "sync-lastrun sync-lastrun--error";
+          lastRun.className   = "od-sync-lastrun od-sync-lastrun--error";
           lastRun.title       = data.message || "";
         }
         return;
@@ -702,25 +659,24 @@ function triggerSync() {
       if (parts.length === 0) parts.push("Already up to date");
 
       status.textContent = "✓ " + parts.join(" · ");
-      status.className   = "sync-status sync-status--ok";
+      status.className   = "od-sync-status od-sync-status--ok";
 
       const lastRun = document.getElementById("syncLastRun");
       if (lastRun) {
         lastRun.textContent = "Last synced: just now";
-        lastRun.className   = "sync-lastrun";
+        lastRun.className   = "od-sync-lastrun";
         lastRun.title       = new Date().toLocaleString();
       }
 
-      // Reload after a beat if new data arrived
       if (data.inserted > 0) {
         setTimeout(() => location.reload(), 2000);
       }
     })
     .catch(err => {
       btn.disabled    = false;
-      btn.innerHTML   = "<span class='sync-icon'>⟳</span> Sync Workouts";
+      btn.innerHTML   = "<span class='sync-icon'>⟳</span> Sync workouts";
       status.textContent = "✗ Request failed — check logs.";
-      status.className   = "sync-status sync-status--error";
+      status.className   = "od-sync-status od-sync-status--error";
     });
 }
 </script>
