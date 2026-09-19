@@ -41,14 +41,17 @@
     <span class="stat-label">day streak</span>
   </div>
 
-  <div class="stat-block">
-    <span class="stat-value">{{ summary.workouts_week }}</span>
-    <span class="stat-label">workouts this week</span>
-  </div>
-
-  <div class="stat-block">
-    <span class="stat-value">{{ summary.workouts_month }}</span>
-    <span class="stat-label">this month</span>
+  {# Week + month paired in one tile — keeps the summary bar at 4 chunks
+     instead of 5, per the working-memory/chunking guideline. #}
+  <div class="stat-block stat-block--paired">
+    <div class="stat-block-pair-item">
+      <span class="stat-value stat-value--md">{{ summary.workouts_week }}</span>
+      <span class="stat-label">this week</span>
+    </div>
+    <div class="stat-block-pair-item">
+      <span class="stat-value stat-value--md">{{ summary.workouts_month }}</span>
+      <span class="stat-label">this month</span>
+    </div>
   </div>
 
   {% if summary.last_workout %}
@@ -456,7 +459,15 @@ const heatmapDays = {{ heatmap | tojson }};
   ];
 
   Promise.all(
-    ROUTES.map(r => fetch(r.api).then(res => res.json()).then(data => ({ ...r, data })))
+    ROUTES.map(r =>
+      fetch(r.api)
+        .then(res => res.json())
+        .then(data => ({ ...r, data }))
+        // One route's endpoint failing shouldn't hide every other route's
+        // progress — resolve to a harmless "not relevant" entry instead of
+        // rejecting the whole Promise.all.
+        .catch(() => ({ ...r, data: { active: false, complete: false } }))
+    )
   ).then(results => {
     const relevant = results.filter(r => r.data.active || r.data.complete);
     if (!relevant.length) return;   // section stays hidden
@@ -487,6 +498,7 @@ const heatmapDays = {{ heatmap | tojson }};
       list.appendChild(row);
     });
 
+    document.getElementById("journeyProgressSection").classList.add("section--fade-in");
     document.getElementById("journeyProgressSection").style.display = "";
 
     const activeOnly = results.filter(r => r.data.active);
@@ -517,6 +529,7 @@ const heatmapDays = {{ heatmap | tojson }};
     link.href = route.href;
     link.textContent = "Continue journey →";
 
+    section.classList.add("section--fade-in");
     section.style.display = "";
   }
 })();

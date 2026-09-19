@@ -9,6 +9,35 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.31.4] — 2026-09-19
+
+Follow-up from a re-run `/impeccable critique` of the Dashboard (score:
+27/40, up from 24/40, "Acceptable"). All 5 P0/P1 issues from the prior
+critique were independently confirmed fixed; this addresses the 5 new,
+lower-severity issues the re-run found.
+
+### Fixed
+- **A single failing journey-route endpoint silently hid the entire "Your
+  Progress" section.** The 4-route `Promise.all` had no per-request error
+  handling, so one 500 rejected the whole batch. Each route fetch now
+  fails independently to a harmless "not active" fallback instead.
+- **`.journey-map-pct` used `--color-accent` while its sibling path and
+  marker deliberately use `--color-success`** — the one remaining
+  inconsistency in the dashboard's color-token discipline.
+- **A dead, fully-shadowed `@media (max-width: 768px)` block for
+  `.summary-bar`/`.stat-block`/`.stat-value`** sat earlier in `main.css`
+  than an equivalent, more complete block with the same specificity —
+  the later block always won, making the earlier one unreachable. Removed.
+
+### Changed
+- **Summary bar reduced from 5 stat tiles to 4**, per the chunking
+  guideline (working memory holds ≤4 items well). "Workouts this week"
+  and "this month" are now paired in one tile instead of two.
+- **Journey-progress and journey-map sections now fade in** when their
+  async data resolves, instead of snapping from hidden to visible —
+  softens (though doesn't eliminate) the layout shift from optional
+  content that may or may not appear.
+
 ## [0.31.3] — 2026-09-18
 
 Follow-up from an `/impeccable critique` of the Dashboard (score: 24/40,

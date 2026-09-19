@@ -389,6 +389,19 @@ code {
   flex: 1.4;
 }
 
+.stat-block--paired {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.stat-block-pair-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
 .stat-value {
   font-size: 1.75rem;
   font-weight: 700;
@@ -480,6 +493,19 @@ code {
   box-shadow: var(--card-shadow);
   padding: 1.5rem 1.75rem;
   margin-bottom: 1.5rem;
+}
+
+/* Conditional sections (journey progress/map on the dashboard) fade in
+   once their async data resolves, rather than snapping straight from
+   display:none to visible — softens, though doesn't eliminate, the
+   layout shift from content that may or may not appear at all. */
+.section--fade-in {
+  animation: section-fade-in 0.25s ease-out;
+}
+
+@keyframes section-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .section-header {
@@ -615,21 +641,10 @@ code {
   border-color: var(--color-accent);
 }
 
-/* ---- Responsive ---- */
-@media (max-width: 768px) {
-  .summary-bar {
-    flex-direction: column;
-    gap: 1px;
-  }
-
-  .stat-block {
-    flex: unset;
-  }
-
-  .stat-value {
-    font-size: 1.4rem;
-  }
-}
+/* Responsive summary-bar/stat-block/stat-value rules for max-width: 768px
+   live further down (see "Summary bar: 2-column grid on mobile") — a
+   dead duplicate block here was removed since the later rule, same
+   specificity, always won the cascade anyway. */
 
 /* ============================================================
    1C Additions — Chart Pages
@@ -958,7 +973,7 @@ code {
 
 .journey-map-pct {
   font-weight: 600;
-  color: var(--color-accent);
+  color: var(--color-success);
   font-variant-numeric: tabular-nums;
 }
 
