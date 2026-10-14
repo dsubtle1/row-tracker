@@ -23,6 +23,9 @@ Yes — Row Tracker is fully responsive and optimised for iPhone and iPad, with 
 **Can I install Row Tracker like an app on my phone?**
 Yes. On iPhone/iPad, open Row Tracker in Safari, tap the Share icon, then **Add to Home Screen** — it launches full-screen with its own icon, no browser chrome. On Android/Chrome, look for an **Install app** option in the browser menu. Full install support (the browser-native install prompt) requires the app to be served over HTTPS — on a plain-HTTP homelab setup, iOS's Add to Home Screen still works, but Android's install prompt may not appear until you put a reverse proxy with a certificate in front of it.
 
+**Is Row Tracker secure? Does it have a login?**
+No — there is no built-in authentication. Anyone who can reach the app's port can view, edit, export and restore your data, so keep it on a network you trust. The default `docker-compose.yml` publishes it on `127.0.0.1` only (the computer running it); to reach it from your phone, change the port line to `"7376:7376"` on a trusted home network. Don't port-forward it from your router or expose it to the internet — for remote access use a VPN such as Tailscale, or put a reverse proxy with its own login in front of it.
+
 ---
 
 ### Data & Sync

@@ -199,7 +199,7 @@ services:
     image: ghcr.io/dsubtle1/row-tracker:latest
     container_name: row-tracker
     ports:
-      - "7376:7376"
+      - "127.0.0.1:7376:7376"
     volumes:
       - ./data:/app/data
       - ./csv-data:/app/csv-data:ro
@@ -226,6 +226,12 @@ http://localhost:7376
 ```
 
 Click **Sync Workouts** on the dashboard to pull in your full workout history from the Concept2 Logbook.
+
+> **⚠️ No built-in authentication — keep it on a trusted network.** Row Tracker has no login: anyone who
+> can reach the port can view, change, export and restore your data. The compose file therefore publishes
+> it on `127.0.0.1` only (this computer). To open it to your phone or other devices, change the port line
+> to `"7376:7376"` — but only on a home network you trust, never forwarded from your router or exposed to
+> the internet. For remote access, use a VPN such as Tailscale, or a reverse proxy that adds its own login.
 
 ### Building from source instead
 

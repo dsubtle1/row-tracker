@@ -35,6 +35,22 @@ def test_faq_and_quickstart_pages(client):
     assert client.get("/quickstart").status_code == 200
 
 
+def test_faq_warns_about_no_built_in_auth(client):
+    """The app has no login — the FAQ must say so (see README security callout)."""
+    body = client.get("/faq").get_data(as_text=True)
+    assert "no built-in authentication" in body
+
+
+def test_compose_publishes_port_on_localhost_only():
+    """The app has no auth, so the repo's compose file must not publish it on all interfaces."""
+    import os
+    compose = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docker-compose.yml")
+    with open(compose) as f:
+        lines = [l.strip() for l in f if l.strip() and not l.strip().startswith("#")]
+    assert '- "127.0.0.1:7376:7376"' in lines
+    assert '- "7376:7376"' not in lines
+
+
 def test_mobile_nav_has_every_desktop_nav_link(client):
     """
     Regression test: the "Insights" link was added to the desktop nav

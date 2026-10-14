@@ -9,6 +9,20 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.32.1] — 2026-10-14
+
+### Security
+- `docker-compose.yml` now publishes port 7376 on `127.0.0.1` only (was all
+  interfaces). Row Tracker has no built-in authentication, so the default no
+  longer exposes it to the LAN. **Upgrade note:** if you reach the app from
+  another device (phone, another computer), change the port line back to
+  `"7376:7376"` — only on a network you trust.
+
+### Documentation
+- README and FAQ (plus the in-app FAQ) now state plainly that there is no
+  login, and cover safe ways to reach the app remotely (VPN, authenticating
+  reverse proxy).
+
 ## [0.32.0] — 2026-09-19
 
 ### Changed
