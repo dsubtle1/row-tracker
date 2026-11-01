@@ -29,6 +29,15 @@
   </form>
 </div>
 
+{# ── Delete ──────────────────────────────────────────────────────────────── #}
+<div class="wd-delete-row">
+  <form method="POST" action="{{ url_for('tracker.workout_delete', workout_id=workout.id) }}"
+        onsubmit="return confirm('Delete this workout permanently? Sync will not bring it back, and PBs and badges will be recalculated.');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" class="btn btn-danger btn-sm">Delete workout</button>
+  </form>
+</div>
+
 {# ── Core stats ──────────────────────────────────────────────────────────── #}
 <div class="wd-stats-grid">
 

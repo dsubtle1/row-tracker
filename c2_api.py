@@ -220,7 +220,7 @@ class C2ApiClient:
         Returns summary dict: {inserted, skipped, errors}
         Requires Flask app context.
         """
-        from models import db, Workout
+        from models import db, Workout, DeletedWorkout
 
         if not self.is_configured():
             return {"inserted": 0, "skipped": 0, "errors": 1,
@@ -245,6 +245,7 @@ class C2ApiClient:
         inserted = 0
         skipped  = 0
         errors   = 0
+        deleted_ids = {d.id for d in DeletedWorkout.query.all()}
 
         for result in raw_results:
             try:
@@ -253,8 +254,8 @@ class C2ApiClient:
                     errors += 1
                     continue
 
-                # Skip if already in DB (C2 ID is PK)
-                if Workout.query.get(c2_id):
+                # Skip if already in DB (C2 ID is PK) or the user deleted it
+                if c2_id in deleted_ids or Workout.query.get(c2_id):
                     skipped += 1
                     continue
 

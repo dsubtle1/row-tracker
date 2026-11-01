@@ -723,3 +723,50 @@ def test_manifest_served(client):
     resp = client.get("/static/manifest.json")
     assert resp.status_code == 200
     assert resp.get_json()["name"] == "Row Tracker"
+
+
+# --------------------------------------------------------------------------- #
+#  Workout delete                                                             #
+# --------------------------------------------------------------------------- #
+
+def test_delete_workout_removes_row_and_leaves_tombstone(client, full_make_workout):
+    from models import DeletedWorkout, Workout, db
+    full_make_workout(id=501, distance_meters=2000, time_seconds=480)
+    full_make_workout(id=502, distance_meters=2000, time_seconds=500)
+
+    resp = client.post("/workouts/501/delete")
+    assert resp.status_code == 302
+    assert db.session.get(Workout, 501) is None
+    assert db.session.get(Workout, 502) is not None
+    assert db.session.get(DeletedWorkout, 501) is not None
+
+
+def test_delete_workout_recalculates_pbs(client, full_make_workout):
+    from models import PersonalBest
+    full_make_workout(id=601, distance_meters=2000, time_seconds=480)
+    full_make_workout(id=602, distance_meters=2000, time_seconds=500)
+    from pb_engine import recalculate_all_pbs
+    recalculate_all_pbs()
+    assert PersonalBest.query.filter_by(category="2000m").one().workout_id == 601
+
+    client.post("/workouts/601/delete")
+    assert PersonalBest.query.filter_by(category="2000m").one().workout_id == 602
+
+
+def test_delete_unknown_workout_404(client):
+    assert client.post("/workouts/999999/delete").status_code == 404
+
+
+def test_csv_import_skips_deleted_workout(client, full_make_workout):
+    from models import DeletedWorkout, Workout, db
+    from import_csv import import_rows
+    db.session.add(DeletedWorkout(id=701))
+    db.session.commit()
+    csv_text = (
+        "Log ID,Date,Type,Work Time (Seconds),Work Distance\n"
+        "701,2025-01-02 08:00:00,RowErg,480.0,2000\n"
+    )
+    stats = import_rows(io.StringIO(csv_text))
+    assert stats["inserted"] == 0
+    assert stats["skipped_duplicate"] == 1
+    assert db.session.get(Workout, 701) is None

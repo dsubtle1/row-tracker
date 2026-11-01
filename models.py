@@ -91,6 +91,17 @@ class Workout(db.Model):
         return f"{m}:{s:02d}"
 
 
+class DeletedWorkout(db.Model):
+    """
+    Tombstone for a workout the user deleted (e.g. a bad or duplicated sync).
+    Sync and CSV import skip these C2 IDs so the row isn't re-imported.
+    """
+    __tablename__ = "deleted_workouts"
+
+    id         = db.Column(db.Integer, primary_key=True)          # the C2 Log ID that was deleted
+    deleted_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class PersonalBest(db.Model):
     """
     Build 1. One row per PB category. Recalculated after every sync.

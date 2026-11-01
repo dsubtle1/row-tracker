@@ -66,6 +66,9 @@ Yes — the Workouts page has a filter bar for date range and distance range (e.
 **Can I add a note to a workout?**
 Yes — every workout detail page has a Notes field near the top. Free text, up to 2,000 characters, saved with its own button. Good for things Concept2 doesn't track: how you felt, equipment changes, why a session got cut short.
 
+**Can I delete a workout?**
+Yes — open the workout and click Delete workout at the top right of the stats. Use it when a sync brought in a duplicate or wrong data. Personal bests and badges are recalculated from what's left, and the workout is remembered as deleted so a later sync or CSV import won't bring it back. Deletion can't be undone from the app (restore a backup if you need it back).
+
 **Can I compare two workouts side by side?**
 Yes — tick the checkbox next to any two workouts on the Workouts page and click Compare. You'll get a split-by-split pace chart overlaying both, plus a table of every split from each. This needs per-split detail from Concept2, so it won't work for a single continuous piece with no intervals, or a CSV-imported workout (no split data comes with a CSV import).
 

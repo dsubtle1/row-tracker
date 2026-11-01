@@ -3170,6 +3170,27 @@ body.mobile-nav-open { overflow: hidden; }
   padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
 }
+.btn-danger {
+  background: transparent;
+  color: var(--color-red);
+  border: 1px solid rgba(239,68,68,0.4);
+}
+.btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.12); }
+.flash-note {
+  margin: 0 0 1rem;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-success);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+.wd-delete-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: -0.75rem 0 1.5rem;
+}
 .wd-notes-label {
   display: block;
   font-size: 0.72rem;

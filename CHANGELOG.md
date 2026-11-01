@@ -9,6 +9,18 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## [0.33.0] — 2026-11-01
+
+### Added
+- **Delete a workout.** A "Delete workout" button on the workout detail page
+  (with a confirmation) removes a bad or duplicated sync. Personal bests are
+  rebuilt from the remaining workouts, badges earned on it go back to locked
+  and are re-awarded if other data still justifies them, and any WOD linked to
+  it is un-completed.
+- Deleted Concept2 Log IDs are remembered (new `deleted_workouts` table,
+  created automatically on startup), so neither sync nor CSV import
+  re-adds them.
+
 ## [0.32.1] — 2026-10-14
 
 ### Security

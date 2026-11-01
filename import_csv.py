@@ -21,7 +21,7 @@ import sys
 from datetime import datetime
 
 from app import create_app
-from models import db, Workout
+from models import db, Workout, DeletedWorkout
 
 # --------------------------------------------------------------------------- #
 #  Pace parser                                                                 #
@@ -186,7 +186,7 @@ def import_rows(csv_file) -> dict:
 
         # Use merge (INSERT OR IGNORE equivalent via SQLAlchemy)
         existing = db.session.get(Workout, workout.id)
-        if existing is not None:
+        if existing is not None or db.session.get(DeletedWorkout, workout.id) is not None:
             skipped_duplicate += 1
             continue
 

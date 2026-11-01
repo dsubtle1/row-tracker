@@ -331,6 +331,47 @@ def workout_save_notes(workout_id):
     return redirect(url_for("tracker.workout_detail", workout_id=workout_id))
 
 
+@tracker_bp.route("/workouts/<int:workout_id>/delete", methods=["POST"])
+def workout_delete(workout_id):
+    """
+    Delete a workout (e.g. a bad or duplicated sync). Leaves a tombstone so
+    sync/CSV import don't bring it back, detaches anything that pointed at
+    it, then recomputes PBs and badges from what's left.
+    """
+    from models import Badge, DeletedWorkout, PersonalBest, WodHistory
+    from pb_engine import recalculate_all_pbs
+    from badge_engine import evaluate_badges
+
+    workout = db.get_or_404(Workout, workout_id)
+
+    if not db.session.get(DeletedWorkout, workout_id):
+        db.session.add(DeletedWorkout(id=workout_id))
+
+    # Badges earned on this workout go back to locked; evaluate_badges below
+    # re-awards any that the remaining data still justifies.
+    for badge in Badge.query.filter_by(workout_id=workout_id).all():
+        badge.earned_date = None
+        badge.workout_id = None
+    for wod in WodHistory.query.filter_by(actual_workout_id=workout_id).all():
+        wod.actual_workout_id = None
+        wod.completed = False
+    # recalculate_all_pbs only replaces a PB with a *better* result, so a PB
+    # held by this workout must be dropped for it to be rebuilt from the rest.
+    PersonalBest.query.filter_by(workout_id=workout_id).delete()
+
+    db.session.delete(workout)
+    db.session.commit()
+
+    try:
+        recalculate_all_pbs()
+        evaluate_badges()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Post-delete PB/badge recalc failed: {e}")
+
+    return redirect(url_for("tracker.workout_list", deleted=1))
+
+
 def _compute_splits(workout: Workout) -> list[dict]:
     """
     Per-split breakdown from raw_json, shared by the workout detail page and

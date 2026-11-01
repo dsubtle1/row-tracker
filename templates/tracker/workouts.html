@@ -6,6 +6,10 @@
   <h1>Workout History</h1>
 </div>
 
+{% if request.args.get('deleted') %}
+<div class="flash-note" role="status">Workout deleted. Sync won't re-import it.</div>
+{% endif %}
+
 <form method="GET" class="workout-filter-form">
   <div class="wf-field">
     <label for="wf-date-from">From</label>
