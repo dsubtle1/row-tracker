@@ -3797,3 +3797,23 @@ body.mobile-nav-open { overflow: hidden; }
   .od-zone-inner { padding: 24px; }
   .od-journey-label--fixed { width: 96px; }
 }
+
+/* ---- Light-mode contrast for tinted status badges ----
+   The dark-theme text colours (Tailwind 300-500) are too pale against a white
+   surface. Same hues, darkened to clear 4.5:1 on the tinted background. */
+[data-theme="light"] .cawr-zone--low,
+[data-theme="light"] .wod-type-threshold,
+[data-theme="light"] .zone-AT            { color: #92400e; }
+[data-theme="light"] .cawr-zone--optimal,
+[data-theme="light"] .wod-type-steady_state,
+[data-theme="light"] .zone-UT2           { color: #166534; }
+[data-theme="light"] .cawr-zone--high,
+[data-theme="light"] .zone-TR            { color: #9a3412; }
+[data-theme="light"] .cawr-zone--danger,
+[data-theme="light"] .wod-type-test,
+[data-theme="light"] .zone-AN            { color: #991b1b; }
+[data-theme="light"] .zone-Max           { color: #7f1d1d; }
+[data-theme="light"] .zone-UT1           { color: #065f46; }
+[data-theme="light"] .wod-type-interval  { color: #1d4ed8; }
+[data-theme="light"] .wod-type-long      { color: #6b21a8; }
+[data-theme="light"] .restore-result--ok { color: #166534; }

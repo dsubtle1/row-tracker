@@ -770,3 +770,11 @@ def test_csv_import_skips_deleted_workout(client, full_make_workout):
     assert stats["inserted"] == 0
     assert stats["skipped_duplicate"] == 1
     assert db.session.get(Workout, 701) is None
+
+
+def test_light_theme_overrides_badge_text_colours():
+    """Pastel dark-theme badge text is unreadable on white; light mode must override it."""
+    import pathlib
+    css = (pathlib.Path(__file__).parent.parent / "static/css/main.css").read_text()
+    for sel in (".cawr-zone--low", ".wod-type-interval", ".zone-UT2", ".restore-result--ok"):
+        assert f'[data-theme="light"] {sel}' in css

@@ -13,6 +13,13 @@ these releases weren't tagged contemporaneously, but the groupings and dates ref
 
 - Update devto-intro-me-post.md, devto-intro-post.md
 
+## [0.33.2] — 2026-11-01
+
+### Fixed
+- Light-mode contrast for tinted status badges (training-load zones, WOD
+  types, heart-rate zones, restore-success banner): the pale dark-theme text
+  colours are now darkened in light mode. Dark mode is unchanged.
+
 ## [0.33.0] — 2026-11-01
 
 ### Added
