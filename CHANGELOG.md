@@ -9,6 +9,10 @@ include breaking changes (`.env` keys, schema, etc.), same as any other pre-1.0 
 History below `0.9.0` is backfilled from commit history at the point versioning was introduced —
 these releases weren't tagged contemporaneously, but the groupings and dates reflect what actually shipped.
 
+## 0.33.1 - 2026-11-01
+
+- Update devto-intro-me-post.md, devto-intro-post.md
+
 ## [0.33.0] — 2026-11-01
 
 ### Added
