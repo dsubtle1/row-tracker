@@ -5,6 +5,7 @@
 
 /* ---- Custom Properties ---- */
 :root {
+  color-scheme: dark;
   --color-bg:         #0a0b10;
   --color-surface:    #16181f;
   --color-surface-2:  #1e212b;
@@ -50,6 +51,7 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   --color-bg:           #f1f5f9;
   --color-surface:      #ffffff;
   --color-surface-2:    #e8eef5;

@@ -778,3 +778,11 @@ def test_light_theme_overrides_badge_text_colours():
     css = (pathlib.Path(__file__).parent.parent / "static/css/main.css").read_text()
     for sel in (".cawr-zone--low", ".wod-type-interval", ".zone-UT2", ".restore-result--ok"):
         assert f'[data-theme="light"] {sel}' in css
+
+
+def test_color_scheme_follows_theme():
+    """Native controls/scrollbars must follow the theme toggle."""
+    import pathlib
+    css = (pathlib.Path(__file__).parent.parent / "static/css/main.css").read_text()
+    assert ":root {\n  color-scheme: dark;" in css
+    assert '[data-theme="light"] {\n  color-scheme: light;' in css

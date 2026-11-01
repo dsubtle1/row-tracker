@@ -13,6 +13,12 @@ these releases weren't tagged contemporaneously, but the groupings and dates ref
 
 - Update devto-intro-me-post.md, devto-intro-post.md
 
+## [0.33.3] — 2026-11-01
+
+### Fixed
+- Set `color-scheme` per theme, so native form controls (date inputs, file
+  picker, selects) and scrollbars follow the dark/light toggle.
+
 ## [0.33.2] — 2026-11-01
 
 ### Fixed
