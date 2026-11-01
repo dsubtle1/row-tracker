@@ -238,17 +238,20 @@ const heatmapDays = {{ heatmap | tojson }};
   });
   grid.appendChild(labelCol);
 
+  grid.style.setProperty("--weeks", weeks.length + 1);   // +1 for the weekday-label column
+
   let lastMonth = -1;
 
   weeks.forEach(wk => {
     const col = document.createElement("div");
     col.className = "od-heatmap-col";
 
+    let monthLabel = null;
     const firstDay = wk.find(d => d.dow === 0) || wk[0];
     const dt = new Date(firstDay.date + "T00:00:00");
     const mo = dt.getMonth();
     if (mo !== lastMonth) {
-      col.dataset.month = dt.toLocaleString("default", { month: "short" });
+      monthLabel = dt.toLocaleString("default", { month: "short" });
       lastMonth = mo;
     }
 
@@ -287,6 +290,7 @@ const heatmapDays = {{ heatmap | tojson }};
       }
       col.appendChild(cell);
     }
+    if (monthLabel) col.firstChild.dataset.month = monthLabel;
     grid.appendChild(col);
   });
 })();

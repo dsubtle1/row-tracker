@@ -786,3 +786,13 @@ def test_color_scheme_follows_theme():
     css = (pathlib.Path(__file__).parent.parent / "static/css/main.css").read_text()
     assert ":root {\n  color-scheme: dark;" in css
     assert '[data-theme="light"] {\n  color-scheme: light;' in css
+
+
+def test_heatmap_grid_is_fluid_not_fixed_width():
+    """The 52-week heatmap must flex to the container (no scroll on desktop),
+    keeping a larger fixed minimum cell on mobile for tap targets."""
+    import pathlib
+    css = (pathlib.Path(__file__).parent.parent / "static/css/main.css").read_text()
+    assert "--hm-cell-min: 8px" in css
+    assert "--hm-cell-min: 16px" in css
+    assert "minmax(var(--hm-cell-min), 22px)" in css

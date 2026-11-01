@@ -13,6 +13,13 @@ these releases weren't tagged contemporaneously, but the groupings and dates ref
 
 - Update devto-intro-me-post.md, devto-intro-post.md
 
+## [0.33.4] — 2026-11-01
+
+### Changed
+- The dashboard's 52-week volume heatmap now sizes to the available width, so
+  the full last 12 months fit without horizontal scrolling on desktop. On
+  phones it keeps the larger 16px tap targets and scrolls sideways as before.
+
 ## [0.33.3] — 2026-11-01
 
 ### Fixed

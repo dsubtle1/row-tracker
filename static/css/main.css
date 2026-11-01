@@ -3730,10 +3730,23 @@ body.mobile-nav-open { overflow: hidden; }
 .od-bar--peak { background: var(--od-accent); }
 
 .od-heatmap-wrap { display: flex; flex-direction: column; gap: 12px; }
-.od-heatmap-scroll { overflow-x: auto; padding-top: 1.2rem; }
-.od-heatmap-grid { display: inline-flex; gap: 3px; }
-.od-heatmap-col { display: flex; flex-direction: column; gap: 3px; position: relative; }
-.od-heatmap-col[data-month]::before {
+.od-heatmap-scroll { overflow-x: auto; overflow-y: hidden; padding-top: 1.2rem; }
+/* Fluid grid: the 7 weekday rows fill column-by-column, and the week columns
+   share the available width, so ~12 months fit without scrolling. The column
+   floor (--hm-cell-min) keeps squares tappable; below it the wrapper scrolls. */
+.od-heatmap-grid {
+  --hm-cell-min: 8px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, auto);
+  grid-template-columns: 14px repeat(calc(var(--weeks, 54) - 1), minmax(var(--hm-cell-min), 22px));
+  gap: 3px;
+  width: max-content;
+  min-width: 100%;
+  max-width: 100%;
+}
+.od-heatmap-col { display: contents; }
+.od-heatmap-cell[data-month]::before {
   content: attr(data-month);
   position: absolute;
   top: -1.2rem;
@@ -3743,12 +3756,12 @@ body.mobile-nav-open { overflow: hidden; }
   white-space: nowrap;
 }
 .od-heatmap-dow {
-  display: block; width: 12px; height: 12px;
+  display: block;
   font-size: 0.6rem; color: var(--od-muted);
-  line-height: 12px; text-align: right; padding-right: 2px;
+  line-height: 1; align-self: center; text-align: right; padding-right: 2px;
 }
 .od-heatmap-cell {
-  display: block; width: 12px; height: 12px;
+  display: block; position: relative; aspect-ratio: 1; min-width: 0;
   border-radius: 2px; background: var(--od-cell-empty);
   cursor: default; transition: opacity 0.15s ease;
 }
@@ -3760,11 +3773,12 @@ body.mobile-nav-open { overflow: hidden; }
 .od-heatmap-cell[data-level="4"] { background: var(--od-accent); }
 .od-heatmap-cell[data-level="empty"] { background: transparent; }
 .od-heatmap-legend { display: flex; align-items: center; gap: 6px; }
+.od-heatmap-legend .od-heatmap-cell { width: 12px; height: 12px; aspect-ratio: auto; }
 .od-heatmap-legend-label { font-size: 12px; color: var(--od-muted); }
 
 @media (max-width: 640px) {
-  .od-heatmap-cell, .od-heatmap-dow { width: 16px; height: 16px; line-height: 16px; }
-  .od-heatmap-grid, .od-heatmap-col { gap: 4px; }
+  .od-heatmap-grid { --hm-cell-min: 16px; gap: 4px; }
+  .od-heatmap-legend .od-heatmap-cell { width: 16px; height: 16px; }
 }
 
 .od-journeys-wrap { margin-top: 72px; }
