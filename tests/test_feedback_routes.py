@@ -49,3 +49,16 @@ def test_submit_defaults_name_to_anonymous(client, sent_messages):
     assert resp.status_code == 200
     assert "Anonymous" in sent_messages[0].body
     assert "from: Anonymous" in sent_messages[0].subject
+
+
+def test_submit_strips_newlines_from_subject_fields_and_caps_length(client, sent_messages):
+    resp = client.post("/feedback/submit", data={
+        "category": "Bug\r\nBcc: someone@example.com",
+        "name": "A" * 500,
+        "message": "x" * 20000,
+    })
+    assert resp.status_code == 200
+    msg = sent_messages[0]
+    assert "\n" not in msg.subject and "\r" not in msg.subject
+    assert "A" * 81 not in msg.subject
+    assert "x" * 5001 not in msg.body

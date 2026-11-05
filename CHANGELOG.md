@@ -13,6 +13,32 @@ these releases weren't tagged contemporaneously, but the groupings and dates ref
 
 - Update devto-intro-me-post.md, devto-intro-post.md
 
+## [0.34.0] — 2026-11-05
+
+### Security
+- The container now runs as an unprivileged `app` user (uid 999) instead of
+  root. The application code inside the image is read-only to that user;
+  only `/app/data` is writable. **Upgrade note:** on first start the
+  entrypoint hands an existing `data/` folder to uid 999 automatically, so
+  no manual step is needed — but on a Linux host those files will then show
+  as owned by uid 999 (see the FAQ).
+- Security headers on every response: `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: same-origin`, and a
+  `Permissions-Policy` that denies camera, microphone, location and payment.
+- Request bodies are capped at 32 MB (CSV imports are the only uploads).
+- Feedback form: subject-line fields are flattened to one line and every
+  field is length-capped.
+- The tests CI workflow now runs with a read-only `GITHUB_TOKEN`.
+
+### Changed
+- Served by Gunicorn (one worker, eight threads) instead of Flask's
+  development server. One worker is deliberate: the nightly scheduler runs
+  inside the app process, so a second worker would run every job twice.
+- Python 3.11 → 3.13 (Docker image and CI).
+- Docker `HEALTHCHECK`, so `docker ps` and monitoring tools show whether the
+  app is actually answering.
+- SQLAlchemy 2.0.51 → 2.1.8; pytest 8.4.2 → 9.2.0 (dev only).
+
 ## [0.33.4] — 2026-11-01
 
 ### Changed

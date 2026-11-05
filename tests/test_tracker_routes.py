@@ -796,3 +796,18 @@ def test_heatmap_grid_is_fluid_not_fixed_width():
     assert "--hm-cell-min: 8px" in css
     assert "--hm-cell-min: 16px" in css
     assert "minmax(var(--hm-cell-min), 22px)" in css
+
+
+def test_security_headers_on_every_response(client):
+    for url in ("/", "/faq", "/this-page-does-not-exist"):
+        resp = client.get(url)
+        assert resp.headers["X-Content-Type-Options"] == "nosniff"
+        assert resp.headers["X-Frame-Options"] == "SAMEORIGIN"
+        assert resp.headers["Referrer-Policy"] == "same-origin"
+
+
+def test_oversized_upload_rejected(client):
+    big = io.BytesIO(b"x" * (33 * 1024 * 1024))
+    resp = client.post("/import", data={"csv_files": (big, "huge.csv")},
+                       content_type="multipart/form-data")
+    assert resp.status_code == 413

@@ -153,6 +153,16 @@ def create_app():
     # way, which is the real CSRF protection. Disable the time limit.
     app.config["WTF_CSRF_TIME_LIMIT"] = None
 
+    # No login, so the session cookie only carries the CSRF token — still,
+    # keep it out of cross-site requests explicitly rather than relying on
+    # each browser's default.
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+    # Upper bound on any request body (CSV imports are the only uploads).
+    # A season export is well under 5 MB; this just stops a runaway or
+    # malicious upload from being buffered into memory in full.
+    app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
+
     # ---------------------------------------------------------- init extensions
     db.init_app(app)
     mail.init_app(app)
@@ -199,6 +209,17 @@ def create_app():
         response = Response(render_template("sw.js"), mimetype="application/javascript")
         response.headers["Service-Worker-Allowed"] = "/"
         response.headers["Cache-Control"] = "no-cache"
+        return response
+
+    # Baseline browser hardening on every response. No full CSP: templates
+    # use inline scripts and the journey maps load external tiles, so a
+    # meaningful policy needs those refactored first.
+    @app.after_request
+    def security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
+        response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
         return response
 
     # A mistyped or stale-bookmarked URL otherwise fell through to Flask's

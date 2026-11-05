@@ -57,6 +57,9 @@ Yes — the Export Data page lists every backup with a Restore button next to it
 **Can I get a backup file off the server without SSH?**
 Yes — each row in the Export Data page's backup list also has a Download button that saves that snapshot's `.db` file directly, for offsite storage on your own machine.
 
+**Why are the files in my data folder owned by a different user?**
+Since v0.34.0 the container runs as an unprivileged `app` user (uid 999) instead of root, and on startup it hands the `data/` folder to that user so it can keep writing the database and backups. On a Linux host you'll see those files owned by uid 999. Reading or copying them from the host as root (or with `sudo`) works as before; to edit them as your own user, use `sudo` or add yourself to a group that can read them.
+
 **Can I export my data?**
 Yes — click **Export Data** next to the Sync button on the Dashboard. You can download your full workout history or personal bests as CSV (for spreadsheets) or JSON (for other tools), separately from the automatic nightly backup.
 

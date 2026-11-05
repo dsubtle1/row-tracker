@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# Tests only read the repo — don't hand them a write-capable token.
+permissions:
+  contents: read
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
@@ -15,7 +19,7 @@ jobs:
 
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.13"
           cache: "pip"
           cache-dependency-path: requirements-dev.txt
 

@@ -39,5 +39,6 @@ Thumbs.db
 desktop.ini
 
 # Editor/tooling
+.claude/
 .worktrees/
 .superpowers/

@@ -14,10 +14,16 @@ FEEDBACK_RECIPIENT = "rowtracker@pm.me"
 
 @feedback_bp.route("/submit", methods=["POST"])
 def submit():
-    category = request.form.get("category", "General").strip()
-    name     = request.form.get("name", "").strip() or "Anonymous"
-    message  = request.form.get("message", "").strip()
-    page     = request.form.get("page", "Unknown").strip()
+    # Length caps keep a single submission from producing an oversized
+    # email; header-bound fields (category/name go into the Subject) also
+    # get newlines stripped so they can't break the header.
+    def _one_line(value, limit):
+        return " ".join(value.split())[:limit]
+
+    category = _one_line(request.form.get("category", "General"), 40) or "General"
+    name     = _one_line(request.form.get("name", ""), 80) or "Anonymous"
+    message  = request.form.get("message", "").strip()[:5000]
+    page     = _one_line(request.form.get("page", "Unknown"), 200)
 
     if not message:
         return jsonify({"ok": False, "error": "Message is required."}), 400

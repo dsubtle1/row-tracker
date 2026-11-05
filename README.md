@@ -140,7 +140,7 @@ Built with Flask, SQLite, and Docker. Runs on a home server at a single port wit
 
 | Layer | Technology |
 |---|---|
-| Backend | Python 3.11 · Flask · SQLAlchemy · Flask-WTF (CSRF) |
+| Backend | Python 3.13 · Flask · SQLAlchemy · Flask-WTF (CSRF) · Gunicorn |
 | Database | SQLite (single file, Docker volume) |
 | Scheduler | APScheduler (embedded, nightly sync) |
 | Frontend | Jinja2 · Vanilla JS · Chart.js |

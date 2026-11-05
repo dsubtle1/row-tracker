@@ -131,6 +131,13 @@
       </details>
 
       <details class="faq-item">
+        <summary class="faq-question">Why are the files in my data folder owned by a different user?</summary>
+        <div class="faq-answer">
+          Since v0.34.0 the container runs as an unprivileged <code>app</code> user (uid 999) instead of root, and on startup it hands the <code>data/</code> folder to that user so it can keep writing the database and backups. On a Linux host you'll see those files owned by uid 999. Reading or copying them from the host as root (or with <code>sudo</code>) works as before; to edit them as your own user, use <code>sudo</code> or add yourself to a group that can read them.
+        </div>
+      </details>
+
+      <details class="faq-item">
         <summary class="faq-question">Can I export my data?</summary>
         <div class="faq-answer">
           Yes — click <strong>Export Data</strong> next to the Sync button on the Dashboard. You can download your full workout history or personal bests as CSV (for spreadsheets) or JSON (for other tools), separately from the automatic nightly backup.
